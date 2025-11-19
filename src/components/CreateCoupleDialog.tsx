@@ -1,9 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,16 +12,19 @@ interface CreateCoupleDialogProps {
 }
 
 export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogProps) => {
-  const [step, setStep] = useState<"name" | "code">("name");
-  const [yourName, setYourName] = useState("");
   const [coupleCode, setCoupleCode] = useState("");
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Auto-generate code when dialog opens
+  useEffect(() => {
+    if (open && !coupleCode) {
+      generateCode();
+    }
+  }, [open]);
+
   const generateCode = async () => {
-    if (!yourName.trim()) return;
-    
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -47,7 +48,6 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
       if (error) throw error;
 
       setCoupleCode(code);
-      setStep("code");
       toast.success("Couple created! Share your code with your partner.");
     } catch (error: any) {
       toast.error(error.message);
@@ -64,8 +64,6 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
   };
 
   const handleClose = () => {
-    setStep("name");
-    setYourName("");
     setCoupleCode("");
     setCopied(false);
     onOpenChange(false);
@@ -74,33 +72,10 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md bg-gradient-warm border-none shadow-card rounded-3xl">
-        {step === "name" ? (
-          <>
-            <DialogHeader>
-              <DialogTitle className="text-2xl text-center font-bold text-foreground">
-                What's your name?
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-foreground">Your name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={yourName}
-                  onChange={(e) => setYourName(e.target.value)}
-                  className="border-primary/30 rounded-xl h-12 text-lg"
-                />
-              </div>
-              <Button
-                onClick={generateCode}
-                disabled={!yourName.trim() || loading}
-                className="w-full bg-gradient-ritual text-white hover:opacity-90 h-12 rounded-xl text-lg"
-              >
-                {loading ? "Creating..." : "Create Ritual"}
-              </Button>
-            </div>
-          </>
+        {loading ? (
+          <div className="py-12 text-center">
+            <p className="text-lg text-muted-foreground">Creating your ritual space...</p>
+          </div>
         ) : (
           <>
             <DialogHeader>

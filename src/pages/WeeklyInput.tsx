@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const QUESTIONS = [
   {
@@ -44,21 +47,126 @@ const WeeklyInput = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [direction, setDirection] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const currentQuestion = QUESTIONS[currentStep];
   const isLastQuestion = currentStep === QUESTIONS.length - 1;
 
+  // Handle Enter key press
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey && answers[currentQuestion.id]) {
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentStep, answers]);
+
   const handleAnswer = (value: any) => {
-    setAnswers({ ...answers, [currentQuestion.id]: value });
+    const newAnswers = { ...answers, [currentQuestion.id]: value };
+    setAnswers(newAnswers);
+    
+    // Auto-advance for choice questions (not text or slider)
+    if (currentQuestion.type === "choice") {
+      setTimeout(() => {
+        if (isLastQuestion) {
+          handleSubmit(newAnswers);
+        } else {
+          setDirection(1);
+          setCurrentStep(currentStep + 1);
+        }
+      }, 300);
+    }
+  };
+
+  const handleSubmit = async (finalAnswers = answers) => {
+    setSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in first");
+        navigate("/auth");
+        return;
+      }
+
+      // Get user's couple
+      const { data: couple, error: coupleError } = await supabase
+        .from('couples')
+        .select('*')
+        .or(`partner_one.eq.${user.id},partner_two.eq.${user.id}`)
+        .maybeSingle();
+
+      if (coupleError) throw coupleError;
+      if (!couple) {
+        toast.error("Please create or join a couple first");
+        navigate("/");
+        return;
+      }
+
+      const isPartnerOne = couple.partner_one === user.id;
+      const weekStart = new Date();
+      weekStart.setHours(0, 0, 0, 0);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
+
+      // Check if there's an existing cycle for this week
+      const { data: existingCycle } = await supabase
+        .from('weekly_cycles')
+        .select('*')
+        .eq('couple_id', couple.id)
+        .eq('week_start_date', weekStart.toISOString().split('T')[0])
+        .maybeSingle();
+
+      const inputData = {
+        energy: finalAnswers.energy,
+        time: finalAnswers.availability,
+        budget: finalAnswers.budget,
+        craving: finalAnswers.craving,
+        desire: finalAnswers.desire,
+      };
+
+      if (existingCycle) {
+        // Update existing cycle
+        const { error: updateError } = await supabase
+          .from('weekly_cycles')
+          .update({
+            [isPartnerOne ? 'partner_one_input' : 'partner_two_input']: inputData,
+            [isPartnerOne ? 'partner_one_submitted_at' : 'partner_two_submitted_at']: new Date().toISOString(),
+          })
+          .eq('id', existingCycle.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new cycle
+        const { error: insertError } = await supabase
+          .from('weekly_cycles')
+          .insert({
+            couple_id: couple.id,
+            week_start_date: weekStart.toISOString().split('T')[0],
+            [isPartnerOne ? 'partner_one_input' : 'partner_two_input']: inputData,
+            [isPartnerOne ? 'partner_one_submitted_at' : 'partner_two_submitted_at']: new Date().toISOString(),
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      toast.success("Input saved! Waiting for your partner...");
+      navigate("/rituals");
+    } catch (error: any) {
+      console.error('Submit error:', error);
+      toast.error(error.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleNext = () => {
     if (!answers[currentQuestion.id]) return;
     
     if (isLastQuestion) {
-      // Submit answers
-      console.log("Submitted answers:", answers);
-      // TODO: Navigate to waiting screen
+      handleSubmit();
     } else {
       setDirection(1);
       setCurrentStep(currentStep + 1);
@@ -188,12 +296,12 @@ const WeeklyInput = () => {
         
         <Button
           onClick={handleNext}
-          disabled={!answers[currentQuestion.id]}
+          disabled={!answers[currentQuestion.id] || submitting}
           size="lg"
           className="flex-1 bg-gradient-ritual text-white hover:opacity-90 rounded-2xl h-14 text-lg"
         >
-          {isLastQuestion ? "Submit" : "Next"}
-          {!isLastQuestion && <ChevronRight className="w-5 h-5 ml-2" />}
+          {submitting ? "Saving..." : isLastQuestion ? "Submit" : "Next"}
+          {!isLastQuestion && !submitting && <ChevronRight className="w-5 h-5 ml-2" />}
         </Button>
       </div>
     </div>
