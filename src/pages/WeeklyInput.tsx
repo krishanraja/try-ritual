@@ -227,7 +227,7 @@ const WeeklyInput = () => {
           if (updateSynthesisError) throw updateSynthesisError;
 
           toast.success("Your weekly rituals are ready!", { id: "synthesis" });
-          navigate("/rituals");
+          navigate("/waiting-room");
         } catch (synthError: any) {
           console.error('Synthesis error:', synthError);
           toast.error("Failed to generate rituals. Your inputs are saved.", { id: "synthesis" });
@@ -235,7 +235,7 @@ const WeeklyInput = () => {
         }
       } else {
         toast.success("Input saved! Waiting for your partner...");
-        navigate("/");
+        navigate("/waiting-room");
       }
     } catch (error: any) {
       console.error('Submit error:', error);

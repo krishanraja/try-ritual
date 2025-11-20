@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import WeeklyInput from "./pages/WeeklyInput";
 import RitualCards from "./pages/RitualCards";
+import WaitingRoom from "./pages/WaitingRoom";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/input" element={<WeeklyInput />} />
+          <Route path="/waiting-room" element={<WaitingRoom />} />
           <Route path="/rituals" element={<RitualCards />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
