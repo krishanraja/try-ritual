@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 export default function Home() {
   const { user, couple, currentCycle, loading, shareCode, joinCouple } = useCouple();
   const navigate = useNavigate();
+  const { rituals, isShowingSamples } = useSampleRituals();
 
   useEffect(() => {
     if (!loading && !user) navigate('/auth');
@@ -27,8 +28,6 @@ export default function Home() {
   }
 
   if (!user) return null;
-
-  const { rituals, isShowingSamples } = useSampleRituals();
 
   if (!couple) {
     return (
