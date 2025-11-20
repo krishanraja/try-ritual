@@ -36,7 +36,7 @@ export const AppShell = ({ children }: AppShellProps) => {
   }, []);
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
+    { path: '/home', icon: Home, label: 'Home' },
     { path: couple?.partner_two ? '/input' : '/', icon: Calendar, label: 'This Week' },
     { path: '/history', icon: Clock, label: 'History' },
     { path: '/profile', icon: User, label: 'Profile' },

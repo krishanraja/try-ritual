@@ -8,7 +8,7 @@ import { Heart, Calendar, CheckCircle2, Clock } from 'lucide-react';
 import { StreakBadge } from '@/components/StreakBadge';
 import ritualLogo from '@/assets/ritual-logo.png';
 
-export default function Index() {
+export default function Home() {
   const { user, couple, currentCycle, loading, shareCode, joinCouple } = useCouple();
   const navigate = useNavigate();
 
