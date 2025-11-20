@@ -73,72 +73,66 @@ const RitualCards = () => {
       </div>
 
       {/* Card Stack */}
-      <div className="flex-1 flex items-center justify-center relative">
+      <div className="flex-1 flex items-center justify-center relative px-4">
         <div className="w-full max-w-md h-[500px] relative">
-          <AnimatePresence>
-            {cards.map((ritual, index) => {
-              if (index < currentIndex) return null;
-              
-              const isTop = index === currentIndex;
-              
-              return (
-                <motion.div
-                  key={ritual.id}
-                  style={{
-                    x: isTop ? x : 0,
-                    rotate: isTop ? rotate : 0,
-                    opacity: isTop ? opacity : 1 - (index - currentIndex) * 0.1,
-                  }}
-                  drag={isTop ? "x" : false}
-                  dragConstraints={{ left: 0, right: 0 }}
-                  onDragEnd={(_, info) => {
-                    if (Math.abs(info.offset.x) > 100) {
-                      if (info.offset.x > 0) {
-                        handleKeep();
-                      } else {
-                        handleSwap();
-                      }
+          <AnimatePresence mode="wait">
+            {currentCard && (
+              <motion.div
+                key={currentCard.id}
+                style={{
+                  x,
+                  rotate,
+                }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={(_, info) => {
+                  if (Math.abs(info.offset.x) > 100) {
+                    if (info.offset.x > 0) {
+                      handleKeep();
+                    } else {
+                      handleSwap();
                     }
-                  }}
-                  className="absolute inset-0"
-                  initial={{ scale: 1 - (index - currentIndex) * 0.05, y: (index - currentIndex) * 20 }}
-                  animate={{ scale: 1 - (index - currentIndex) * 0.05, y: (index - currentIndex) * 20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="h-full bg-white rounded-3xl shadow-card border-none p-8 flex flex-col">
-                    {/* Category Badge */}
-                    <div className="inline-flex items-center gap-2 self-start mb-4">
-                      <div className="w-2 h-2 rounded-full bg-gradient-ritual" />
-                      <span className="text-sm font-medium text-primary">
-                        {ritual.category}
-                      </span>
+                  }
+                }}
+                className="absolute inset-0"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="h-full bg-card rounded-3xl shadow-card border-none p-8 flex flex-col">
+                  {/* Category Badge */}
+                  <div className="inline-flex items-center gap-2 self-start mb-4">
+                    <div className="w-2 h-2 rounded-full bg-gradient-ritual" />
+                    <span className="text-sm font-medium text-primary">
+                      {currentCard.category}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h2 className="text-2xl font-bold text-foreground mb-4">
+                    {currentCard.title}
+                  </h2>
+
+                  {/* Description */}
+                  <p className="text-muted-foreground flex-1 leading-relaxed">
+                    {currentCard.description}
+                  </p>
+
+                  {/* Meta Info */}
+                  <div className="flex gap-4 mt-6 pt-6 border-t border-border">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="w-4 h-4" />
+                      {currentCard.time_estimate}
                     </div>
-
-                    {/* Title */}
-                    <h2 className="text-2xl font-bold text-foreground mb-4">
-                      {ritual.title}
-                    </h2>
-
-                    {/* Description */}
-                    <p className="text-muted-foreground flex-1 leading-relaxed">
-                      {ritual.description}
-                    </p>
-
-                    {/* Meta Info */}
-                    <div className="flex gap-4 mt-6 pt-6 border-t border-border">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="w-4 h-4" />
-                        {ritual.time_estimate}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <DollarSign className="w-4 h-4" />
-                        {ritual.budget_band}
-                      </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <DollarSign className="w-4 h-4" />
+                      {currentCard.budget_band}
                     </div>
-                  </Card>
-                </motion.div>
-              );
-            })}
+                  </div>
+                </Card>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>
