@@ -57,52 +57,51 @@ export default function Home() {
     );
   }
 
-  // Solo exploration mode: show sample rituals while waiting
+  // Waiting for partner: INVITE CTA
   if (!couple.partner_two) {
     return (
       <StrictMobileViewport>
-        <div className="h-full bg-gradient-warm flex flex-col">
-          {/* Compact Header */}
-          <div className="flex-none px-4 pt-3 pb-2 text-center">
-            <RitualLogo size="xs" className="mx-auto mb-2" />
-            <h1 className="text-lg font-bold mb-1">Explore While You Wait</h1>
-            <p className="text-xs text-muted-foreground">See what rituals look like</p>
-          </div>
-
-          {/* Status Card */}
-          <div className="flex-none px-4 pb-3">
-            <Card className="p-3 bg-card/90 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-ritual flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="font-semibold text-xs">Sample Rituals</h2>
-                  <p className="text-xs text-muted-foreground">Get inspired</p>
-                </div>
+        <div className="h-full bg-gradient-warm flex flex-col justify-center px-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-6 max-w-sm mx-auto"
+          >
+            {/* Hero Message */}
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">
+                <Heart className="w-8 h-8 text-white" />
               </div>
-              <div className="flex gap-2">
-                <Button onClick={() => navigate('/rituals')} size="sm" className="flex-1 bg-gradient-ritual text-white h-9 rounded-xl text-xs">
-                  View All
-                </Button>
-                <Button onClick={shareCode} variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-xs">
-                  <Share2 className="w-3 h-3 mr-1" />
-                  Share
-                </Button>
-              </div>
-            </Card>
-          </div>
+              <h1 className="text-2xl font-bold">Almost There!</h1>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Ritual works best with two people. Invite someone special to create weekly rituals together.
+              </p>
+            </div>
 
-          {/* Sample Carousel */}
-          <div className="flex-1 overflow-hidden">
-            <RitualCarousel
-              rituals={rituals.slice(0, 6)}
-              completions={new Set()}
-              onComplete={() => {}}
-              variant="compact"
-              isShowingSamples={true}
-            />
-          </div>
+            {/* Primary CTA */}
+            <Button 
+              onClick={shareCode} 
+              size="lg"
+              className="w-full h-14 bg-gradient-ritual text-white rounded-xl text-base"
+            >
+              <Share2 className="w-5 h-5 mr-2" />
+              Invite Your Partner
+            </Button>
+
+            {/* Secondary: Preview Samples */}
+            <div className="text-center space-y-2">
+              <p className="text-xs text-muted-foreground">
+                While you wait, see what rituals look like:
+              </p>
+              <Button 
+                onClick={() => navigate('/rituals')} 
+                variant="outline"
+                className="w-full h-12 rounded-xl"
+              >
+                Preview Sample Rituals
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </StrictMobileViewport>
     );

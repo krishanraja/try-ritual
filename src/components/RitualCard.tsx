@@ -33,9 +33,9 @@ export const RitualCard = ({
   showActions = true 
 }: RitualCardProps) => {
   const heights = {
-    full: 'h-[420px]',
-    compact: 'h-[320px]',
-    sample: 'h-[320px]'
+    full: 'min-h-[420px]',
+    compact: 'min-h-[320px]',
+    sample: 'min-h-[320px]'
   };
 
   const getCategoryColor = (category?: string) => {
@@ -61,7 +61,7 @@ export const RitualCard = ({
       {/* Header */}
       <div className="p-5 pb-3 flex-none">
         <div className="flex items-start justify-between gap-3 mb-3">
-          <h3 className="text-lg font-bold leading-tight line-clamp-2 flex-1">
+          <h3 className="text-lg font-bold leading-tight flex-1">
             {ritual.title}
           </h3>
           {ritual.is_sample && (
@@ -70,11 +70,11 @@ export const RitualCard = ({
             </Badge>
           )}
         </div>
-        
-        <p className={cn(
-          "text-sm text-muted-foreground leading-relaxed",
-          variant === 'full' ? 'line-clamp-4' : 'line-clamp-3'
-        )}>
+      </div>
+
+      {/* Description - scrollable if needed */}
+      <div className="px-5 pb-3 flex-1 overflow-y-auto">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {ritual.description}
         </p>
       </div>

@@ -32,6 +32,11 @@ const QUESTIONS = [
     id: 'craving',
     question: 'What are you craving?',
     options: ['Connection', 'Adventure', 'Rest', 'Play']
+  },
+  {
+    id: 'city',
+    question: 'Where are you based?',
+    options: ['New York', 'London', 'Sydney', 'Melbourne']
   }
 ];
 
@@ -45,6 +50,7 @@ export default function QuickInput() {
     availability: '',
     budget: '',
     craving: '',
+    city: '',
     desire: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -212,7 +218,7 @@ export default function QuickInput() {
         {/* Progress Bar */}
         <div className="flex-none px-6 pt-6 pb-4">
           <div className="flex gap-1">
-            {[...Array(5)].map((_, i) => (
+            {[...Array(6)].map((_, i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-all ${
@@ -222,7 +228,7 @@ export default function QuickInput() {
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Question {currentStep + 1} of 5
+            Question {currentStep + 1} of 6
           </p>
         </div>
 

@@ -1,15 +1,69 @@
 import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { LogOut, Share2, UserPlus, UserMinus } from 'lucide-react';
+import { LogOut, Share2, UserPlus, UserMinus, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { StrictMobileViewport } from '@/components/StrictMobileViewport';
+import { LocationToggle, City } from '@/components/LocationToggle';
+import { useState, useEffect } from 'react';
+import { toast } from '@/hooks/use-toast';
 
 export default function Profile() {
   const { user, couple, shareCode, joinCouple, leaveCouple } = useCouple();
   const navigate = useNavigate();
+  const [selectedCity, setSelectedCity] = useState<City>('New York');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadPreferredCity();
+    }
+  }, [user]);
+
+  const loadPreferredCity = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('preferred_city')
+        .eq('id', user?.id)
+        .single();
+
+      if (error) throw error;
+      if (data?.preferred_city) {
+        setSelectedCity(data.preferred_city as City);
+      }
+    } catch (error) {
+      console.error('Error loading city preference:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCityChange = async (city: City) => {
+    setSelectedCity(city);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ preferred_city: city })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Location updated",
+        description: `Your rituals will now be tailored for ${city}`,
+      });
+    } catch (error) {
+      console.error('Error updating city:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update location",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -48,6 +102,22 @@ export default function Profile() {
             transition={{ delay: 0.1 }}
             className="space-y-3"
           >
+            {/* Location Preference */}
+            <Card className="p-4 bg-white/90">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <MapPin className="w-4 h-4" />
+                  <span>Your City</span>
+                </div>
+                {!loading && (
+                  <LocationToggle 
+                    selected={selectedCity} 
+                    onChange={handleCityChange} 
+                  />
+                )}
+              </div>
+            </Card>
+
             {couple ? (
               <>
                 <Card className="p-4 bg-white/90">
