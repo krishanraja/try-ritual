@@ -29,12 +29,30 @@ export const JoinCoupleDialog = ({ open, onOpenChange }: JoinCoupleDialogProps) 
       return;
     }
 
+    if (yourName.trim().length > 100) {
+      toast.error("Name must be less than 100 characters");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Please sign in first");
         navigate("/auth");
+        return;
+      }
+
+      // Check if user is already in a couple
+      const { data: existingCouple } = await supabase
+        .from('couples')
+        .select('*')
+        .or(`partner_one.eq.${user.id},partner_two.eq.${user.id}`)
+        .maybeSingle();
+
+      if (existingCouple) {
+        toast.error("You're already in a couple!");
+        onOpenChange(false);
         return;
       }
 
@@ -47,27 +65,51 @@ export const JoinCoupleDialog = ({ open, onOpenChange }: JoinCoupleDialogProps) 
 
       if (findError) throw findError;
       if (!couple) {
-        toast.error("Invalid couple code");
+        toast.error("Invalid couple code. Please check and try again.");
         return;
       }
 
       if (couple.partner_two) {
-        toast.error("This couple is already complete");
+        toast.error("This couple is already complete. Please check the code.");
         return;
       }
 
-      // Join the couple
-      const { error: updateError } = await supabase
+      if (couple.partner_one === user.id) {
+        toast.error("You can't join your own couple code!");
+        return;
+      }
+
+      // Update user's profile name
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ name: yourName.trim() })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
+
+      // Join the couple (with optimistic locking check)
+      const { data: updatedCouple, error: updateError } = await supabase
         .from('couples')
         .update({ partner_two: user.id })
-        .eq('id', couple.id);
+        .eq('id', couple.id)
+        .is('partner_two', null) // Only update if still null
+        .select()
+        .maybeSingle();
 
       if (updateError) throw updateError;
+      
+      if (!updatedCouple) {
+        toast.error("Someone else just joined this couple. Please try a different code.");
+        return;
+      }
 
       toast.success("Successfully joined your partner's ritual!");
       onOpenChange(false);
+      setYourName("");
+      setCode("");
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Join error:", error);
+      toast.error(error.message || "Failed to join couple. Please try again.");
     } finally {
       setLoading(false);
     }

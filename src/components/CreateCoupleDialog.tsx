@@ -34,8 +34,44 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
         return;
       }
 
-      // Generate a 6-digit code
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      // Check if user already has a couple
+      const { data: existingCouple } = await supabase
+        .from('couples')
+        .select('*')
+        .or(`partner_one.eq.${user.id},partner_two.eq.${user.id}`)
+        .maybeSingle();
+
+      if (existingCouple) {
+        toast.error("You're already in a couple! Share your existing code instead.");
+        setCoupleCode(existingCouple.couple_code);
+        setLoading(false);
+        return;
+      }
+
+      // Generate a unique 6-digit code
+      let code = '';
+      let isUnique = false;
+      let attempts = 0;
+      
+      while (!isUnique && attempts < 10) {
+        code = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Check if code already exists
+        const { data: existingCode } = await supabase
+          .from('couples')
+          .select('id')
+          .eq('couple_code', code)
+          .maybeSingle();
+        
+        if (!existingCode) {
+          isUnique = true;
+        }
+        attempts++;
+      }
+
+      if (!isUnique) {
+        throw new Error("Unable to generate unique code. Please try again.");
+      }
       
       // Create couple in database
       const { error } = await supabase

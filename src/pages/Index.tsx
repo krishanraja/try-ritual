@@ -224,7 +224,7 @@ const Index = () => {
                 size="lg"
                 className="w-full border-2 border-primary/30 text-foreground hover:bg-lavender-light transition-colors text-lg h-14 rounded-2xl"
               >
-                Join Your Partner
+                I Have a Code
               </Button>
             </>
           )}
