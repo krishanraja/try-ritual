@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Share2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { ViewCoupleCodeDialog } from "@/components/ViewCoupleCodeDialog";
+import { JoinCoupleDialog } from "@/components/JoinCoupleDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ritualLogo from "@/assets/ritual-logo.png";
@@ -52,6 +53,7 @@ const WeeklyInput = () => {
   const [submitting, setSubmitting] = useState(false);
   const [couple, setCouple] = useState<any>(null);
   const [showViewCode, setShowViewCode] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
   const navigate = useNavigate();
 
   const currentQuestion = QUESTIONS[currentStep];
@@ -314,15 +316,26 @@ const WeeklyInput = () => {
         </div>
         <div className="flex items-center gap-2">
           {couple && (
-            <Button
-              onClick={() => setShowViewCode(true)}
+            <>
+              <Button
+                onClick={() => setShowJoin(true)}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Join
+              </Button>
+              <Button
+                onClick={() => setShowViewCode(true)}
               variant="outline"
               size="sm"
               className="gap-2"
             >
               <Share2 className="w-4 h-4" />
-              Share Code
+              Share
             </Button>
+            </>
           )}
         </div>
       </header>
@@ -447,11 +460,17 @@ const WeeklyInput = () => {
       </div>
       
       {couple && (
-        <ViewCoupleCodeDialog 
-          open={showViewCode} 
-          onOpenChange={setShowViewCode} 
-          coupleCode={couple.couple_code} 
-        />
+        <>
+          <ViewCoupleCodeDialog 
+            open={showViewCode} 
+            onOpenChange={setShowViewCode} 
+            coupleCode={couple.couple_code} 
+          />
+          <JoinCoupleDialog 
+            open={showJoin} 
+            onOpenChange={setShowJoin}
+          />
+        </>
       )}
     </div>
   );
