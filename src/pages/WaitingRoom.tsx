@@ -194,16 +194,17 @@ const WaitingRoom = () => {
   if (!couple.partner_two) {
     return (
       <div className="min-h-screen bg-gradient-calm flex flex-col">
-        <header className="w-full px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
-          <div className="flex items-center gap-3">
-            <img src={ritualLogo} alt="Ritual" className="h-8" />
-            <span className="text-sm font-medium text-muted-foreground">Waiting Room</span>
+        <header className="w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 backdrop-blur-sm border-b border-border/30">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src={ritualLogo} alt="Ritual" className="h-8 flex-shrink-0" />
+            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Waiting Room</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               onClick={() => setShowJoin(true)}
               variant="outline"
               size="sm"
+              className="whitespace-nowrap"
             >
               Join with Code
             </Button>
@@ -211,6 +212,7 @@ const WaitingRoom = () => {
               onClick={() => navigate("/")}
               variant="ghost"
               size="sm"
+              className="whitespace-nowrap"
             >
               Back to Home
             </Button>
@@ -275,16 +277,17 @@ const WaitingRoom = () => {
   if (!cycle) {
     return (
       <div className="min-h-screen bg-gradient-calm flex flex-col">
-        <header className="w-full px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
-          <div className="flex items-center gap-3">
-            <img src={ritualLogo} alt="Ritual" className="h-8" />
-            <span className="text-sm font-medium text-muted-foreground">Waiting Room</span>
+        <header className="w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 backdrop-blur-sm border-b border-border/30">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src={ritualLogo} alt="Ritual" className="h-8 flex-shrink-0" />
+            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Waiting Room</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               onClick={() => setShowJoin(true)}
               variant="outline"
               size="sm"
+              className="whitespace-nowrap"
             >
               Join with Code
             </Button>
@@ -292,7 +295,7 @@ const WaitingRoom = () => {
               onClick={() => setShowViewCode(true)}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 whitespace-nowrap"
             >
               <Share2 className="w-4 h-4" />
               Share Code
@@ -339,18 +342,19 @@ const WaitingRoom = () => {
   return (
     <div className="min-h-screen bg-gradient-calm flex flex-col">
       {/* Header */}
-      <header className="w-full px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
-        <div className="flex items-center gap-3">
-          <img src={ritualLogo} alt="Ritual" className="h-8" />
-          <span className="text-sm font-medium text-muted-foreground">
+      <header className="w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 backdrop-blur-sm border-b border-border/30">
+        <div className="flex items-center gap-3 min-w-0">
+          <img src={ritualLogo} alt="Ritual" className="h-8 flex-shrink-0" />
+          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
             {generatingRituals ? "Creating Your Rituals..." : "Waiting Room"}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button
             onClick={() => setShowJoin(true)}
             variant="outline"
             size="sm"
+            className="whitespace-nowrap"
           >
             Join with Code
           </Button>
@@ -358,7 +362,7 @@ const WaitingRoom = () => {
             onClick={() => setShowViewCode(true)}
             variant="outline"
             size="sm"
-            className="gap-2"
+            className="gap-2 whitespace-nowrap"
           >
             <Share2 className="w-4 h-4" />
             Share Code
