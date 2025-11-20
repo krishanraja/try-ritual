@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useCouple } from '@/contexts/CoupleContext';
 import { supabase } from '@/integrations/supabase/client';
 import { MagneticCanvas } from '@/components/MagneticCanvas';
+import { StrictMobileViewport } from '@/components/StrictMobileViewport';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function MagneticInput() {
@@ -125,31 +126,37 @@ export default function MagneticInput() {
 
   if (loading || !weeklyCycleId) {
     return (
-      <div className="min-h-screen bg-gradient-warm flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
+      <StrictMobileViewport>
+        <div className="h-full bg-gradient-warm flex flex-col items-center justify-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Preparing canvas...</p>
+        </div>
+      </StrictMobileViewport>
     );
   }
 
   if (isGenerating) {
     return (
-      <div className="min-h-screen bg-gradient-warm flex flex-col items-center justify-center gap-4 px-4">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        >
-          <Loader2 className="w-12 h-12 text-primary" />
-        </motion.div>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-lg text-foreground text-center"
-        >
-          Weaving your alignments into beautiful rituals...
-        </motion.p>
-      </div>
+      <StrictMobileViewport>
+        <div className="h-full bg-gradient-warm flex flex-col items-center justify-center gap-4 px-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          >
+            <Sparkles className="w-12 h-12 text-primary" />
+          </motion.div>
+          <div className="text-center space-y-1">
+            <h2 className="text-lg font-bold">Weaving Rituals...</h2>
+            <p className="text-xs text-muted-foreground">Creating moments from your intentions</p>
+          </div>
+        </div>
+      </StrictMobileViewport>
     );
   }
 
-  return <MagneticCanvas weeklyCycleId={weeklyCycleId} onComplete={handleComplete} />;
+  return (
+    <StrictMobileViewport>
+      <MagneticCanvas weeklyCycleId={weeklyCycleId} onComplete={handleComplete} />
+    </StrictMobileViewport>
+  );
 }

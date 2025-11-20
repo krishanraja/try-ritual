@@ -37,9 +37,9 @@ export const AppShell = ({ children }: AppShellProps) => {
 
   const navItems = [
     { path: '/home', icon: Home, label: 'Home' },
-    { path: couple?.partner_two ? '/input' : '/home', icon: Calendar, label: 'This Week' },
+    { path: '/input', icon: Calendar, label: 'This Week' },
     { path: '/history', icon: Clock, label: 'History' },
-    { path: '/profile', icon: User, label: 'Profile' },
+    { path: '/profile', icon: User, label: 'Profile' }
   ];
 
   const getPartnerName = () => {
@@ -56,7 +56,9 @@ export const AppShell = ({ children }: AppShellProps) => {
           animate={{ y: 0, opacity: 1 }}
           className="flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50"
         >
-          <RitualLogo size="sm" />
+          <button onClick={() => navigate('/')} className="focus:outline-none">
+            <RitualLogo size="sm" />
+          </button>
           
           <div className="flex items-center gap-2">
             <div className="text-xs text-muted-foreground hidden sm:block">
