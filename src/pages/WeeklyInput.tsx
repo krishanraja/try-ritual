@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Share2, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { ViewCoupleCodeDialog } from "@/components/ViewCoupleCodeDialog";
-import { JoinCoupleDialog } from "@/components/JoinCoupleDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCouple } from "@/contexts/CoupleContext";
+import { usePresence } from "@/hooks/usePresence";
 import ritualLogo from "@/assets/ritual-logo.png";
 
 const QUESTIONS = [
@@ -51,55 +51,21 @@ const WeeklyInput = () => {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [direction, setDirection] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [couple, setCouple] = useState<any>(null);
-  const [showViewCode, setShowViewCode] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
+  const { user, couple, refreshCycle } = useCouple();
+  const { isPartnerOnline, partnerPresence } = usePresence('weekly-input', 'answering questions');
   const navigate = useNavigate();
 
   const currentQuestion = QUESTIONS[currentStep];
   const isLastQuestion = currentStep === QUESTIONS.length - 1;
 
-  // Fetch couple data and check if partner is waiting
   useEffect(() => {
-    const fetchCouple = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('couples')
-          .select('*')
-          .or(`partner_one.eq.${user.id},partner_two.eq.${user.id}`)
-          .maybeSingle();
-        
-        if (data) {
-          setCouple(data);
-          
-          // Check if partner already submitted this week
-          const weekStart = new Date();
-          weekStart.setHours(0, 0, 0, 0);
-          weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-          const { data: cycleData } = await supabase
-            .from('weekly_cycles')
-            .select('*')
-            .eq('couple_id', data.id)
-            .eq('week_start_date', weekStart.toISOString().split('T')[0])
-            .maybeSingle();
-
-          if (cycleData) {
-            const isPartnerOne = data.partner_one === user.id;
-            const partnerSubmitted = isPartnerOne 
-              ? !!cycleData.partner_two_input 
-              : !!cycleData.partner_one_input;
-            
-            if (partnerSubmitted) {
-              toast.info("Your partner is waiting for you! 💕", { duration: 3000 });
-            }
-          }
-        }
-      }
-    };
-    fetchCouple();
-  }, []);
+    if (!user) {
+      navigate('/auth');
+    }
+    if (!couple) {
+      navigate('/');
+    }
+  }, [user, couple, navigate]);
 
   // Handle Enter key press
   useEffect(() => {
@@ -307,41 +273,20 @@ const WeeklyInput = () => {
   };
 
   return (
-    <div className="min-h-screen-mobile bg-gradient-warm flex flex-col">
-      {/* Professional Header */}
-      <header className="w-full px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
-        <div className="flex items-center gap-3">
-          <img src={ritualLogo} alt="Ritual" className="h-8" />
-          <span className="text-sm font-medium text-muted-foreground">Weekly Input</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {couple && (
-            <>
-              <Button
-                onClick={() => setShowJoin(true)}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <UserPlus className="w-4 h-4" />
-                Join
-              </Button>
-              <Button
-                onClick={() => setShowViewCode(true)}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <Share2 className="w-4 h-4" />
-              Share
-            </Button>
-            </>
-          )}
-        </div>
-      </header>
+    <div className="min-h-screen-mobile bg-gradient-warm flex flex-col pb-20">
+      {isPartnerOnline && partnerPresence?.activity && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-40 inline-flex items-center gap-2 px-4 py-2 bg-white/90 rounded-full shadow-lg"
+        >
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          <span className="text-sm text-muted-foreground">{partnerPresence.activity}</span>
+        </motion.div>
+      )}
 
       {/* Progress */}
-      <div className="max-w-md mx-auto w-full space-y-2 mb-6 px-4 sm:px-6 pt-4 safe-top">
+      <div className="max-w-md mx-auto w-full space-y-2 mb-6 px-4 sm:px-6 pt-6">
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>Your weekly input</span>
           <span>{currentStep + 1} / {QUESTIONS.length}</span>
@@ -425,7 +370,7 @@ const WeeklyInput = () => {
       </div>
 
       {/* Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 sm:px-6 pb-6 pb-safe bg-gradient-to-t from-background via-background to-transparent pt-4">
+      <div className="fixed bottom-20 left-0 right-0 px-4 sm:px-6 pb-6 pb-safe bg-gradient-to-t from-background via-background to-transparent pt-8">
         <div className="max-w-md mx-auto w-full flex gap-3">
           {currentStep > 0 && (
             <Button
@@ -458,20 +403,6 @@ const WeeklyInput = () => {
           </Button>
         </div>
       </div>
-      
-      {couple && (
-        <>
-          <ViewCoupleCodeDialog 
-            open={showViewCode} 
-            onOpenChange={setShowViewCode} 
-            coupleCode={couple.couple_code} 
-          />
-          <JoinCoupleDialog 
-            open={showJoin} 
-            onOpenChange={setShowJoin}
-          />
-        </>
-      )}
     </div>
   );
 };
