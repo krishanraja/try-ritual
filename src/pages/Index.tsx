@@ -1,310 +1,101 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Heart, LogOut, Share2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import ritualLogo from "@/assets/ritual-logo.png";
-import { CreateCoupleDialog } from "@/components/CreateCoupleDialog";
-import { JoinCoupleDialog } from "@/components/JoinCoupleDialog";
-import { ViewCoupleCodeDialog } from "@/components/ViewCoupleCodeDialog";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCouple } from '@/contexts/CoupleContext';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { motion } from 'framer-motion';
+import { Heart, Calendar, CheckCircle2, Clock } from 'lucide-react';
+import { StreakBadge } from '@/components/StreakBadge';
+import ritualLogo from '@/assets/ritual-logo.png';
 
-const Index = () => {
-  const [showCreate, setShowCreate] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
-  const [showViewCode, setShowViewCode] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [session, setSession] = useState<any>(null);
-  const [couple, setCouple] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+export default function Index() {
+  const { user, couple, currentCycle, loading, shareCode, joinCouple } = useCouple();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up listener FIRST before checking session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      // Only log errors, don't sign out - let auth state change handle it
-      if (error) {
-        console.log("Session check error (may be stale):", error.message);
-      }
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      const fetchCouple = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('couples')
-            .select('*')
-            .or(`partner_one.eq.${user.id},partner_two.eq.${user.id}`)
-            .maybeSingle();
-          
-          if (error) {
-            console.error("Error fetching couple:", error);
-          }
-          setCouple(data);
-        } catch (error) {
-          console.error("Failed to fetch couple:", error);
-        }
-      };
-      fetchCouple();
-
-      // Subscribe to realtime updates for couples and weekly cycles
-      const couplesChannel = supabase
-        .channel('couples-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'couples',
-          },
-          () => {
-            fetchCouple();
-          }
-        )
-        .subscribe();
-
-      const cyclesChannel = supabase
-        .channel('cycles-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'weekly_cycles',
-          },
-          (payload) => {
-            // Check if synthesis was just completed
-            if (payload.new.synthesized_output && !payload.old.synthesized_output) {
-              toast.success("Your weekly rituals are ready! 🎉");
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(couplesChannel);
-        supabase.removeChannel(cyclesChannel);
-      };
-    }
-  }, [user]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
-    setCouple(null);
-  };
+    if (!loading && !user) navigate('/auth');
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
       <div className="min-h-screen-mobile bg-gradient-warm flex flex-col items-center justify-center gap-4">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-muted-foreground text-sm">Loading...</p>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen-mobile bg-gradient-warm flex flex-col">
-      {/* Professional Header */}
-      <header className="w-full px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
-        <div className="flex items-center gap-3">
-          <img src={ritualLogo} alt="Ritual" className="h-8" />
-        </div>
-        <div className="flex items-center gap-2">
-          {user && !couple && (
-            <Button
-              onClick={() => setShowJoin(true)}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              Join with Code
-            </Button>
-          )}
-          {couple && (
-            <Button
-              onClick={() => setShowViewCode(true)}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <Share2 className="w-4 h-4" />
-              Share Code
-            </Button>
-          )}
-          {user && (
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              size="sm"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          )}
-        </div>
-      </header>
+  if (!user) return null;
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md space-y-8 text-center"
-      >
-        {/* Logo */}
-        <motion.div
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex justify-center"
-        >
-          <img 
-            src={ritualLogo} 
-            alt="Ritual" 
-            className="w-64 h-auto"
-          />
-        </motion.div>
-
-        {/* Tagline */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="space-y-3"
-        >
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">
-            Shared moments,<br />designed together
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-sm mx-auto">
-            Build weekly rituals with someone special. Both contribute, AI synthesizes your perfect week.
-          </p>
-          {!user && (
-            <p className="text-sm text-muted-foreground pt-2">
-              <button 
-                onClick={() => navigate("/auth?join=true")}
-                className="text-primary hover:underline"
-              >
-                Have a partner code?
-              </button>
-            </p>
-          )}
-        </motion.div>
-
-        {/* Heart animation */}
-        <motion.div
-          animate={{ 
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, -5, 0]
-          }}
-          transition={{ 
-            duration: 2,
-            repeat: Infinity,
-            repeatDelay: 1
-          }}
-          className="flex justify-center py-4"
-        >
-          <div className="w-16 h-16 rounded-full bg-gradient-ritual flex items-center justify-center shadow-soft">
-            <Heart className="w-8 h-8 text-white fill-white" />
+  if (!couple) {
+    return (
+      <div className="min-h-screen-mobile bg-gradient-warm flex flex-col items-center justify-center p-6">
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center space-y-8 max-w-md">
+          <img src={ritualLogo} alt="Ritual" className="w-32 h-32 mx-auto" />
+          <div>
+            <h1 className="text-4xl font-bold mb-3">Welcome to Ritual</h1>
+            <p className="text-lg text-muted-foreground">Create weekly rituals with someone special</p>
+          </div>
+          <div className="space-y-3">
+            <Button onClick={shareCode} size="lg" className="w-full bg-gradient-ritual text-white hover:opacity-90 h-14 text-lg rounded-xl">
+              <Heart className="w-5 h-5 mr-2" />Start a Ritual Space
+            </Button>
+            <Button onClick={joinCouple} variant="outline" size="lg" className="w-full h-14 text-lg rounded-xl border-2">
+              I Have a Code
+            </Button>
           </div>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="space-y-3 pt-4"
-        >
-          {!user ? (
-            <Button
-              onClick={() => navigate("/auth")}
-              size="lg"
-              className="w-full bg-gradient-ritual text-white hover:opacity-90 transition-opacity shadow-soft text-lg h-14 rounded-2xl"
-            >
-              Get Started
-            </Button>
-          ) : couple ? (
-            <>
-              <Button
-                onClick={() => navigate("/input")}
-                size="lg"
-                className="w-full bg-gradient-ritual text-white hover:opacity-90 transition-opacity shadow-soft text-lg h-14 rounded-2xl"
-              >
-                Weekly Input
-              </Button>
-              {couple.partner_two && (
-                <Button
-                  onClick={() => navigate("/rituals")}
-                  variant="outline"
-                  size="lg"
-                  className="w-full border-2 border-primary/30 text-foreground hover:bg-lavender-light transition-colors text-lg h-14 rounded-2xl"
-                >
-                  View Rituals
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
-              <Button
-                onClick={() => setShowCreate(true)}
-                size="lg"
-                className="w-full bg-gradient-ritual text-white hover:opacity-90 transition-opacity shadow-soft text-lg h-14 rounded-2xl"
-              >
-                Start a Ritual
-              </Button>
-              
-              <Button
-                onClick={() => setShowJoin(true)}
-                variant="outline"
-                size="lg"
-                className="w-full border-2 border-primary/30 text-foreground hover:bg-lavender-light transition-colors text-lg h-14 rounded-2xl"
-              >
-                I Have a Code
-              </Button>
-            </>
-          )}
-        </motion.div>
-
-        {/* Footer */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-sm text-muted-foreground pt-8"
-        >
-          Free to start • Weekly rituals designed by AI
-        </motion.p>
-      </motion.div>
       </div>
+    );
+  }
 
-      <CreateCoupleDialog open={showCreate} onOpenChange={setShowCreate} />
-      <JoinCoupleDialog open={showJoin} onOpenChange={setShowJoin} />
-      {couple && (
-        <ViewCoupleCodeDialog 
-          open={showViewCode} 
-          onOpenChange={setShowViewCode} 
-          coupleCode={couple.couple_code} 
-        />
-      )}
+  if (!couple.partner_two) {
+    return (
+      <div className="min-h-screen-mobile bg-gradient-warm flex flex-col items-center justify-center p-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-8 max-w-md">
+          <img src={ritualLogo} alt="Ritual" className="w-24 h-24 mx-auto" />
+          <div>
+            <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-6xl mb-4">💕</motion.div>
+            <h2 className="text-3xl font-bold mb-3">Waiting for Your Partner</h2>
+          </div>
+          <Button onClick={shareCode} size="lg" className="w-full bg-gradient-ritual text-white hover:opacity-90 h-14 text-lg rounded-xl">
+            Share Code
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  const hasSynthesized = currentCycle?.synthesized_output;
+  const hasPartnerOne = !!currentCycle?.partner_one_input;
+  const hasPartnerTwo = !!currentCycle?.partner_two_input;
+  const userIsPartnerOne = couple.partner_one === user.id;
+  const userSubmitted = userIsPartnerOne ? hasPartnerOne : hasPartnerTwo;
+
+  return (
+    <div className="min-h-screen-mobile bg-gradient-warm p-6 space-y-6">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4">
+        <img src={ritualLogo} alt="Ritual" className="w-20 h-20 mx-auto" />
+        <h1 className="text-3xl font-bold">This Week Together</h1>
+        <StreakBadge />
+      </motion.div>
+
+      <Card className="p-8 bg-white/90 backdrop-blur-sm text-center space-y-6">
+        <div className="w-16 h-16 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">
+          {hasSynthesized ? <CheckCircle2 className="w-8 h-8 text-white" /> : userSubmitted ? <Clock className="w-8 h-8 text-white animate-pulse" /> : <Calendar className="w-8 h-8 text-white" />}
+        </div>
+        <h2 className="text-2xl font-bold">
+          {hasSynthesized ? 'Your rituals are ready! 🎉' : userSubmitted ? 'Waiting for your partner...' : 'Ready for this week?'}
+        </h2>
+        {hasSynthesized ? (
+          <Button onClick={() => navigate('/rituals')} size="lg" className="w-full bg-gradient-ritual text-white h-14 rounded-xl">
+            View Rituals
+          </Button>
+        ) : !userSubmitted && (
+          <Button onClick={() => navigate('/input')} size="lg" className="w-full bg-gradient-ritual text-white h-14 rounded-xl">
+            Start Weekly Input
+          </Button>
+        )}
+      </Card>
     </div>
   );
-};
-
-export default Index;
+}
