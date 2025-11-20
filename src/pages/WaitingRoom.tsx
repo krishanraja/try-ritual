@@ -194,27 +194,25 @@ const WaitingRoom = () => {
   if (!couple.partner_two) {
     return (
       <div className="min-h-screen bg-gradient-calm flex flex-col">
-        <header className="w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 backdrop-blur-sm border-b border-border/30">
-          <div className="flex items-center gap-3 min-w-0">
-            <img src={ritualLogo} alt="Ritual" className="h-8 flex-shrink-0" />
-            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Waiting Room</span>
+        <header className="w-full px-4 sm:px-6 py-3 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
+          <div className="flex items-center gap-3">
+            <img src={ritualLogo} alt="Ritual" className="h-7" />
+            <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Waiting Room</span>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2">
             <Button
               onClick={() => setShowJoin(true)}
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="whitespace-nowrap"
             >
-              Join with Code
+              Join Code
             </Button>
             <Button
               onClick={() => navigate("/")}
               variant="ghost"
               size="sm"
-              className="whitespace-nowrap"
             >
-              Back to Home
+              Home
             </Button>
           </div>
         </header>
@@ -269,6 +267,8 @@ const WaitingRoom = () => {
             </p>
           </motion.div>
         </div>
+
+        <JoinCoupleDialog open={showJoin} onOpenChange={setShowJoin} />
       </div>
     );
   }
@@ -277,28 +277,27 @@ const WaitingRoom = () => {
   if (!cycle) {
     return (
       <div className="min-h-screen bg-gradient-calm flex flex-col">
-        <header className="w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 backdrop-blur-sm border-b border-border/30">
-          <div className="flex items-center gap-3 min-w-0">
-            <img src={ritualLogo} alt="Ritual" className="h-8 flex-shrink-0" />
-            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Waiting Room</span>
+        <header className="w-full px-4 sm:px-6 py-3 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
+          <div className="flex items-center gap-3">
+            <img src={ritualLogo} alt="Ritual" className="h-7" />
+            <span className="text-sm font-medium text-muted-foreground hidden sm:inline">Waiting Room</span>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2">
             <Button
               onClick={() => setShowJoin(true)}
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="whitespace-nowrap"
             >
-              Join with Code
+              Join Code
             </Button>
             <Button
               onClick={() => setShowViewCode(true)}
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="gap-2 whitespace-nowrap"
+              className="gap-2"
             >
               <Share2 className="w-4 h-4" />
-              Share Code
+              Share
             </Button>
           </div>
         </header>
@@ -335,6 +334,7 @@ const WaitingRoom = () => {
           onOpenChange={setShowViewCode} 
           coupleCode={couple.couple_code} 
         />
+        <JoinCoupleDialog open={showJoin} onOpenChange={setShowJoin} />
       </div>
     );
   }
@@ -342,30 +342,29 @@ const WaitingRoom = () => {
   return (
     <div className="min-h-screen bg-gradient-calm flex flex-col">
       {/* Header */}
-      <header className="w-full px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 bg-white/80 backdrop-blur-sm border-b border-border/30">
-        <div className="flex items-center gap-3 min-w-0">
-          <img src={ritualLogo} alt="Ritual" className="h-8 flex-shrink-0" />
-          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+      <header className="w-full px-4 sm:px-6 py-3 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
+        <div className="flex items-center gap-3">
+          <img src={ritualLogo} alt="Ritual" className="h-7" />
+          <span className="text-sm font-medium text-muted-foreground hidden sm:inline">
             {generatingRituals ? "Creating Your Rituals..." : "Waiting Room"}
           </span>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2">
           <Button
             onClick={() => setShowJoin(true)}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="whitespace-nowrap"
           >
-            Join with Code
+            Join Code
           </Button>
           <Button
             onClick={() => setShowViewCode(true)}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="gap-2 whitespace-nowrap"
+            className="gap-2"
           >
             <Share2 className="w-4 h-4" />
-            Share Code
+            Share
           </Button>
         </div>
       </header>
