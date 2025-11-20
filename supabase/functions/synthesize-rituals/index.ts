@@ -17,105 +17,7 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
     
-    const { action, weeklyInputs, partnerOneInput, partnerTwoInput, coupleId, canvasStateOne, canvasStateTwo } = await req.json();
-    
-    // Handle Magnetic Canvas synthesis
-    if (action === 'canvas') {
-      const alignments = new Set([
-        ...(canvasStateOne?.alignments || []),
-        ...(canvasStateTwo?.alignments || [])
-      ]);
-
-      const combinedPriorities: Record<string, number[]> = {};
-      [...(canvasStateOne?.priorities || []), ...(canvasStateTwo?.priorities || [])].forEach((p: any) => {
-        if (!combinedPriorities[p.token]) {
-          combinedPriorities[p.token] = [];
-        }
-        combinedPriorities[p.token].push(p.strength);
-      });
-
-      const avgPriorities = Object.entries(combinedPriorities)
-        .map(([token, strengths]: [string, number[]]) => ({
-          token,
-          avgStrength: strengths.reduce((a: number, b: number) => a + b, 0) / strengths.length
-        }))
-        .sort((a, b) => b.avgStrength - a.avgStrength);
-
-      const systemPrompt = `You are a ritual designer creating personalized relationship rituals based on emotional alignment data from a Magnetic Canvas interface.
-
-The couple has expressed their desires through token positioning:
-- Alignments (tokens that snapped together): ${Array.from(alignments).join(', ')}
-- Priority ranking: ${avgPriorities.map(p => `${p.token} (${Math.round(p.avgStrength)}%)`).join(', ')}
-
-Generate 7 unique rituals (one per day) that:
-1. Heavily emphasize the aligned tokens (these are areas of mutual desire)
-2. Weight towards high-priority tokens
-3. Create a balanced week that flows naturally
-4. Each ritual should be specific, actionable, and meaningful
-
-Return ONLY a JSON array with this exact structure:
-[
-  {
-    "day": "Monday",
-    "title": "Ritual name",
-    "description": "2-3 sentence description",
-    "timeEstimate": "15-30 min",
-    "category": "connection|adventure|rest|intimacy|play|growth"
-  }
-]`;
-
-      const userPrompt = `Create 7 rituals based on this emotional data:
-Alignments: ${Array.from(alignments).join(', ')}
-Priorities: ${JSON.stringify(avgPriorities)}`;
-
-      console.log("Generating canvas rituals with Lovable AI");
-
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.9,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Lovable AI error:', response.status, errorText);
-        
-        if (response.status === 429) {
-          return new Response(JSON.stringify({ error: "AI rate limit exceeded. Please try again in a moment." }), {
-            status: 429,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        if (response.status === 402) {
-          return new Response(JSON.stringify({ error: "AI credits depleted. Please add credits to continue." }), {
-            status: 402,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        
-        throw new Error(`AI request failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const content = data.choices[0].message.content.trim();
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      const rituals = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(content);
-
-      return new Response(
-        JSON.stringify({ rituals }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { action, weeklyInputs, partnerOneInput, partnerTwoInput, coupleId } = await req.json();
     
     // Handle swap action - generate a single alternative ritual
     if (action === 'swap') {
@@ -236,6 +138,7 @@ CRITICAL: Analyze BOTH partners' inputs carefully and create rituals that:
 - Consider the time availability of BOTH (if one has 30min and other has 2hrs, suggest ~1hr activities)
 - Stay within the lower budget constraint to ensure accessibility for both
 - Weave BOTH desires into each ritual in meaningful ways
+- HIGHLIGHT THE CONTRAST between partners explicitly in the "why" field
 
 Create 4-5 surprising, NYC-specific rituals that:
 - Are NOT generic (avoid "sunset picnic", "coffee date" unless adding unique NYC twist)
@@ -246,7 +149,7 @@ Create 4-5 surprising, NYC-specific rituals that:
 - Range from quick moments to longer experiences based on their time availability
 - Include unexpected combinations that only NYC can offer
 - Make people say "wow, I never thought of that!" and "this is so us AND so NYC!"
-- Reference specific NYC locations, neighborhoods, or experiences when relevant
+- Reference specific NYC neighborhoods, venues, or experiences when relevant
 
 Return ONLY valid JSON (no markdown, no explanation) in this exact format:
 [
@@ -255,7 +158,8 @@ Return ONLY valid JSON (no markdown, no explanation) in this exact format:
     "category": "Connection|Rest|Fun|Exploration|Comfort|Intimacy",
     "description": "Vivid, specific description with sensory details (2-3 sentences)",
     "time_estimate": "30 min|1 hour|1.5 hours|2 hours|3 hours",
-    "budget_band": "Free|$|$$|$$$"
+    "budget_band": "Free|$|$$|$$$",
+    "why": "One sentence explaining how this balances both partners' needs/desires"
   }
 ]`;
 

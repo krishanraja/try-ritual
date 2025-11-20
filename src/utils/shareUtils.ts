@@ -14,7 +14,7 @@ export const shareToWhatsApp = (ritual: Ritual) => {
 };
 
 export const shareCodeToWhatsApp = (code: string) => {
-  const text = `Join our ritual space! 💕\n\nUse code: ${code}\n\nDownload the app and enter this code to start creating weekly rituals together.`;
+  const text = `Try this 2-min ritual generator with me! 💕\n\nUse code: ${code}\n\nGet personalized date ideas based on our combined vibes. Takes 2 minutes total.`;
   const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
   window.open(url, '_blank');
 };

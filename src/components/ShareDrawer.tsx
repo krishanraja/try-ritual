@@ -39,7 +39,7 @@ export const ShareDrawer = ({ open, onOpenChange, coupleCode }: ShareDrawerProps
         <DrawerHeader className="text-center">
           <DrawerTitle className="text-2xl font-bold">Share Your Code</DrawerTitle>
           <p className="text-muted-foreground mt-2">
-            Invite your partner to join your ritual space
+            Try this 2-min ritual generator together! Get personalized ideas based on your combined vibes.
           </p>
         </DrawerHeader>
 

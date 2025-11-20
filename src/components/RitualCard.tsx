@@ -14,6 +14,7 @@ interface Ritual {
   budget_band: string;
   category?: string;
   is_sample?: boolean;
+  why?: string;
 }
 
 interface RitualCardProps {
@@ -77,6 +78,18 @@ export const RitualCard = ({
           {ritual.description}
         </p>
       </div>
+
+      {/* Why Section */}
+      {ritual.why && (
+        <div className="px-5 pb-3 flex-none">
+          <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-xl border border-primary/10">
+            <span className="text-xs">✨</span>
+            <p className="text-xs text-muted-foreground italic leading-relaxed flex-1">
+              {ritual.why}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Metadata */}
       <div className="px-5 pb-3 flex-none">
