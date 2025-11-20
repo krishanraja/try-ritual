@@ -3,11 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { CoupleProvider } from "@/contexts/CoupleContext";
+import { AppShell } from "@/components/AppShell";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import WeeklyInput from "./pages/WeeklyInput";
 import RitualCards from "./pages/RitualCards";
-import WaitingRoom from "./pages/WaitingRoom";
+import History from "./pages/History";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,15 +21,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/input" element={<WeeklyInput />} />
-          <Route path="/waiting-room" element={<WaitingRoom />} />
-          <Route path="/rituals" element={<RitualCards />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <CoupleProvider>
+          <AppShell>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/input" element={<WeeklyInput />} />
+              <Route path="/rituals" element={<RitualCards />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AppShell>
+        </CoupleProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

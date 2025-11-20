@@ -145,6 +145,132 @@ export type Database = {
         }
         Relationships: []
       }
+      ritual_memories: {
+        Row: {
+          completion_date: string
+          couple_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          photo_url: string | null
+          rating: number | null
+          ritual_description: string | null
+          ritual_title: string
+          updated_at: string
+        }
+        Insert: {
+          completion_date: string
+          couple_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          ritual_description?: string | null
+          ritual_title: string
+          updated_at?: string
+        }
+        Update: {
+          completion_date?: string
+          couple_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          rating?: number | null
+          ritual_description?: string | null
+          ritual_title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_memories_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ritual_streaks: {
+        Row: {
+          couple_id: string
+          created_at: string
+          current_streak: number
+          id: string
+          last_completion_date: string | null
+          longest_streak: number
+          updated_at: string
+        }
+        Insert: {
+          couple_id: string
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_completion_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+        }
+        Update: {
+          couple_id?: string
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_completion_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_streaks_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: true
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ritual_suggestions: {
+        Row: {
+          accepted: boolean | null
+          based_on_history: Json | null
+          couple_id: string
+          created_at: string
+          id: string
+          reason: string
+          shown_at: string
+          suggested_ritual: Json
+        }
+        Insert: {
+          accepted?: boolean | null
+          based_on_history?: Json | null
+          couple_id: string
+          created_at?: string
+          id?: string
+          reason: string
+          shown_at?: string
+          suggested_ritual: Json
+        }
+        Update: {
+          accepted?: boolean | null
+          based_on_history?: Json | null
+          couple_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          shown_at?: string
+          suggested_ritual?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_suggestions_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_cycles: {
         Row: {
           couple_id: string
