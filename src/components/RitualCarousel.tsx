@@ -71,24 +71,24 @@ export const RitualCarousel = ({
         <CarouselNext className="right-2" />
       </Carousel>
       
-      {/* Dot indicators */}
-      <div className="flex-none py-4 flex items-center justify-center gap-1.5">
+      {/* Dot indicators - Compact */}
+      <div className="flex-none py-2 flex items-center justify-center gap-1">
         {rituals.map((_, index) => (
           <button
             key={index}
             onClick={() => api?.scrollTo(index)}
-            className={`h-1.5 rounded-full transition-all ${
+            className={`h-1 rounded-full transition-all ${
               index === current - 1
-                ? 'w-8 bg-primary'
-                : 'w-1.5 bg-primary/30'
+                ? 'w-6 bg-primary'
+                : 'w-1 bg-primary/30'
             }`}
             aria-label={`Go to ritual ${index + 1}`}
           />
         ))}
       </div>
       
-      {/* Counter */}
-      <div className="flex-none pb-2 text-center text-sm text-muted-foreground">
+      {/* Counter - Compact */}
+      <div className="flex-none pb-1 text-center text-xs text-muted-foreground">
         {current} / {count}
       </div>
     </div>

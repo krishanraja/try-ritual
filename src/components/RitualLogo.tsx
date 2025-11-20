@@ -2,11 +2,12 @@ import ritualLogo from '@/assets/ritual-logo.png';
 import { cn } from '@/lib/utils';
 
 interface RitualLogoProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
 const sizeClasses = {
+  xs: 'max-h-6',    // 24px height
   sm: 'max-h-8',    // 32px height
   md: 'max-h-16',   // 64px height
   lg: 'max-h-20',   // 80px height

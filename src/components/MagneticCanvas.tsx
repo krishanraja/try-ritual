@@ -123,7 +123,7 @@ export const MagneticCanvas = ({ weeklyCycleId, onComplete, demoMode = false, on
   const allTokensPlaced = snapCount >= 2; // At least 2 alignments
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
+    <div className="relative w-full h-full bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden flex flex-col">
       {/* Ambient particles */}
       <div className="absolute inset-0 opacity-30">
         {[...Array(20)].map((_, i) => (
@@ -143,48 +143,46 @@ export const MagneticCanvas = ({ weeklyCycleId, onComplete, demoMode = false, on
         ))}
       </div>
 
-      {/* Header */}
-      <div className="absolute top-4 left-0 right-0 z-20 px-4">
-        <div className="max-w-2xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-primary" />
-                Magnetic Canvas
-              </h2>
-              {!demoMode && (
-                <div className="flex items-center gap-2">
-                  <Users className={`w-5 h-5 ${isPartnerOnline ? 'text-green-500' : 'text-muted-foreground'}`} />
-                  <span className="text-sm text-muted-foreground">
-                    {isPartnerOnline ? 'Partner Online' : 'Waiting...'}
-                  </span>
-                </div>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {demoMode 
-                ? "Drag the tokens around to explore. Sign up to create rituals with your partner!"
-                : "Drag your emotional tokens. When they're close to your partner's, they'll snap together with a burst of energy."}
-            </p>
-            {snapCount > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-3 text-sm font-semibold text-primary"
-              >
-                ✨ {snapCount} alignment{snapCount > 1 ? 's' : ''} discovered!
-              </motion.div>
+      {/* Header - Compact */}
+      <div className="flex-none px-3 py-2 z-20">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-background/80 backdrop-blur-sm rounded-xl p-3"
+        >
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-bold flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Magnetic Canvas
+            </h2>
+            {!demoMode && (
+              <div className="flex items-center gap-1.5">
+                <Users className={`w-4 h-4 ${isPartnerOnline ? 'text-green-500' : 'text-muted-foreground'}`} />
+                <span className="text-xs text-muted-foreground">
+                  {isPartnerOnline ? 'Online' : 'Waiting'}
+                </span>
+              </div>
             )}
-          </motion.div>
-        </div>
+          </div>
+          <p className="text-xs text-muted-foreground leading-tight">
+            {demoMode 
+              ? "Drag tokens to explore"
+              : "Drag tokens. They snap when close to your partner's"}
+          </p>
+          {snapCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-1.5 text-xs font-semibold text-primary"
+            >
+              ✨ {snapCount} alignment{snapCount > 1 ? 's' : ''}
+            </motion.div>
+          )}
+        </motion.div>
       </div>
 
-      {/* Canvas area */}
-      <div className="absolute inset-0 pt-32 pb-24">
+      {/* Canvas area - Fills remaining space */}
+      <div className="flex-1 relative">
         <PartnerGhost tokens={partnerTokens} isOnline={isPartnerOnline} />
         
         {tokens.map(token => {
@@ -205,25 +203,22 @@ export const MagneticCanvas = ({ weeklyCycleId, onComplete, demoMode = false, on
         })}
       </div>
 
-      {/* Complete button */}
+      {/* Complete button - Bottom fixed */}
       <AnimatePresence>
         {allTokensPlaced && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-8 left-0 right-0 z-20 px-4"
+            exit={{ opacity: 0, y: 10 }}
+            className="flex-none px-3 pb-3 z-20"
           >
-            <div className="max-w-md mx-auto">
-              <Button
-                onClick={handleComplete}
-                size="lg"
-                className="w-full text-lg font-semibold shadow-xl"
-              >
-                <Sparkles className="w-5 h-5 mr-2" />
-                {demoMode ? "Sign Up to Create Rituals" : "Generate Our Rituals"}
-              </Button>
-            </div>
+            <Button
+              onClick={handleComplete}
+              className="w-full h-12 text-sm font-semibold shadow-xl bg-gradient-ritual"
+            >
+              <Sparkles className="w-4 h-4 mr-1.5" />
+              {demoMode ? "Sign Up to Create" : "Generate Rituals"}
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>

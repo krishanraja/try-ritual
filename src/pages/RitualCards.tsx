@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useCouple } from '@/contexts/CoupleContext';
-import { usePresence } from '@/hooks/usePresence';
-import { useSampleRituals } from '@/hooks/useSampleRituals';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { RitualCarousel } from '@/components/RitualCarousel';
+import { RitualLogo } from '@/components/RitualLogo';
+import { StrictMobileViewport } from '@/components/StrictMobileViewport';
+import { useSampleRituals } from '@/hooks/useSampleRituals';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
-import { RitualLogo } from '@/components/RitualLogo';
-import { MobileViewport } from '@/components/MobileViewport';
-import { RitualCarousel } from '@/components/RitualCarousel';
+import { usePresence } from '@/hooks/usePresence';
+import { UserCircle } from 'lucide-react';
 
 interface Ritual {
   id: string | number;
@@ -143,63 +143,75 @@ export default function RitualCards() {
 
   if (loading) {
     return (
-      <div className="h-screen-mobile bg-gradient-warm flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
+      <StrictMobileViewport>
+        <div className="h-full bg-gradient-warm flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </StrictMobileViewport>
     );
   }
 
   if (rituals.length === 0) {
     return (
-      <div className="h-screen-mobile bg-gradient-warm flex flex-col items-center justify-center p-6 gap-6">
-        <RitualLogo size="lg" />
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold">No Rituals Yet</h2>
-          <p className="text-muted-foreground">Complete your weekly input to generate rituals!</p>
+      <StrictMobileViewport>
+        <div className="h-full bg-gradient-warm flex flex-col items-center justify-center px-4 gap-4">
+          <RitualLogo size="md" />
+          <div className="text-center space-y-2">
+            <h2 className="text-lg font-bold">No Rituals Yet</h2>
+            <p className="text-sm text-muted-foreground">Complete weekly input to generate</p>
+          </div>
+          <Button onClick={() => navigate('/input')} className="bg-gradient-ritual text-white h-12 rounded-xl px-6">
+            Start Input
+          </Button>
         </div>
-        <Button onClick={() => navigate('/')} size="lg" className="rounded-xl">
-          Go Home
-        </Button>
-      </div>
+      </StrictMobileViewport>
     );
   }
 
   return (
-    <MobileViewport
-      className="bg-gradient-warm"
-      header={
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-warm/80 backdrop-blur-sm">
-          <RitualLogo size="sm" />
-          <h1 className="text-lg font-bold flex-1 text-center">
-            {isShowingSamples ? 'Sample Rituals' : 'Your Rituals'}
-          </h1>
-          {isPartnerOnline && partnerPresence && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-card/60 backdrop-blur-sm px-2 py-1 rounded-full">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            </div>
-          )}
+    <StrictMobileViewport>
+      <div className="h-full bg-gradient-warm flex flex-col">
+        {/* Header - Compact */}
+        <div className="flex-none px-4 pt-3 pb-2">
+          <div className="flex items-center justify-between mb-2">
+            <RitualLogo size="xs" />
+            {isPartnerOnline && (
+              <div className="flex items-center gap-1.5 text-xs text-green-600">
+                <UserCircle className="w-3 h-3" />
+                <span>Partner online</span>
+              </div>
+            )}
+          </div>
+          <div className="text-center">
+            <h1 className="text-lg font-bold mb-0.5">This Week's Rituals</h1>
+            <p className="text-xs text-muted-foreground">
+              {isShowingSamples ? 'Sample rituals' : 'Swipe to explore'}
+            </p>
+          </div>
         </div>
-      }
-      footer={
-        <div className="p-4 bg-gradient-warm/80 backdrop-blur-sm border-t">
+
+        {/* Carousel - Fills remaining space */}
+        <div className="flex-1 overflow-hidden">
+          <RitualCarousel
+            rituals={rituals}
+            completions={completions}
+            onComplete={handleComplete}
+            variant="full"
+            isShowingSamples={isShowingSamples}
+          />
+        </div>
+
+        {/* Footer - Compact */}
+        <div className="flex-none px-4 pb-3 pt-2">
           <Button 
-            onClick={() => navigate('/')} 
+            onClick={() => navigate('/home')} 
             variant="outline" 
-            className="w-full h-12 rounded-xl"
+            className="w-full h-10 rounded-xl text-sm"
           >
-            <Home className="w-4 h-4 mr-2" />
             Go Home
           </Button>
         </div>
-      }
-    >
-      <RitualCarousel
-        rituals={rituals}
-        completions={completions}
-        onComplete={handleComplete}
-        variant="full"
-        isShowingSamples={isShowingSamples}
-      />
-    </MobileViewport>
+      </div>
+    </StrictMobileViewport>
   );
 }

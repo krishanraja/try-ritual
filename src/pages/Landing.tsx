@@ -1,31 +1,42 @@
 import { useNavigate } from 'react-router-dom';
+import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
-import { Heart, Calendar, Sparkles } from 'lucide-react';
+import { Heart, Calendar, Sparkles, X } from 'lucide-react';
 import { RitualLogo } from '@/components/RitualLogo';
 import { MagneticCanvas } from '@/components/MagneticCanvas';
 import { RitualCarousel } from '@/components/RitualCarousel';
 import { SAMPLE_RITUALS } from '@/data/sampleRituals';
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { user } = useCouple();
   const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [showAuthBanner, setShowAuthBanner] = useState(true);
 
   const handleDemoComplete = () => {
     setShowSignupPrompt(true);
   };
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-warm overflow-y-auto px-6 md:px-12 py-12">
+    <div className="min-h-screen bg-gradient-warm overflow-y-auto">
+      {/* Authenticated User Banner */}
+      {user && showAuthBanner && (
+        <div className="sticky top-0 z-50 bg-primary/10 backdrop-blur-sm border-b border-primary/20">
+          <div className="px-4 py-2 flex items-center justify-between">
+            <p className="text-xs text-foreground">
+              You're signed in! <button onClick={() => navigate('/home')} className="underline font-semibold">Go to Dashboard →</button>
+            </p>
+            <button onClick={() => setShowAuthBanner(false)} className="text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="px-6 md:px-12 py-12">
         <main className="text-center space-y-16 max-w-4xl w-full mx-auto">
         {/* Logo Section */}
         <motion.div
@@ -179,6 +190,6 @@ export default function Landing() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
