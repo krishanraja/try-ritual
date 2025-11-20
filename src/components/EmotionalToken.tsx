@@ -5,7 +5,7 @@ interface EmotionalTokenProps {
   token: EmotionalTokenData;
   isActive: boolean;
   onDragStart: () => void;
-  onDragEnd: (x: number, y: number) => void;
+  onDragEnd: (tokenId: string, x: number, y: number) => void;
   partnerPosition?: { x: number; y: number } | null;
   showConnectionLine?: boolean;
 }
@@ -45,23 +45,19 @@ export const EmotionalToken = ({
         dragMomentum={false}
         dragElastic={0.1}
         onDragStart={onDragStart}
-        onDragEnd={(_, info) => {
-          const x = token.position.x + info.offset.x;
-          const y = token.position.y + info.offset.y;
-          onDragEnd(x, y);
-        }}
+        onDragEnd={(_, info) => onDragEnd(token.id, info.point.x, info.point.y)}
+        initial={{ x: token.position.x, y: token.position.y, scale: 0 }}
         animate={{
           x: token.position.x,
           y: token.position.y,
-          scale: isActive ? 1.15 : token.isSnapped ? 1.2 : 1,
-          filter: token.isSnapped ? 'brightness(1.3)' : 'brightness(1)'
+          scale: isActive ? 1.1 : token.isSnapped ? 1.15 : 1,
         }}
         whileHover={{ scale: 1.05 }}
         className="absolute cursor-grab active:cursor-grabbing"
         style={{ touchAction: 'none' }}
       >
         <div
-          className={`relative w-20 h-20 rounded-full bg-gradient-to-br ${token.gradient} shadow-lg flex items-center justify-center`}
+          className={`relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br ${token.gradient} shadow-lg flex items-center justify-center transition-all duration-300 ${isActive ? 'shadow-2xl brightness-110' : ''} ${token.isSnapped ? 'ring-4 ring-white/50 shadow-2xl animate-pulse' : ''}`}
         >
           {token.isSnapped && (
             <motion.div
@@ -81,7 +77,7 @@ export const EmotionalToken = ({
             />
           )}
           
-          <span className="text-sm font-semibold text-white relative z-10 text-center px-2">
+          <span className="text-xs md:text-sm font-semibold text-white relative z-10 text-center px-2">
             {token.label}
           </span>
           

@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Calendar, Share2, CheckCircle2, Clock, Sparkles } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useCouple } from '@/contexts/CoupleContext';
 import { usePresence } from '@/hooks/usePresence';
 import { useSampleRituals } from '@/hooks/useSampleRituals';
-import { shareToWhatsApp } from '@/utils/shareUtils';
-import { downloadICS } from '@/utils/calendarUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { RitualLogo } from '@/components/RitualLogo';
+import { MobileViewport } from '@/components/MobileViewport';
+import { RitualCarousel } from '@/components/RitualCarousel';
 
 interface Ritual {
   id: string | number;
@@ -146,107 +143,63 @@ export default function RitualCards() {
 
   if (loading) {
     return (
-      <div className="min-h-screen-mobile bg-gradient-warm flex items-center justify-center">
+      <div className="h-screen-mobile bg-gradient-warm flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen-mobile bg-gradient-warm p-6 pb-24 space-y-6">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-3">
-        <RitualLogo size="md" className="mx-auto" />
-        <h1 className="text-3xl font-bold">{isShowingSamples ? 'Sample Rituals' : 'Your Rituals'}</h1>
-        {isPartnerOnline && partnerPresence?.activity && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm text-muted-foreground">{partnerPresence.activity}</span>
-          </motion.div>
-        )}
-      </motion.div>
-
-      <div className="grid gap-6">
-        {rituals.map((ritual, index) => {
-          const isComplete = completions.has(ritual.title);
-          
-          return (
-            <motion.div
-              key={ritual.id || index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className={`p-6 space-y-4 ${isComplete ? 'bg-green-50 border-green-200' : 'bg-white/90'}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-xl font-bold">{ritual.title}</h3>
-                      {isComplete && <CheckCircle2 className="w-5 h-5 text-green-600" />}
-                    </div>
-                    {ritual.category && (
-                      <Badge variant="secondary" className="text-xs">
-                        {ritual.category}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <p className="text-muted-foreground leading-relaxed">{ritual.description}</p>
-
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>{ritual.time_estimate}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Sparkles className="w-4 h-4" />
-                    <span>{ritual.budget_band}</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 flex-wrap">
-                  {!isComplete && (
-                    <Button
-                      onClick={() => handleComplete(ritual)}
-                      className="bg-gradient-ritual text-white hover:opacity-90"
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Mark as Done
-                    </Button>
-                  )}
-                  
-                  <Button
-                    onClick={() => shareToWhatsApp(ritual)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Share2 className="w-4 h-4 mr-2" />
-                    WhatsApp
-                  </Button>
-                  
-                  <Button
-                    onClick={() => downloadICS(ritual)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Calendar
-                  </Button>
-                </div>
-              </Card>
-            </motion.div>
-          );
-        })}
+  if (rituals.length === 0) {
+    return (
+      <div className="h-screen-mobile bg-gradient-warm flex flex-col items-center justify-center p-6 gap-6">
+        <RitualLogo size="lg" />
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold">No Rituals Yet</h2>
+          <p className="text-muted-foreground">Complete your weekly input to generate rituals!</p>
+        </div>
+        <Button onClick={() => navigate('/')} size="lg" className="rounded-xl">
+          Go Home
+        </Button>
       </div>
+    );
+  }
 
-      {rituals.length === 0 && (
-        <Card className="p-12 text-center bg-white/90">
-          <p className="text-muted-foreground">No rituals generated yet</p>
-          <Button onClick={() => navigate('/')} className="mt-4">
+  return (
+    <MobileViewport
+      className="bg-gradient-warm"
+      header={
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-warm/80 backdrop-blur-sm">
+          <RitualLogo size="sm" />
+          <h1 className="text-lg font-bold flex-1 text-center">
+            {isShowingSamples ? 'Sample Rituals' : 'Your Rituals'}
+          </h1>
+          {isPartnerOnline && partnerPresence && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-card/60 backdrop-blur-sm px-2 py-1 rounded-full">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            </div>
+          )}
+        </div>
+      }
+      footer={
+        <div className="p-4 bg-gradient-warm/80 backdrop-blur-sm border-t">
+          <Button 
+            onClick={() => navigate('/')} 
+            variant="outline" 
+            className="w-full h-12 rounded-xl"
+          >
+            <Home className="w-4 h-4 mr-2" />
             Go Home
           </Button>
-        </Card>
-      )}
-    </div>
+        </div>
+      }
+    >
+      <RitualCarousel
+        rituals={rituals}
+        completions={completions}
+        onComplete={handleComplete}
+        variant="full"
+        isShowingSamples={isShowingSamples}
+      />
+    </MobileViewport>
   );
 }

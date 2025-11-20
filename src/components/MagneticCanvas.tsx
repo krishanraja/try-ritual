@@ -177,7 +177,7 @@ export const MagneticCanvas = ({ weeklyCycleId, onComplete }: MagneticCanvasProp
               token={token}
               isActive={activeToken === token.id}
               onDragStart={() => setActiveToken(token.id)}
-              onDragEnd={(x, y) => handleDragEnd(token.id, x, y)}
+              onDragEnd={handleDragEnd}
               partnerPosition={partnerPos}
               showConnectionLine={showConnection}
             />
