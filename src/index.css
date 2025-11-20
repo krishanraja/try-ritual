@@ -107,6 +107,17 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  /* Mobile-friendly viewport height that accounts for browser UI */
+  .min-h-screen-mobile {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height - adjusts for mobile browser UI */
+  }
+  
+  .h-screen-mobile {
+    height: 100vh;
+    height: 100dvh;
+  }
+  
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
@@ -130,5 +141,9 @@ All colors MUST be HSL.
   
   .bg-gradient-ritual {
     background: linear-gradient(135deg, hsl(270 50% 85%), hsl(340 100% 92%));
+  }
+  
+  .bg-gradient-warm {
+    background: linear-gradient(135deg, hsl(340 100% 96%), hsl(40 60% 95%));
   }
 }

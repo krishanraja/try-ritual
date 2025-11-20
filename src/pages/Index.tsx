@@ -113,7 +113,7 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-warm flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen-mobile bg-gradient-warm flex flex-col items-center justify-center gap-4">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-muted-foreground text-sm">Loading...</p>
       </div>
@@ -121,7 +121,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex flex-col">
+    <div className="min-h-screen-mobile bg-gradient-warm flex flex-col">
       {/* Professional Header */}
       <header className="w-full px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
         <div className="flex items-center gap-3">
