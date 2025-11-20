@@ -307,7 +307,7 @@ const WeeklyInput = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex flex-col">
+    <div className="min-h-screen-mobile bg-gradient-warm flex flex-col">
       {/* Professional Header */}
       <header className="w-full px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
         <div className="flex items-center gap-3">

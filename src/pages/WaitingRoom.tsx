@@ -181,7 +181,7 @@ const WaitingRoom = () => {
   // Show loading state
   if (!couple) {
     return (
-      <div className="min-h-screen bg-gradient-calm flex items-center justify-center">
+      <div className="min-h-screen-mobile bg-gradient-calm flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading...</p>
@@ -193,7 +193,7 @@ const WaitingRoom = () => {
   // If couple is incomplete, show share code prominently
   if (!couple.partner_two) {
     return (
-      <div className="min-h-screen bg-gradient-calm flex flex-col">
+      <div className="min-h-screen-mobile bg-gradient-calm flex flex-col">
         <header className="w-full px-4 sm:px-6 py-3 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
           <div className="flex items-center gap-3">
             <img src={ritualLogo} alt="Ritual" className="h-7" />
@@ -276,7 +276,7 @@ const WaitingRoom = () => {
   // If no cycle yet, prompt to submit input
   if (!cycle) {
     return (
-      <div className="min-h-screen bg-gradient-calm flex flex-col">
+      <div className="min-h-screen-mobile bg-gradient-calm flex flex-col">
         <header className="w-full px-4 sm:px-6 py-3 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
           <div className="flex items-center gap-3">
             <img src={ritualLogo} alt="Ritual" className="h-7" />
@@ -340,7 +340,7 @@ const WaitingRoom = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-calm flex flex-col">
+    <div className="min-h-screen-mobile bg-gradient-calm flex flex-col">
       {/* Header */}
       <header className="w-full px-4 sm:px-6 py-3 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-border/30">
         <div className="flex items-center gap-3">
