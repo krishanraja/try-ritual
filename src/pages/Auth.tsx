@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { JoinCoupleDialog } from "@/components/JoinCoupleDialog";
+import { StrictMobileViewport } from "@/components/StrictMobileViewport";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -82,82 +83,84 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen-mobile bg-gradient-warm flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-card">
-          <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
-            {isLogin ? "Welcome back" : "Create your ritual"}
-          </h1>
-          <p className="text-center text-muted-foreground mb-8">
-            {isLogin ? "Sign in to continue your journey" : "Start your shared ritual journey"}
-          </p>
+    <StrictMobileViewport>
+      <div className="h-full bg-gradient-warm flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-card">
+            <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
+              {isLogin ? "Welcome back" : "Create your ritual"}
+            </h1>
+            <p className="text-center text-muted-foreground mb-8">
+              {isLogin ? "Sign in to continue your journey" : "Start your shared ritual journey"}
+            </p>
 
-          <form onSubmit={handleAuth} className="space-y-6">
-            {!isLogin && (
+            <form onSubmit={handleAuth} className="space-y-6">
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="name">Your name</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required={!isLogin}
+                    className="rounded-xl h-12"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="name">Your name</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="name"
-                  type="text"
-                  placeholder="Enter your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required={!isLogin}
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   className="rounded-xl h-12"
                 />
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="rounded-xl h-12"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="rounded-xl h-12"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="rounded-xl h-12"
-              />
-            </div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-ritual text-white hover:opacity-90 h-12 rounded-xl"
+              >
+                {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
+              </Button>
+            </form>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-ritual text-white hover:opacity-90 h-12 rounded-xl"
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="w-full mt-4 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
-            </Button>
-          </form>
-
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="w-full mt-4 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-          </button>
-        </div>
-      </motion.div>
-      
-      <JoinCoupleDialog open={showJoin} onOpenChange={setShowJoin} />
-    </div>
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            </button>
+          </div>
+        </motion.div>
+        
+        <JoinCoupleDialog open={showJoin} onOpenChange={setShowJoin} />
+      </div>
+    </StrictMobileViewport>
   );
 };
 

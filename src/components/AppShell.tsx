@@ -48,13 +48,13 @@ export const AppShell = ({ children }: AppShellProps) => {
   };
 
   return (
-    <div className="flex flex-col h-screen-mobile bg-gradient-warm">
+    <div className="flex flex-col h-screen bg-gradient-warm overflow-hidden">
       {/* Top Bar */}
       {showNav && (
         <motion.header 
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/50 sticky top-0 z-50"
+          className="flex-none flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/50 z-50"
         >
           <button onClick={() => navigate('/')} className="focus:outline-none">
             <RitualLogo size="sm" />
@@ -100,7 +100,7 @@ export const AppShell = ({ children }: AppShellProps) => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-hidden">
         {children}
       </main>
 
@@ -109,7 +109,7 @@ export const AppShell = ({ children }: AppShellProps) => {
         <motion.nav 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center justify-around px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border/50 sticky bottom-0 z-50 pb-safe"
+          className="flex-none flex items-center justify-around px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border/50 z-50 pb-safe"
         >
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;

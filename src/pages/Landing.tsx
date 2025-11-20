@@ -21,7 +21,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm overflow-y-auto">
+    <div className="min-h-[100dvh] bg-gradient-warm overflow-y-auto">
       {/* Authenticated User Banner */}
       {user && showAuthBanner && (
         <div className="sticky top-0 z-50 bg-primary/10 backdrop-blur-sm border-b border-primary/20">
