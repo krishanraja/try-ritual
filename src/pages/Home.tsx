@@ -149,12 +149,11 @@ export default function Home() {
     <StrictMobileViewport>
       <div className="h-full bg-gradient-warm flex flex-col">
         {/* Compact Header */}
-        <div className="flex-none px-4 pt-3 pb-2">
-          <div className="flex items-center justify-between mb-1">
-            <RitualLogo size="xs" />
+        <div className="flex-none px-4 pt-4 pb-2">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-xl font-bold">This Week</h1>
             <StreakBadge />
           </div>
-          <h1 className="text-lg font-bold">This Week</h1>
         </div>
 
         {/* Main Content - Centered */}
