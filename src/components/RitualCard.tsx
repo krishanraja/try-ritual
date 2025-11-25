@@ -23,6 +23,8 @@ interface RitualCardProps {
   onComplete?: () => void;
   variant?: 'full' | 'compact' | 'sample';
   showActions?: boolean;
+  agreedDate?: string;
+  agreedTime?: string;
 }
 
 export const RitualCard = ({ 
@@ -30,7 +32,9 @@ export const RitualCard = ({
   isComplete = false, 
   onComplete, 
   variant = 'full',
-  showActions = true 
+  showActions = true,
+  agreedDate,
+  agreedTime
 }: RitualCardProps) => {
   const heights = {
     full: 'max-h-[calc(100vh-220px)] min-h-[340px]',
@@ -143,7 +147,10 @@ export const RitualCard = ({
                 variant="ghost"
                 size="sm"
                 className="flex-1 h-9 text-xs"
-                onClick={() => downloadICS(ritual)}
+                onClick={() => {
+                  const date = agreedDate ? new Date(agreedDate) : undefined;
+                  downloadICS(ritual, date, agreedTime);
+                }}
               >
                 <Calendar className="w-3 h-3 mr-1" />
                 Calendar

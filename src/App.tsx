@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import QuickInput from "./pages/QuickInput";
 import RitualCards from "./pages/RitualCards";
+import RitualPicker from "./pages/RitualPicker";
 import History from "./pages/History";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/home" element={<Home />} />
               <Route path="/input" element={<QuickInput />} />
+              <Route path="/picker" element={<RitualPicker />} />
               <Route path="/rituals" element={<RitualCards />} />
               <Route path="/history" element={<History />} />
               <Route path="/profile" element={<Profile />} />

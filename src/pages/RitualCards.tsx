@@ -12,6 +12,12 @@ import confetti from 'canvas-confetti';
 import { usePresence } from '@/hooks/usePresence';
 import { UserCircle } from 'lucide-react';
 
+interface AgreedRitual {
+  agreed_ritual?: any;
+  agreed_date?: string;
+  agreed_time?: string;
+}
+
 interface Ritual {
   id: string | number;
   title: string;
@@ -198,6 +204,8 @@ export default function RitualCards() {
             onComplete={handleComplete}
             variant="full"
             isShowingSamples={isShowingSamples}
+            agreedDate={(currentCycle as any)?.agreed_date}
+            agreedTime={(currentCycle as any)?.agreed_time}
           />
         </div>
 

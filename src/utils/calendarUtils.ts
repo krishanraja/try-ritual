@@ -1,8 +1,24 @@
 import { Ritual } from './shareUtils';
 
-export const generateICSFile = (ritual: Ritual, startDate?: Date) => {
+export const generateICSFile = (ritual: Ritual, startDate?: Date, startTime?: string) => {
   const now = new Date();
-  const start = startDate || new Date(now.getTime() + 24 * 60 * 60 * 1000); // Tomorrow by default
+  
+  // If no date provided, default to tomorrow
+  let start: Date;
+  if (startDate && startTime) {
+    // Use provided date and time
+    const [hours, minutes] = startTime.split(':').map(Number);
+    start = new Date(startDate);
+    start.setHours(hours, minutes, 0, 0);
+  } else if (startDate) {
+    // Use provided date with default time (7pm)
+    start = new Date(startDate);
+    start.setHours(19, 0, 0, 0);
+  } else {
+    // Default to tomorrow at 7pm
+    start = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    start.setHours(19, 0, 0, 0);
+  }
   
   // Parse duration
   const duration = parseDuration(ritual.time_estimate);
@@ -31,8 +47,8 @@ export const generateICSFile = (ritual: Ritual, startDate?: Date) => {
   return icsContent;
 };
 
-export const downloadICS = (ritual: Ritual, startDate?: Date) => {
-  const icsContent = generateICSFile(ritual, startDate);
+export const downloadICS = (ritual: Ritual, startDate?: Date, startTime?: string) => {
+  const icsContent = generateICSFile(ritual, startDate, startTime);
   const blob = new Blob([icsContent], { type: 'text/calendar' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

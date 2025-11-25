@@ -175,7 +175,7 @@ export default function QuickInput() {
 
         // Refresh cycle data before showing animation
         await refreshCycle();
-        // Navigate will happen from SynthesisAnimation
+        navigate('/picker');
       } else {
         toast.success('All set! We\'ll notify you when your partner is ready', {
           duration: 4000

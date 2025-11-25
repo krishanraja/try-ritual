@@ -204,6 +204,50 @@ export type Database = {
           },
         ]
       }
+      ritual_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          proposed_date: string | null
+          proposed_time: string | null
+          rank: number
+          ritual_data: Json
+          ritual_title: string
+          user_id: string
+          weekly_cycle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          proposed_date?: string | null
+          proposed_time?: string | null
+          rank: number
+          ritual_data: Json
+          ritual_title: string
+          user_id: string
+          weekly_cycle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          proposed_date?: string | null
+          proposed_time?: string | null
+          rank?: number
+          ritual_data?: Json
+          ritual_title?: string
+          user_id?: string
+          weekly_cycle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_preferences_weekly_cycle_id_fkey"
+            columns: ["weekly_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ritual_streaks: {
         Row: {
           couple_id: string
@@ -285,6 +329,10 @@ export type Database = {
       }
       weekly_cycles: {
         Row: {
+          agreed_date: string | null
+          agreed_ritual: Json | null
+          agreed_time: string | null
+          agreement_reached: boolean | null
           canvas_state_one: Json | null
           canvas_state_two: Json | null
           couple_id: string
@@ -301,6 +349,10 @@ export type Database = {
           week_start_date: string
         }
         Insert: {
+          agreed_date?: string | null
+          agreed_ritual?: Json | null
+          agreed_time?: string | null
+          agreement_reached?: boolean | null
           canvas_state_one?: Json | null
           canvas_state_two?: Json | null
           couple_id: string
@@ -317,6 +369,10 @@ export type Database = {
           week_start_date: string
         }
         Update: {
+          agreed_date?: string | null
+          agreed_ritual?: Json | null
+          agreed_time?: string | null
+          agreement_reached?: boolean | null
           canvas_state_one?: Json | null
           canvas_state_two?: Json | null
           couple_id?: string

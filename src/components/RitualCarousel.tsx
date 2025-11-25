@@ -18,6 +18,8 @@ interface RitualCarouselProps {
   onComplete: (ritual: Ritual) => void;
   variant?: 'full' | 'compact' | 'sample';
   isShowingSamples?: boolean;
+  agreedDate?: string;
+  agreedTime?: string;
 }
 
 export const RitualCarousel = ({ 
@@ -25,7 +27,9 @@ export const RitualCarousel = ({
   completions, 
   onComplete, 
   variant = 'full',
-  isShowingSamples = false 
+  isShowingSamples = false,
+  agreedDate,
+  agreedTime
 }: RitualCarouselProps) => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
@@ -56,13 +60,15 @@ export const RitualCarousel = ({
           {rituals.map((ritual) => (
             <CarouselItem key={ritual.id} className="pl-4 basis-[85vw]">
               <div className="h-full flex items-center justify-center px-1 py-2">
-                <RitualCard
-                  ritual={ritual}
-                  isComplete={completions.has(ritual.title)}
-                  onComplete={() => onComplete(ritual)}
-                  variant={variant}
-                  showActions={true}
-                />
+              <RitualCard
+                ritual={ritual}
+                isComplete={completions.has(ritual.title)}
+                onComplete={() => onComplete(ritual)}
+                variant={variant}
+                showActions={true}
+                agreedDate={agreedDate}
+                agreedTime={agreedTime}
+              />
               </div>
             </CarouselItem>
           ))}
