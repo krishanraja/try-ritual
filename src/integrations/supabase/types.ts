@@ -56,6 +56,7 @@ export type Database = {
           is_active: boolean | null
           partner_one: string
           partner_two: string | null
+          preferred_city: string | null
           synthesis_ready: boolean | null
         }
         Insert: {
@@ -67,6 +68,7 @@ export type Database = {
           is_active?: boolean | null
           partner_one: string
           partner_two?: string | null
+          preferred_city?: string | null
           synthesis_ready?: boolean | null
         }
         Update: {
@@ -78,6 +80,7 @@ export type Database = {
           is_active?: boolean | null
           partner_one?: string
           partner_two?: string | null
+          preferred_city?: string | null
           synthesis_ready?: boolean | null
         }
         Relationships: [

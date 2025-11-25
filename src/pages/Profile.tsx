@@ -17,17 +17,22 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user && couple) {
       loadPreferredCity();
     }
-  }, [user]);
+  }, [user, couple]);
 
   const loadPreferredCity = async () => {
     try {
+      if (!couple) {
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
-        .from('profiles')
+        .from('couples')
         .select('preferred_city')
-        .eq('id', user?.id)
+        .eq('id', couple.id)
         .single();
 
       if (error) throw error;
@@ -42,12 +47,14 @@ export default function Profile() {
   };
 
   const handleCityChange = async (city: City) => {
+    if (!couple) return;
+    
     setSelectedCity(city);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('couples')
         .update({ preferred_city: city })
-        .eq('id', user?.id);
+        .eq('id', couple.id);
 
       if (error) throw error;
       
