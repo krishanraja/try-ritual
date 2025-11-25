@@ -21,6 +21,17 @@ export default function Home() {
     if (!loading && !user) navigate('/auth');
   }, [user, loading, navigate]);
 
+  // Handle pending join action after auth
+  useEffect(() => {
+    if (user && !loading) {
+      const pendingAction = sessionStorage.getItem('pendingAction');
+      if (pendingAction === 'join') {
+        sessionStorage.removeItem('pendingAction');
+        setTimeout(() => joinCouple(), 300); // Open join drawer after a brief delay
+      }
+    }
+  }, [user, loading, joinCouple]);
+
   // Smart redirect: Auto-navigate to rituals when ready
   useEffect(() => {
     if (currentCycle?.synthesized_output && couple?.partner_two) {

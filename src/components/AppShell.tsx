@@ -6,7 +6,7 @@ import { useCouple } from '@/contexts/CoupleContext';
 import { ShareDrawer } from './ShareDrawer';
 import { JoinDrawer } from './JoinDrawer';
 import { CreateCoupleDialog } from './CreateCoupleDialog';
-import { RitualLogo } from './RitualLogo';
+import { StatusIndicator } from './StatusIndicator';
 import { motion } from 'framer-motion';
 
 interface AppShellProps {
@@ -47,13 +47,6 @@ export const AppShell = ({ children }: AppShellProps) => {
     { path: '/profile', icon: User, label: 'Profile' }
   ];
 
-  const { partnerProfile } = useCouple();
-
-  const getPartnerStatus = () => {
-    if (!couple?.partner_two) return 'Waiting for partner';
-    return partnerProfile?.name || 'Connected';
-  };
-
   return (
     <div className="flex flex-col h-screen bg-gradient-warm overflow-hidden">
       {/* Top Bar */}
@@ -63,7 +56,7 @@ export const AppShell = ({ children }: AppShellProps) => {
           animate={{ y: 0, opacity: 1 }}
           className="flex-none flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/50 z-50"
         >
-          <button onClick={() => navigate('/')} className="focus:outline-none">
+          <button onClick={() => navigate('/home')} className="focus:outline-none">
             <img 
               src="/favicon.png" 
               alt="Ritual" 
@@ -71,24 +64,15 @@ export const AppShell = ({ children }: AppShellProps) => {
             />
           </button>
           
-          <div className="flex items-center gap-2">
-            <div className="text-xs text-muted-foreground hidden sm:block">
-              {couple ? (
-                <span className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${couple.partner_two ? 'bg-green-500' : 'bg-amber-500'} animate-pulse`} />
-                  {getPartnerStatus()}
-                </span>
-              ) : (
-                'Solo Mode'
-              )}
-            </div>
+          <div className="flex items-center gap-3">
+            <StatusIndicator />
             
             {couple && (
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => setShareOpen(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 h-8 px-3"
               >
                 <Share2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Share</span>
@@ -100,7 +84,7 @@ export const AppShell = ({ children }: AppShellProps) => {
                 variant="ghost" 
                 size="sm"
                 onClick={() => setJoinOpen(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 h-8 px-3"
               >
                 <UserPlus className="w-4 h-4" />
                 <span className="hidden sm:inline">Join</span>

@@ -43,45 +43,57 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
     setValidating(true);
     setErrorMessage('');
     try {
+      // Query with properly formatted code (with hyphen)
+      const cleanCode = code.replace(/-/g, '');
+      const formattedCode = cleanCode.length === 8 
+        ? `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}` 
+        : code;
+
       const { data } = await supabase
         .from('couples')
-        .select('id, partner_two, code_expires_at, is_active')
-        .eq('couple_code', code)
+        .select('id, partner_two, partner_one, code_expires_at, is_active')
+        .eq('couple_code', formattedCode)
         .eq('is_active', true)
         .maybeSingle();
       
       if (!data) {
         setIsCodeValid(false);
-        setErrorMessage('Invalid code');
+        setErrorMessage('Code not found. Check with your partner for the correct code.');
         return;
       }
 
       if (data.partner_two) {
         setIsCodeValid(false);
-        setErrorMessage('Code already used');
+        setErrorMessage('This couple is already complete.');
+        return;
+      }
+
+      if (user && data.partner_one === user.id) {
+        setIsCodeValid(false);
+        setErrorMessage("You can't join your own code!");
         return;
       }
 
       // Check expiration
       if (new Date(data.code_expires_at) < new Date()) {
         setIsCodeValid(false);
-        setErrorMessage('Code expired');
+        setErrorMessage('This code has expired. Ask your partner for a new one.');
         return;
       }
 
       setIsCodeValid(true);
     } catch (error) {
       setIsCodeValid(false);
-      setErrorMessage('Error validating code');
+      setErrorMessage('Error validating code. Please try again.');
     } finally {
       setValidating(false);
     }
   };
 
   const handleJoin = async () => {
-    const formattedCode = code.replace('-', '');
-    if (formattedCode.length !== 8) {
-      toast.error('Please enter a valid code');
+    const cleanCode = code.replace(/-/g, '');
+    if (cleanCode.length !== 8) {
+      toast.error('Please enter a valid 8-character code');
       return;
     }
 
@@ -94,30 +106,35 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
     try {
       if (!user) throw new Error('Not authenticated');
 
+      // Format code for query (with hyphen)
+      const formattedCode = `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}`;
+
       // Find and join couple
       const { data: couple } = await supabase
         .from('couples')
         .select('*')
-        .eq('couple_code', code)
+        .eq('couple_code', formattedCode)
         .eq('is_active', true)
         .single();
 
-      if (!couple) throw new Error('Invalid code');
-      if (couple.partner_two) throw new Error('Code already used');
-      if (couple.partner_one === user.id) throw new Error("Can't join your own code");
-      if (new Date(couple.code_expires_at) < new Date()) throw new Error('Code expired');
+      if (!couple) throw new Error('Code not found');
+      if (couple.partner_two) throw new Error('This couple is already complete');
+      if (couple.partner_one === user.id) throw new Error("You can't join your own code");
+      if (new Date(couple.code_expires_at) < new Date()) throw new Error('This code has expired');
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('couples')
         .update({ partner_two: user.id })
         .eq('id', couple.id)
         .is('partner_two', null);
 
+      if (updateError) throw updateError;
+
       await refreshCouple();
       toast.success('Successfully joined! 🎉');
       onOpenChange(false);
       setCode('');
-      navigate('/');
+      navigate('/home');
     } catch (error: any) {
       toast.error(error.message || 'Failed to join');
     } finally {

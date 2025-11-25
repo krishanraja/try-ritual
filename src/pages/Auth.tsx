@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { JoinCoupleDialog } from "@/components/JoinCoupleDialog";
 import { StrictMobileViewport } from "@/components/StrictMobileViewport";
 
 const Auth = () => {
@@ -16,14 +15,13 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
   const navigate = useNavigate();
 
-  // Check if user came here to join a couple
+  // Store join intent if user came to join
   useEffect(() => {
     if (searchParams.get('join') === 'true') {
-      setShowJoin(true);
-      setIsLogin(false); // Switch to signup mode for new users
+      sessionStorage.setItem('pendingAction', 'join');
+      setIsLogin(false); // Switch to signup mode
     }
   }, [searchParams]);
 
@@ -157,8 +155,6 @@ const Auth = () => {
             </button>
           </div>
         </motion.div>
-        
-        <JoinCoupleDialog open={showJoin} onOpenChange={setShowJoin} />
       </div>
     </StrictMobileViewport>
   );
