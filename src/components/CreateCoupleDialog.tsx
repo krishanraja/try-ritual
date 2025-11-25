@@ -36,13 +36,22 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
         return;
       }
 
-      // Check if user already has a couple
-      const { data: existingCouple } = await supabase
+      // Check if user already has a couple (check both as partner_one and partner_two)
+      const { data: asPartnerOne } = await supabase
         .from('couples')
         .select('*')
-        .or(`partner_one.eq.${user.id},partner_two.eq.${user.id}`)
+        .eq('partner_one', user.id)
         .eq('is_active', true)
         .maybeSingle();
+
+      const { data: asPartnerTwo } = await supabase
+        .from('couples')
+        .select('*')
+        .eq('partner_two', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      const existingCouple = asPartnerOne || asPartnerTwo;
 
       if (existingCouple) {
         toast.error("You're already in a couple! Share your existing code instead.");

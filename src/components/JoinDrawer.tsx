@@ -38,9 +38,9 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
     const cleanCode = code.replace(/-/g, '');
     console.log('[JOIN] Cleaned code (no dash):', cleanCode);
     
-    if (cleanCode.length < 6) {
-      console.log('[JOIN] ❌ Code too short:', cleanCode.length);
-      toast.error('Code must be at least 6 characters');
+    if (cleanCode.length !== 8) {
+      console.log('[JOIN] ❌ Code must be exactly 8 characters');
+      toast.error('Code must be 8 characters');
       return;
     }
 
@@ -53,26 +53,13 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
     setLoading(true);
     setErrorMessage('');
 
-    // 15-second timeout protection
-    const timeoutId = setTimeout(() => {
-      console.log('[JOIN] ⏱️ 15-second timeout triggered');
-      setLoading(false);
-      setErrorMessage('Request took too long. Please check your connection and try again.');
-      toast.error('Request timed out');
-    }, 15000);
-
     try {
       const startTime = Date.now();
       
-      // Format for new codes (8 chars) but also support legacy (6 chars)
-      const formattedNewCode = cleanCode.length === 8 
-        ? `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}`
-        : null;
+      // Format to XXXX-XXXX
+      const formattedCode = `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}`;
       
-      console.log('[JOIN] Searching for code variants:', {
-        cleanCode,
-        formattedNewCode
-      });
+      console.log('[JOIN] Searching for code:', formattedCode);
 
       // Check for existing solo couple first
       console.log('[JOIN] Checking for existing solo couple...');
@@ -102,24 +89,15 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
         console.log('[JOIN] ✅ Solo couple deleted');
       }
 
-      // Query for couple with EITHER format (new 8-char with dash OR legacy 6-char)
+      // Simple direct query - no .or(), just exact match
       console.log('[JOIN] Querying for couple...');
-      const query = supabase
+      const { data: couple, error: fetchError } = await supabase
         .from('couples')
         .select('*')
+        .eq('couple_code', formattedCode)
         .eq('is_active', true)
-        .is('partner_two', null);
-
-      // Support both formats
-      if (formattedNewCode) {
-        query.or(`couple_code.eq.${formattedNewCode},couple_code.eq.${cleanCode}`);
-      } else {
-        query.eq('couple_code', cleanCode);
-      }
-
-      const { data: couple, error: fetchError } = await query.maybeSingle();
-
-      clearTimeout(timeoutId);
+        .is('partner_two', null)
+        .maybeSingle();
 
       if (fetchError) {
         console.error('[JOIN] ❌ Error fetching couple:', fetchError);
@@ -170,7 +148,6 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
       setCode('');
       navigate('/home');
     } catch (error: any) {
-      clearTimeout(timeoutId);
       console.error('[JOIN] ❌ Join failed:', error.message || error);
       setErrorMessage(error.message || 'Failed to join couple');
       toast.error(error.message || 'Failed to join couple');
@@ -196,12 +173,12 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
               <Input
                 ref={codeInputRef}
                 id="code"
-                placeholder="XXXX-XXXX or XXXXXX"
+                placeholder="XXXX-XXXX"
                 value={code}
                 onChange={(e) => {
-                  let val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-                  // Auto-format with dash only for 8-character codes
-                  if (val.length > 4 && val.length <= 8 && !val.includes('-')) {
+                  let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                  // Auto-format with dash for 8-character codes
+                  if (val.length > 4) {
                     val = val.slice(0, 4) + '-' + val.slice(4);
                   }
                   setCode(val.slice(0, 9));
@@ -212,9 +189,6 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
               {errorMessage && (
                 <p className="text-sm text-destructive">{errorMessage}</p>
               )}
-              <p className="text-xs text-muted-foreground text-center">
-                Supports both formats: XXXX-XXXX or XXXXXX
-              </p>
             </div>
           </div>
 
@@ -229,7 +203,7 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
             </Button>
             <Button
               onClick={handleJoin}
-              disabled={loading || code.replace(/-/g, '').length < 6}
+              disabled={loading || code.replace(/-/g, '').length !== 8}
               className="flex-1 bg-gradient-ritual text-white hover:opacity-90 h-12 rounded-xl"
             >
               {loading ? 'Joining...' : 'Join Couple'}

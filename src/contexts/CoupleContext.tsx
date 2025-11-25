@@ -31,15 +31,22 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchCouple = async (userId: string) => {
     try {
-      // Step 1: Fetch couple without profile joins
-      const { data: coupleData, error } = await supabase
+      // Step 1: Fetch couple (check both as partner_one and partner_two)
+      const { data: asPartnerOne } = await supabase
         .from('couples')
         .select('*')
-        .or(`partner_one.eq.${userId},partner_two.eq.${userId}`)
+        .eq('partner_one', userId)
         .eq('is_active', true)
         .maybeSingle();
-      
-      if (error) throw error;
+
+      const { data: asPartnerTwo } = await supabase
+        .from('couples')
+        .select('*')
+        .eq('partner_two', userId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      const coupleData = asPartnerOne || asPartnerTwo;
       
       if (!coupleData) {
         setCouple(null);
