@@ -17,16 +17,16 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
     
-    const { action, weeklyInputs, partnerOneInput, partnerTwoInput, coupleId } = await req.json();
+    const { action, weeklyInputs, partnerOneInput, partnerTwoInput, coupleId, userCity } = await req.json();
     
-    // Partner 1 always sets the city for the couple
-    const userCity = partnerOneInput?.city || 'New York';
+    // Use the city from the couple's profile, fallback to New York
+    const city = userCity || 'New York';
     
     // Handle swap action - generate a single alternative ritual
     if (action === 'swap') {
       const { currentRitual, inputs } = weeklyInputs;
       
-      const swapPrompt = `You are a creative ritual designer for couples in ${userCity}. Generate ONE surprising and delightful alternative ritual that is different from this current one:
+      const swapPrompt = `You are a creative ritual designer for couples in ${city}. Generate ONE surprising and delightful alternative ritual that is different from this current one:
 
 Current Ritual: ${currentRitual.title}
 ${currentRitual.description}
@@ -45,15 +45,15 @@ Partner 2 Inputs:
 - Craving: ${inputs.partner_two_input.craving}
 - Desire: "${inputs.partner_two_input.desire}"
 
-Create a completely different ${userCity}-specific ritual that:
+Create a completely different ${city}-specific ritual that:
 - Is unexpected and delightful, not generic
 - NEVER mention specific businesses or venues - focus on IDEAS (e.g., "find a quiet cafe" not "go to Starbucks")
 - Must be immediately doable with minimal prep
 - Balances BOTH partners' energy levels, time availability, budget, cravings, and desires
 - Synthesizes their different inputs into one harmonious experience
-- Has personality specific to ${userCity}
+- Has personality specific to ${city}
 - Feels special, not like a typical date
-- Include sensory details and ${userCity}-specific geography (beaches in Sydney, laneways in Melbourne, bridges in NYC, parks in London)
+- Include sensory details and ${city}-specific geography (beaches in Sydney, laneways in Melbourne, bridges in NYC, parks in London)
 - Should deepen emotional connection while being fun and not too intense
 
 Return ONLY valid JSON (no markdown, no explanation) in this exact format:
@@ -121,7 +121,7 @@ Return ONLY valid JSON (no markdown, no explanation) in this exact format:
     const partner_one = partnerOneInput;
     const partner_two = partnerTwoInput;
     
-    const synthesisPrompt = `You are a creative ritual designer creating a week of shared experiences for a couple living in ${userCity}. Be creative, unexpected, and delightful.
+    const synthesisPrompt = `You are a creative ritual designer creating a week of shared experiences for a couple living in ${city}. Be creative, unexpected, and delightful.
 
 Partner 1:
 - Energy: ${partner_one.energy}
@@ -146,18 +146,18 @@ CRITICAL: Analyze BOTH partners' inputs carefully and create rituals that:
 - Weave BOTH desires into each ritual in meaningful ways
 - HIGHLIGHT THE CONTRAST between partners explicitly in the "why" field
 
-Create 4-5 surprising, ${userCity}-specific rituals that:
+Create 4-5 surprising, ${city}-specific rituals that:
 - Are NOT generic (avoid "sunset picnic", "coffee date" unless adding unique twist)
 - NEVER mention specific businesses or venues - focus on IDEAS (e.g., "find a quiet harbor spot" not "go to Circular Quay")
 - Must be immediately doable with minimal prep
-- Leverage ${userCity}'s unique geography, culture, and energy
-- Have personality and rich sensory details specific to ${userCity}
+- Leverage ${city}'s unique geography, culture, and energy
+- Have personality and rich sensory details specific to ${city}
 - Balance BOTH partners' needs creatively and explicitly
-- Feel special and memorable - uniquely ${userCity} moments
+- Feel special and memorable - uniquely ${city} moments
 - Range from quick moments to longer experiences based on their time availability
-- Include unexpected combinations that only ${userCity} can offer
-- Make people say "wow, I never thought of that!" and "this is so us AND so ${userCity}!"
-- Reference ${userCity}-specific geography (beaches in Sydney, laneways in Melbourne, bridges in NYC, parks in London) - NOT specific venues
+- Include unexpected combinations that only ${city} can offer
+- Make people say "wow, I never thought of that!" and "this is so us AND so ${city}!"
+- Reference ${city}-specific geography (beaches in Sydney, laneways in Melbourne, bridges in NYC, parks in London) - NOT specific venues
 - Should deepen emotional connection while being fun and not too intense
 
 Return ONLY valid JSON (no markdown, no explanation) in this exact format:

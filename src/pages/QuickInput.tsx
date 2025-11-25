@@ -12,7 +12,7 @@ import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SynthesisAnimation } from '@/components/SynthesisAnimation';
 
-const BASE_QUESTIONS = [
+const QUESTIONS = [
   {
     id: 'energy',
     question: 'How\'s your energy this week?',
@@ -35,14 +35,8 @@ const BASE_QUESTIONS = [
   }
 ];
 
-const CITY_QUESTION = {
-  id: 'city',
-  question: 'Where are you based?',
-  options: ['New York', 'London', 'Sydney', 'Melbourne']
-};
-
 export default function QuickInput() {
-  const { user, couple, currentCycle, loading } = useCouple();
+  const { user, couple, currentCycle, loading, refreshCycle } = useCouple();
   const navigate = useNavigate();
   const [weeklyCycleId, setWeeklyCycleId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -51,15 +45,10 @@ export default function QuickInput() {
     availability: '',
     budget: '',
     craving: '',
-    city: '',
     desire: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
-  const [partnerCity, setPartnerCity] = useState<string | null>(null);
-
-  const isPartnerOne = couple?.partner_one === user?.id;
-  const QUESTIONS = isPartnerOne ? [...BASE_QUESTIONS, CITY_QUESTION] : BASE_QUESTIONS;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -76,13 +65,6 @@ export default function QuickInput() {
     const initializeCycle = async () => {
       if (currentCycle?.id) {
         setWeeklyCycleId(currentCycle.id);
-        
-        // If partner 2, get partner 1's city from their input
-        if (!isPartnerOne && currentCycle.partner_one_input) {
-          const p1Input = currentCycle.partner_one_input as any;
-          setPartnerCity(p1Input.city || 'New York');
-          setAnswers(prev => ({ ...prev, city: p1Input.city || 'New York' }));
-        }
         return;
       }
 
@@ -100,13 +82,6 @@ export default function QuickInput() {
 
       if (existingCycle) {
         setWeeklyCycleId(existingCycle.id);
-        
-        // If partner 2, get partner 1's city
-        if (!isPartnerOne && existingCycle.partner_one_input) {
-          const p1Input = existingCycle.partner_one_input as any;
-          setPartnerCity(p1Input.city || 'New York');
-          setAnswers(prev => ({ ...prev, city: p1Input.city || 'New York' }));
-        }
       } else {
         const { data: newCycle, error } = await supabase
           .from('weekly_cycles')
@@ -182,7 +157,8 @@ export default function QuickInput() {
           body: {
             partnerOneInput: isPartnerOne ? answers : partnerInput,
             partnerTwoInput: isPartnerOne ? partnerInput : answers,
-            coupleId: couple.id
+            coupleId: couple.id,
+            userCity: couple.preferred_city || 'New York'
           }
         });
 
@@ -200,6 +176,7 @@ export default function QuickInput() {
         // Navigate will happen from SynthesisAnimation
       } else {
         toast.success('Answers saved! Waiting for your partner...');
+        await refreshCycle();
         navigate('/home');
       }
     } catch (error) {
@@ -237,7 +214,7 @@ export default function QuickInput() {
         {/* Progress Bar */}
         <div className="flex-none px-6 pt-6 pb-4">
           <div className="flex gap-1">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(5)].map((_, i) => (
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full transition-all ${
@@ -247,7 +224,7 @@ export default function QuickInput() {
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Question {currentStep + 1} of 6
+            Question {currentStep + 1} of 5
           </p>
         </div>
 
@@ -264,32 +241,23 @@ export default function QuickInput() {
               >
                 <h2 className="text-2xl font-bold">{currentQuestion.question}</h2>
                 
-                {/* Show city info for Partner 2 instead of asking */}
-                {!isPartnerOne && partnerCity && currentStep === QUESTIONS.length - 1 ? (
-                  <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
-                    <p className="text-sm text-muted-foreground">
-                      Planning rituals in <span className="font-semibold text-foreground">{partnerCity}</span>
-                    </p>
-                  </div>
-                ) : (
-                  <RadioGroup
-                    value={answers[currentQuestion.id as keyof typeof answers]}
-                    onValueChange={handleAnswer}
-                    className="space-y-3"
-                  >
-                    {currentQuestion.options.map((option) => (
-                      <div
-                        key={option}
-                        className="flex items-center space-x-3 bg-white/80 p-4 rounded-xl border-2 border-transparent has-[:checked]:border-primary transition-all"
-                      >
-                        <RadioGroupItem value={option} id={option} />
-                        <Label htmlFor={option} className="flex-1 cursor-pointer text-base">
-                          {option}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                )}
+                <RadioGroup
+                  value={answers[currentQuestion.id as keyof typeof answers]}
+                  onValueChange={handleAnswer}
+                  className="space-y-3"
+                >
+                  {currentQuestion.options.map((option) => (
+                    <div
+                      key={option}
+                      className="flex items-center space-x-3 bg-white/80 p-4 rounded-xl border-2 border-transparent has-[:checked]:border-primary transition-all"
+                    >
+                      <RadioGroupItem value={option} id={option} />
+                      <Label htmlFor={option} className="flex-1 cursor-pointer text-base">
+                        {option}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               </motion.div>
             ) : (
               <motion.div

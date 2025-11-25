@@ -16,13 +16,6 @@ export default function Profile() {
   const [selectedCity, setSelectedCity] = useState<City>('New York');
   const [loading, setLoading] = useState(true);
 
-  console.log('Profile Debug:', { 
-    hasCouple: !!couple, 
-    hasPartnerTwo: !!couple?.partner_two,
-    partnerProfileName: partnerProfile?.name,
-    partnerProfile 
-  });
-
   useEffect(() => {
     if (user && couple) {
       loadPreferredCity();

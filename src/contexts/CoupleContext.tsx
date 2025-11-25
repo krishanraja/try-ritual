@@ -110,17 +110,25 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
       // Realtime subscriptions
       const couplesChannel = supabase
         .channel('couples-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'couples' }, (payload: any) => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'couples' }, async (payload: any) => {
           // Celebrate when partner joins (only when partner_two is first added)
           if (
             payload.eventType === 'UPDATE' && 
             payload.new.partner_two && 
             !payload.old?.partner_two
           ) {
-            toast.success("🎉 Your partner joined! Time to create rituals together!", { 
+            // Refetch to get partner profile data first
+            const updatedCouple = await fetchCouple(user.id);
+            const isPartnerOne = updatedCouple?.partner_one === user.id;
+            const partnerName = isPartnerOne 
+              ? updatedCouple?.partner_two_profile?.name 
+              : updatedCouple?.partner_one_profile?.name;
+            
+            toast.success(`🎉 ${partnerName || 'Your partner'} joined! Time to create rituals together!`, { 
               duration: 5000
             });
-            // Refetch to get partner profile data
+          } else {
+            // For other updates, just refetch
             fetchCouple(user.id);
           }
         })
