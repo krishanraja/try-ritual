@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from './ui/drawer';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -20,7 +20,7 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
   const [isCodeValid, setIsCodeValid] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const codeInputRef = useRef<HTMLInputElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const { refreshCouple, user } = useCouple();
 
@@ -34,101 +34,56 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
       setErrorMessage('');
       setValidating(false);
       setLoading(false);
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
     }
   }, [open]);
 
-  useEffect(() => {
-    const formattedCode = code.replace('-', '');
-    if (formattedCode.length === 8) {
-      validateCode();
-    } else {
-      setIsCodeValid(null);
-      setErrorMessage('');
-      // Cancel any ongoing validation
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
-    }
-  }, [code]);
-
-  const validateCode = async () => {
-    console.log('[VALIDATION] Starting validation for code:', code);
+  const validateCode = useCallback(async (codeToValidate: string) => {
+    console.log('[VALIDATION] Starting validation for code:', codeToValidate);
     
-    // Cancel previous validation if running
-    if (abortControllerRef.current) {
-      console.log('[VALIDATION] Aborting previous validation');
-      abortControllerRef.current.abort();
+    // Clear any existing timeout
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
     }
-
-    // Create new abort controller
-    abortControllerRef.current = new AbortController();
-    const currentController = abortControllerRef.current;
 
     setValidating(true);
     setErrorMessage('');
     setIsCodeValid(null);
 
-    const cleanCode = code.replace(/-/g, '');
+    const cleanCode = codeToValidate.replace(/-/g, '');
     const formattedCode = cleanCode.length === 8 
       ? `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}` 
-      : code;
+      : codeToValidate;
 
     console.log('[VALIDATION] Formatted code:', formattedCode);
 
-    // Create timeout promise
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        console.log('[VALIDATION] Timeout reached (10s)');
-        reject(new Error('TIMEOUT'));
-      }, 10000);
-    });
-
-    // Create query promise
-    const queryPromise = (async () => {
-      console.log('[VALIDATION] Starting Supabase query...');
+    try {
+      console.log('[VALIDATION] Making Supabase query...');
       const startTime = Date.now();
       
-      try {
-        const { data, error } = await supabase
-          .from('couples')
-          .select('id, partner_two, partner_one, code_expires_at, is_active')
-          .eq('couple_code', formattedCode)
-          .eq('is_active', true)
-          .maybeSingle();
+      const { data, error } = await supabase
+        .from('couples')
+        .select('id, partner_two, partner_one, code_expires_at, is_active')
+        .eq('couple_code', formattedCode)
+        .eq('is_active', true)
+        .maybeSingle();
 
-        const duration = Date.now() - startTime;
-        console.log(`[VALIDATION] Query completed in ${duration}ms`);
-        console.log('[VALIDATION] Query result:', { data, error });
+      const duration = Date.now() - startTime;
+      console.log(`[VALIDATION] Query completed in ${duration}ms`);
+      console.log('[VALIDATION] Query result:', { data, error });
 
-        if (error) {
-          console.error('[VALIDATION] Query error:', error);
-          throw error;
-        }
-
-        return data;
-      } catch (err) {
-        console.error('[VALIDATION] Query exception:', err);
-        throw err;
+      if (error) {
+        console.error('[VALIDATION] Query error:', error);
+        throw error;
       }
-    })();
-
-    try {
-      // Race between query and timeout
-      const data = await Promise.race([queryPromise, timeoutPromise]);
-
-      // Check if this validation was cancelled
-      if (currentController.signal.aborted) {
-        console.log('[VALIDATION] Validation was cancelled');
-        return;
-      }
-
-      console.log('[VALIDATION] Processing validation result:', data);
 
       if (!data) {
         console.log('[VALIDATION] No data found - invalid code');
         setIsCodeValid(false);
-        setErrorMessage('Code not found. Check with your partner for the correct code.');
+        setErrorMessage('Code not found. Check with your partner.');
+        setValidating(false);
         return;
       }
 
@@ -136,6 +91,7 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
         console.log('[VALIDATION] Couple already complete');
         setIsCodeValid(false);
         setErrorMessage('This couple is already complete.');
+        setValidating(false);
         return;
       }
 
@@ -143,6 +99,7 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
         console.log('[VALIDATION] User trying to join own code');
         setIsCodeValid(false);
         setErrorMessage("You can't join your own code!");
+        setValidating(false);
         return;
       }
 
@@ -150,40 +107,44 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
         console.log('[VALIDATION] Code expired');
         setIsCodeValid(false);
         setErrorMessage('This code has expired. Ask your partner for a new one.');
+        setValidating(false);
         return;
       }
 
       console.log('[VALIDATION] Code is valid!');
       setIsCodeValid(true);
       setErrorMessage('');
+      setValidating(false);
     } catch (error: any) {
-      // Check if this validation was cancelled
-      if (currentController.signal.aborted) {
-        console.log('[VALIDATION] Validation was cancelled during error handling');
-        return;
-      }
-
       console.error('[VALIDATION] Error during validation:', error);
+      setIsCodeValid(false);
+      setErrorMessage('Unable to verify code. Try joining anyway.');
+      setValidating(false);
+    }
+  }, [user]);
 
-      if (error.message === 'TIMEOUT') {
-        console.log('[VALIDATION] Showing timeout error to user');
-        setIsCodeValid(false);
-        setErrorMessage('Validation timed out. Please check your connection and try again.');
-      } else {
-        console.log('[VALIDATION] Showing generic error to user');
-        setIsCodeValid(false);
-        setErrorMessage('Error validating code. Please try again.');
-      }
-    } finally {
-      // Only update validating state if this validation wasn't cancelled
-      if (!currentController.signal.aborted) {
-        console.log('[VALIDATION] Validation complete');
-        setValidating(false);
-      } else {
-        console.log('[VALIDATION] Skipping state update - validation was cancelled');
+  useEffect(() => {
+    const formattedCode = code.replace('-', '');
+    if (formattedCode.length === 8) {
+      // Debounce validation by 300ms
+      validationTimeoutRef.current = setTimeout(() => {
+        validateCode(code);
+      }, 300);
+    } else {
+      setIsCodeValid(null);
+      setErrorMessage('');
+      setValidating(false);
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
       }
     }
-  };
+
+    return () => {
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
+    };
+  }, [code, validateCode]);
 
   const handleJoin = async () => {
     console.log('[JOIN] Starting join process');
@@ -374,7 +335,7 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
             </Button>
             <Button
               onClick={handleJoin}
-              disabled={loading || !isCodeValid}
+              disabled={loading || code.replace('-', '').length !== 8}
               className="flex-1 bg-gradient-ritual text-white hover:opacity-90 h-12 rounded-xl"
             >
               {loading ? 'Joining...' : 'Join Couple'}
