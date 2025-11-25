@@ -31,30 +31,41 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchCouple = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      // Step 1: Fetch couple without profile joins
+      const { data: coupleData, error } = await supabase
         .from('couples')
-        .select(`
-          *,
-          partner_one_profile:profiles!couples_partner_one_fkey(id, name, email),
-          partner_two_profile:profiles!couples_partner_two_fkey(id, name, email)
-        `)
+        .select('*')
         .or(`partner_one.eq.${userId},partner_two.eq.${userId}`)
         .eq('is_active', true)
         .maybeSingle();
       
       if (error) throw error;
-      setCouple(data);
       
-      // Set partner profile (the other person in the couple)
-      if (data) {
-        const isPartnerOne = data.partner_one === userId;
-        const partner = isPartnerOne ? data.partner_two_profile : data.partner_one_profile;
-        setPartnerProfile(partner);
+      if (!coupleData) {
+        setCouple(null);
+        setPartnerProfile(null);
+        return null;
+      }
+
+      // Step 2: Fetch partner's profile separately
+      const partnerId = coupleData.partner_one === userId 
+        ? coupleData.partner_two 
+        : coupleData.partner_one;
+      
+      if (partnerId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .eq('id', partnerId)
+          .maybeSingle();
+        
+        setPartnerProfile(profile);
       } else {
         setPartnerProfile(null);
       }
-      
-      return data;
+
+      setCouple(coupleData);
+      return coupleData;
     } catch (error) {
       console.error('Error fetching couple:', error);
       return null;
@@ -114,7 +125,7 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
           // Check if partner just joined
           if (payload.eventType === 'UPDATE' && payload.new.partner_two && !payload.old?.partner_two) {
             const coupleData = await fetchCouple(user.id);
-            const partnerName = coupleData?.partner_two_profile?.name || 'Your partner';
+            const partnerName = partnerProfile?.name || 'Your partner';
             toast.success(`🎉 ${partnerName} joined!`, {
               description: 'Time to create rituals together',
               duration: 5000

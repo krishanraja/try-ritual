@@ -42,20 +42,35 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
   const validateCode = async () => {
     setValidating(true);
     setErrorMessage('');
+    
+    const timeoutId = setTimeout(() => {
+      setValidating(false);
+      setIsCodeValid(false);
+      setErrorMessage('Validation timed out. Please try again.');
+    }, 10000);
+
     try {
-      // Query with properly formatted code (with hyphen)
       const cleanCode = code.replace(/-/g, '');
       const formattedCode = cleanCode.length === 8 
         ? `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}` 
         : code;
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('couples')
         .select('id, partner_two, partner_one, code_expires_at, is_active')
         .eq('couple_code', formattedCode)
         .eq('is_active', true)
         .maybeSingle();
       
+      clearTimeout(timeoutId);
+      
+      if (error) {
+        console.error('Validation error:', error);
+        setIsCodeValid(false);
+        setErrorMessage('Error validating code. Please try again.');
+        return;
+      }
+
       if (!data) {
         setIsCodeValid(false);
         setErrorMessage('Code not found. Check with your partner for the correct code.');
@@ -74,7 +89,6 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
         return;
       }
 
-      // Check expiration
       if (new Date(data.code_expires_at) < new Date()) {
         setIsCodeValid(false);
         setErrorMessage('This code has expired. Ask your partner for a new one.');
@@ -83,6 +97,8 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
 
       setIsCodeValid(true);
     } catch (error) {
+      clearTimeout(timeoutId);
+      console.error('Unexpected validation error:', error);
       setIsCodeValid(false);
       setErrorMessage('Error validating code. Please try again.');
     } finally {
@@ -103,10 +119,16 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
     }
 
     setLoading(true);
+    
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      toast.error('Join request timed out. Please check your connection and try again.');
+    }, 15000);
+
     try {
       if (!user) throw new Error('Not authenticated');
 
-      // Check if user has an existing solo couple and delete it
+      console.log('Checking for existing solo couple...');
       const { data: existingCouple } = await supabase
         .from('couples')
         .select('id, partner_two')
@@ -114,28 +136,30 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
         .maybeSingle();
 
       if (existingCouple && !existingCouple.partner_two) {
+        console.log('Deleting existing solo couple...');
         await supabase
           .from('couples')
           .delete()
           .eq('id', existingCouple.id);
       }
 
-      // Format code for query (with hyphen)
       const formattedCode = `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}`;
 
-      // Find and join couple
-      const { data: couple } = await supabase
+      console.log('Finding couple to join...');
+      const { data: couple, error: fetchError } = await supabase
         .from('couples')
         .select('*')
         .eq('couple_code', formattedCode)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
+      if (fetchError) throw fetchError;
       if (!couple) throw new Error('Code not found');
       if (couple.partner_two) throw new Error('This couple is already complete');
       if (couple.partner_one === user.id) throw new Error("You can't join your own code");
       if (new Date(couple.code_expires_at) < new Date()) throw new Error('This code has expired');
 
+      console.log('Updating couple with partner_two...');
       const { error: updateError } = await supabase
         .from('couples')
         .update({ partner_two: user.id })
@@ -144,13 +168,19 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
 
       if (updateError) throw updateError;
 
+      clearTimeout(timeoutId);
+      console.log('Join successful, refreshing couple data...');
       await refreshCouple();
+      console.log('Couple refreshed, navigating to home...');
+      
       toast.success('Successfully joined! 🎉');
       onOpenChange(false);
       setCode('');
       navigate('/home');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to join');
+      clearTimeout(timeoutId);
+      console.error('Join error:', error);
+      toast.error(error.message || 'Failed to join couple');
     } finally {
       setLoading(false);
     }
@@ -178,11 +208,10 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
                   value={code}
                   onChange={(e) => {
                     let val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-                    // Auto-format with dash
                     if (val.length > 4 && !val.includes('-')) {
                       val = val.slice(0, 4) + '-' + val.slice(4);
                     }
-                    setCode(val.slice(0, 9)); // Max length with dash
+                    setCode(val.slice(0, 9));
                   }}
                   maxLength={9}
                   className={`h-16 text-center text-2xl font-bold font-mono tracking-widest rounded-xl ${
@@ -208,13 +237,28 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
             </div>
           </div>
 
-          <Button
-            onClick={handleJoin}
-            disabled={loading || !isCodeValid}
-            className="w-full bg-gradient-ritual text-white hover:opacity-90 h-12 rounded-xl"
-          >
-            {loading ? 'Joining...' : 'Join Couple'}
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                onOpenChange(false);
+                setCode('');
+                setIsCodeValid(null);
+                setErrorMessage('');
+              }}
+              disabled={loading}
+              className="flex-1 h-12 rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleJoin}
+              disabled={loading || !isCodeValid}
+              className="flex-1 bg-gradient-ritual text-white hover:opacity-90 h-12 rounded-xl"
+            >
+              {loading ? 'Joining...' : 'Join Couple'}
+            </Button>
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
