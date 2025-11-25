@@ -7,19 +7,25 @@ import { motion } from 'framer-motion';
 import { Heart, Sparkles, Share2 } from 'lucide-react';
 import { StreakBadge } from '@/components/StreakBadge';
 import { RitualLogo } from '@/components/RitualLogo';
-import { useSampleRituals } from '@/hooks/useSampleRituals';
-import { RitualCarousel } from '@/components/RitualCarousel';
+import { WaitingForPartner } from '@/components/WaitingForPartner';
 import { StrictMobileViewport } from '@/components/StrictMobileViewport';
+import { SynthesisAnimation } from '@/components/SynthesisAnimation';
 
 export default function Home() {
-  const { user, couple, currentCycle, loading, createCouple, shareCode, joinCouple } = useCouple();
+  const { user, couple, partnerProfile, currentCycle, loading, createCouple, shareCode, joinCouple } = useCouple();
   const navigate = useNavigate();
-  const { rituals, isShowingSamples } = useSampleRituals();
 
   // Redirect to auth if not logged in
   useEffect(() => {
     if (!loading && !user) navigate('/auth');
   }, [user, loading, navigate]);
+
+  // Smart redirect: Auto-navigate to rituals when ready
+  useEffect(() => {
+    if (currentCycle?.synthesized_output && couple?.partner_two) {
+      navigate('/rituals');
+    }
+  }, [currentCycle?.synthesized_output, couple?.partner_two, navigate]);
 
   if (loading) {
     return (
@@ -114,6 +120,31 @@ export default function Home() {
   const userSubmitted = userIsPartnerOne ? hasPartnerOne : hasPartnerTwo;
   const partnerSubmitted = userIsPartnerOne ? hasPartnerTwo : hasPartnerOne;
 
+  // Synthesis in progress: show animation
+  if (userSubmitted && partnerSubmitted && !hasSynthesized) {
+    return (
+      <StrictMobileViewport>
+        <SynthesisAnimation />
+      </StrictMobileViewport>
+    );
+  }
+
+  // User submitted, waiting for partner: show waiting component
+  if (userSubmitted && !partnerSubmitted && currentCycle) {
+    const partnerName = partnerProfile?.name || 'your partner';
+    return (
+      <StrictMobileViewport>
+        <div className="h-full bg-gradient-warm">
+          <WaitingForPartner 
+            partnerName={partnerName}
+            currentCycleId={currentCycle.id}
+            lastNudgedAt={currentCycle.nudged_at}
+          />
+        </div>
+      </StrictMobileViewport>
+    );
+  }
+
   return (
     <StrictMobileViewport>
       <div className="h-full bg-gradient-warm flex flex-col">
@@ -131,25 +162,17 @@ export default function Home() {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             <Card className="p-6 bg-card/90 backdrop-blur-sm text-center space-y-4">
               <div className="w-12 h-12 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">
-                {hasSynthesized ? <Sparkles className="w-6 h-6 text-white" /> : userSubmitted ? <Heart className="w-6 h-6 text-white animate-pulse" /> : <Heart className="w-6 h-6 text-white" />}
+                <Heart className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-base font-bold mb-1">
-                  {hasSynthesized ? 'Rituals Ready! 🎉' : userSubmitted && partnerSubmitted ? 'Creating Rituals...' : userSubmitted ? 'Waiting for Partner' : 'Ready for This Week?'}
-                </h2>
+                <h2 className="text-base font-bold mb-1">Ready for This Week?</h2>
                 <p className="text-xs text-muted-foreground">
-                  {hasSynthesized ? 'View this week\'s rituals' : userSubmitted && partnerSubmitted ? 'Synthesizing your perfect week' : userSubmitted ? 'They haven\'t submitted yet' : 'Share your preferences for the week'}
+                  Share your preferences to create rituals with {partnerProfile?.name || 'your partner'}
                 </p>
               </div>
-              {hasSynthesized ? (
-                <Button onClick={() => navigate('/rituals')} className="w-full bg-gradient-ritual text-white h-12 rounded-xl">
-                  View Rituals
-                </Button>
-              ) : !userSubmitted && (
-                <Button onClick={() => navigate('/input')} className="w-full bg-gradient-ritual text-white h-12 rounded-xl">
-                  Start Input
-                </Button>
-              )}
+              <Button onClick={() => navigate('/input')} className="w-full bg-gradient-ritual text-white h-12 rounded-xl">
+                Start Input
+              </Button>
             </Card>
           </motion.div>
         </div>

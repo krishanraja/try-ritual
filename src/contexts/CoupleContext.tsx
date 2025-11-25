@@ -111,25 +111,16 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
       const couplesChannel = supabase
         .channel('couples-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'couples' }, async (payload: any) => {
-          // Celebrate when partner joins (only when partner_two is first added)
-          if (
-            payload.eventType === 'UPDATE' && 
-            payload.new.partner_two && 
-            !payload.old?.partner_two
-          ) {
-            // Refetch to get partner profile data first
-            const updatedCouple = await fetchCouple(user.id);
-            const isPartnerOne = updatedCouple?.partner_one === user.id;
-            const partnerName = isPartnerOne 
-              ? updatedCouple?.partner_two_profile?.name 
-              : updatedCouple?.partner_one_profile?.name;
-            
-            toast.success(`🎉 ${partnerName || 'Your partner'} joined! Time to create rituals together!`, { 
+          // Check if partner just joined
+          if (payload.eventType === 'UPDATE' && payload.new.partner_two && !payload.old?.partner_two) {
+            const coupleData = await fetchCouple(user.id);
+            const partnerName = coupleData?.partner_two_profile?.name || 'Your partner';
+            toast.success(`🎉 ${partnerName} joined!`, {
+              description: 'Time to create rituals together',
               duration: 5000
             });
           } else {
-            // For other updates, just refetch
-            fetchCouple(user.id);
+            await fetchCouple(user.id);
           }
         })
         .subscribe();
@@ -138,7 +129,8 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
         .channel('cycles-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_cycles' }, (payload: any) => {
           if (payload.new?.synthesized_output && !payload.old?.synthesized_output) {
-            toast.success("Your weekly rituals are ready! 🎉", { duration: 5000 });
+            const partnerName = partnerProfile?.name || 'Your partner';
+            toast.success(`✨ ${partnerName} finished! Your rituals are ready`, { duration: 5000 });
             navigate('/rituals');
           }
           if (couple) fetchCycle(couple.id);

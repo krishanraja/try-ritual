@@ -47,9 +47,11 @@ export const AppShell = ({ children }: AppShellProps) => {
     { path: '/profile', icon: User, label: 'Profile' }
   ];
 
-  const getPartnerName = () => {
+  const { partnerProfile } = useCouple();
+
+  const getPartnerStatus = () => {
     if (!couple?.partner_two) return 'Waiting for partner';
-    return 'Connected';
+    return partnerProfile?.name || 'Connected';
   };
 
   return (
@@ -74,7 +76,7 @@ export const AppShell = ({ children }: AppShellProps) => {
               {couple ? (
                 <span className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${couple.partner_two ? 'bg-green-500' : 'bg-amber-500'} animate-pulse`} />
-                  {getPartnerName()}
+                  {getPartnerStatus()}
                 </span>
               ) : (
                 'Solo Mode'

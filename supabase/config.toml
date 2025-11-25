@@ -2,3 +2,6 @@ project_id = "gdojuuzlxpxftsfkmneu"
 
 [functions.synthesize-rituals]
 verify_jwt = true
+
+[functions.nudge-partner]
+verify_jwt = true

@@ -175,7 +175,9 @@ export default function QuickInput() {
 
         // Navigate will happen from SynthesisAnimation
       } else {
-        toast.success('Answers saved! Waiting for your partner...');
+        toast.success('All set! We\'ll notify you when your partner is ready', {
+          duration: 4000
+        });
         await refreshCycle();
         navigate('/home');
       }

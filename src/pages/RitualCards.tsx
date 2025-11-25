@@ -201,16 +201,6 @@ export default function RitualCards() {
           />
         </div>
 
-        {/* Footer - Compact */}
-        <div className="flex-none px-4 pb-3 pt-2">
-          <Button 
-            onClick={() => navigate('/home')} 
-            variant="outline" 
-            className="w-full h-10 rounded-xl text-sm"
-          >
-            Go Home
-          </Button>
-        </div>
       </div>
     </StrictMobileViewport>
   );

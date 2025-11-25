@@ -291,6 +291,7 @@ export type Database = {
           created_at: string
           generated_at: string | null
           id: string
+          nudged_at: string | null
           partner_one_input: Json | null
           partner_one_submitted_at: string | null
           partner_two_input: Json | null
@@ -306,6 +307,7 @@ export type Database = {
           created_at?: string
           generated_at?: string | null
           id?: string
+          nudged_at?: string | null
           partner_one_input?: Json | null
           partner_one_submitted_at?: string | null
           partner_two_input?: Json | null
@@ -321,6 +323,7 @@ export type Database = {
           created_at?: string
           generated_at?: string | null
           id?: string
+          nudged_at?: string | null
           partner_one_input?: Json | null
           partner_one_submitted_at?: string | null
           partner_two_input?: Json | null
