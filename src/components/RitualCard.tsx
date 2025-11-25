@@ -37,9 +37,9 @@ export const RitualCard = ({
   agreedTime
 }: RitualCardProps) => {
   const heights = {
-    full: 'max-h-[calc(100vh-220px)] min-h-[340px]',
-    compact: 'max-h-[calc(100vh-240px)] min-h-[280px]',
-    sample: 'max-h-[calc(100vh-240px)] min-h-[280px]'
+    full: 'h-[520px]',
+    compact: 'h-[480px]',
+    sample: 'h-[480px]'
   };
 
   const getCategoryColor = (category?: string) => {
@@ -76,24 +76,20 @@ export const RitualCard = ({
         </div>
       </div>
 
-      {/* Description */}
-      <div className="px-5 pb-4 flex-none">
+      {/* Description - Scrollable */}
+      <div className="px-5 pb-4 flex-1 min-h-0 overflow-y-auto">
         <p className="text-base leading-relaxed">
           {ritual.description}
         </p>
-      </div>
-
-      {/* Why Section - Compact */}
-      {ritual.why && (
-        <div className="px-5 pb-3 flex-none">
-          <p className="text-xs text-muted-foreground italic">
+        {ritual.why && (
+          <p className="text-xs text-muted-foreground italic mt-3">
             ✨ {ritual.why}
           </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Metadata */}
-      <div className="px-5 pb-3 flex-none">
+      <div className="px-5 pb-4 flex-none">
         <div className="flex flex-wrap items-center gap-2">
           {ritual.category && (
             <Badge variant="outline" className={cn("text-xs", getCategoryColor(ritual.category))}>
@@ -110,9 +106,6 @@ export const RitualCard = ({
           </div>
         </div>
       </div>
-
-      {/* Spacer */}
-      <div className="flex-1" />
 
       {/* Actions */}
       {showActions && (
