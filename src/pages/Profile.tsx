@@ -16,6 +16,13 @@ export default function Profile() {
   const [selectedCity, setSelectedCity] = useState<City>('New York');
   const [loading, setLoading] = useState(true);
 
+  console.log('Profile Debug:', { 
+    hasCouple: !!couple, 
+    hasPartnerTwo: !!couple?.partner_two,
+    partnerProfileName: partnerProfile?.name,
+    partnerProfile 
+  });
+
   useEffect(() => {
     if (user && couple) {
       loadPreferredCity();
@@ -100,7 +107,7 @@ export default function Profile() {
               <p className="text-sm text-muted-foreground">
                 {couple ? (
                   couple.partner_two 
-                    ? `Connected with ${partnerProfile?.name || 'partner'}` 
+                    ? `Connected with ${partnerProfile?.name || 'Partner'}` 
                     : 'Waiting for partner...'
                 ) : 'Solo Mode'}
               </p>
