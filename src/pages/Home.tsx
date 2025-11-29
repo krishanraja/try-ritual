@@ -61,6 +61,21 @@ export default function Home() {
     }
   }, [currentCycle?.synthesized_output, couple?.partner_two, navigate]);
 
+  // Auto-redirect to input when couple is complete
+  useEffect(() => {
+    if (!couple || !currentCycle || loading) return;
+    
+    const hasPartnerOne = !!currentCycle?.partner_one_input;
+    const hasPartnerTwo = !!currentCycle?.partner_two_input;
+    const userIsPartnerOne = couple.partner_one === user?.id;
+    const userSubmitted = userIsPartnerOne ? hasPartnerOne : hasPartnerTwo;
+    
+    // Both partners connected and user hasn't submitted yet
+    if (couple.partner_two && !userSubmitted) {
+      navigate('/input');
+    }
+  }, [couple, currentCycle, user, loading, navigate]);
+
   if (loading) {
     return (
       <StrictMobileViewport>
