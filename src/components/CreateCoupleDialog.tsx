@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, MessageCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCouple } from "@/contexts/CoupleContext";
+import { shareCodeToWhatsApp, shareCodeToSMS } from "@/utils/shareUtils";
 
 interface CreateCoupleDialogProps {
   open: boolean;
@@ -161,23 +162,42 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
                   )}
                 </div>
                 
-                <Button
-                  onClick={copyCode}
-                  variant="outline"
-                  className="w-full border-2 border-primary/30 rounded-xl h-12"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy Code
-                    </>
-                  )}
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => shareCodeToWhatsApp(coupleCode)}
+                    className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white h-12 rounded-xl"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Share via WhatsApp
+                  </Button>
+                  
+                  <Button
+                    onClick={() => shareCodeToSMS(coupleCode)}
+                    variant="outline"
+                    className="w-full border-2 border-primary/30 rounded-xl h-12"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Share via SMS
+                  </Button>
+                  
+                  <Button
+                    onClick={copyCode}
+                    variant="outline"
+                    className="w-full border-2 border-primary/30 rounded-xl h-12"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy Code
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
 
               <Button
