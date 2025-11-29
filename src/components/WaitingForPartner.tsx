@@ -1,12 +1,24 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { motion } from 'framer-motion';
-import { Clock, Heart, Sparkles } from 'lucide-react';
+import { Clock, Heart, Sparkles, RotateCcw } from 'lucide-react';
 import { RitualCarousel } from './RitualCarousel';
 import { useSampleRituals } from '@/hooks/useSampleRituals';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useCouple } from '@/contexts/CoupleContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
 
 interface WaitingForPartnerProps {
   partnerName: string;
@@ -21,8 +33,12 @@ export const WaitingForPartner = ({
   currentCycleId,
   lastNudgedAt 
 }: WaitingForPartnerProps) => {
+  const navigate = useNavigate();
+  const { user, couple, refreshCycle } = useCouple();
   const [showSamples, setShowSamples] = useState(false);
   const [isNudging, setIsNudging] = useState(false);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const { rituals } = useSampleRituals();
 
   const handleNudge = async () => {
@@ -49,6 +65,37 @@ export const WaitingForPartner = ({
     if (!lastNudgedAt) return true;
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     return new Date(lastNudgedAt) < oneHourAgo;
+  };
+
+  const handleClearAnswers = async () => {
+    if (!user || !couple) return;
+    
+    setIsClearing(true);
+    try {
+      const isPartnerOne = couple.partner_one === user.id;
+      const updateField = isPartnerOne ? 'partner_one_input' : 'partner_two_input';
+      const submittedField = isPartnerOne ? 'partner_one_submitted_at' : 'partner_two_submitted_at';
+
+      const { error } = await supabase
+        .from('weekly_cycles')
+        .update({
+          [updateField]: null,
+          [submittedField]: null
+        })
+        .eq('id', currentCycleId);
+
+      if (error) throw error;
+
+      toast.success('Your answers have been cleared. Ready to start fresh!');
+      await refreshCycle();
+      navigate('/input');
+    } catch (error) {
+      console.error('Error clearing answers:', error);
+      toast.error('Failed to clear answers. Please try again.');
+    } finally {
+      setIsClearing(false);
+      setShowClearDialog(false);
+    }
   };
 
   if (showSamples) {
@@ -156,6 +203,15 @@ export const WaitingForPartner = ({
           <Sparkles className="w-4 h-4" />
           Browse Sample Rituals
         </Button>
+
+        <Button
+          onClick={() => setShowClearDialog(true)}
+          variant="ghost"
+          className="w-full h-10 rounded-xl flex items-center gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Clear & Redo My Answers
+        </Button>
       </div>
 
       {/* Encouraging Message */}
@@ -164,6 +220,28 @@ export const WaitingForPartner = ({
           Once {partnerName} completes their input, we'll synthesize your perfect rituals for the week 💫
         </p>
       </Card>
+
+      {/* Clear Answers Confirmation Dialog */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Your Answers?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove your submitted answers for this week. You'll be able to start fresh and resubmit. {partnerName} will still see that you haven't completed your input yet.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isClearing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearAnswers}
+              disabled={isClearing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isClearing ? 'Clearing...' : 'Clear & Redo'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
