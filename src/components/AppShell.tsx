@@ -1,9 +1,8 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Calendar, Clock, User, Share2, UserPlus } from 'lucide-react';
+import { Home, Calendar, Clock, User, UserPlus } from 'lucide-react';
 import { Button } from './ui/button';
 import { useCouple } from '@/contexts/CoupleContext';
-import { ShareDrawer } from './ShareDrawer';
 import { JoinDrawer } from './JoinDrawer';
 import { CreateCoupleDialog } from './CreateCoupleDialog';
 import { StatusIndicator } from './StatusIndicator';
@@ -17,7 +16,6 @@ export const AppShell = ({ children }: AppShellProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, couple, currentCycle } = useCouple();
-  const [shareOpen, setShareOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   
@@ -73,18 +71,6 @@ export const AppShell = ({ children }: AppShellProps) => {
           <div className="flex items-center gap-3">
             <StatusIndicator />
             
-            {couple && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShareOpen(true)}
-                className="flex items-center gap-2 h-8 px-3"
-              >
-                <Share2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Share</span>
-              </Button>
-            )}
-            
             {(!couple || (couple && !couple.partner_two)) && (
               <Button 
                 variant="ghost" 
@@ -133,13 +119,6 @@ export const AppShell = ({ children }: AppShellProps) => {
       )}
 
       {/* Drawers */}
-      {couple && (
-        <ShareDrawer 
-          open={shareOpen} 
-          onOpenChange={setShareOpen}
-          coupleCode={couple.couple_code}
-        />
-      )}
       <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
       <CreateCoupleDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>

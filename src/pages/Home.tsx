@@ -11,7 +11,7 @@ import { WaitingForPartner } from '@/components/WaitingForPartner';
 import { StrictMobileViewport } from '@/components/StrictMobileViewport';
 import { SynthesisAnimation } from '@/components/SynthesisAnimation';
 import { CreateCoupleDialog } from '@/components/CreateCoupleDialog';
-import { ShareDrawer } from '@/components/ShareDrawer';
+
 import { JoinDrawer } from '@/components/JoinDrawer';
 
 export default function Home() {
@@ -20,7 +20,7 @@ export default function Home() {
   const [nudgeBannerDismissed, setNudgeBannerDismissed] = useState(false);
   const [slowLoading, setSlowLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
+  
   const [joinOpen, setJoinOpen] = useState(false);
 
   // Show slow loading indicator after 3 seconds
@@ -119,7 +119,7 @@ export default function Home() {
     );
   }
 
-  // Waiting for partner: INVITE CTA
+  // Waiting for partner: Show code directly inline
   if (!couple.partner_two) {
     return (
       <StrictMobileViewport>
@@ -129,26 +129,67 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             className="space-y-6 max-w-sm mx-auto"
           >
-            {/* Hero Message */}
+            {/* Waiting status */}
             <div className="text-center space-y-3">
-              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center animate-pulse">
                 <Heart className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-2xl font-bold">Almost There!</h1>
+              <h1 className="text-2xl font-bold">Waiting for Partner...</h1>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Ritual works best with two people. Invite someone special to create weekly rituals together.
+                Share your code to invite someone special
               </p>
             </div>
 
-            {/* Primary CTA */}
-            <Button 
-              onClick={() => setShareOpen(true)} 
-              size="lg"
-              className="w-full h-14 bg-gradient-ritual text-white rounded-xl text-base"
-            >
-              <Share2 className="w-5 h-5 mr-2" />
-              Invite Your Partner
-            </Button>
+            {/* Code Display */}
+            <Card className="p-6 bg-white/90 backdrop-blur-sm">
+              <p className="text-sm text-muted-foreground mb-2 text-center">Your Couple Code</p>
+              <p className="text-5xl font-bold text-primary tracking-wider mb-6 text-center">
+                {couple.couple_code}
+              </p>
+              
+              {/* Share Options */}
+              <div className="space-y-2">
+                <Button
+                  onClick={() => {
+                    const text = `Try this 2-min ritual generator with me! 💕\n\nUse code: ${couple.couple_code}\n\nGet personalized date ideas based on our combined vibes. Takes 2 minutes total.`;
+                    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                    window.open(url, '_blank');
+                  }}
+                  className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white h-12 rounded-xl"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share via WhatsApp
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    const text = `Join our ritual space! Use code: ${couple.couple_code}`;
+                    const url = `sms:&body=${encodeURIComponent(text)}`;
+                    window.location.href = url;
+                  }}
+                  variant="outline"
+                  className="w-full border-2 border-primary/30 rounded-xl h-12"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share via SMS
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(couple.couple_code);
+                    } catch (error) {
+                      console.error('Copy failed:', error);
+                    }
+                  }}
+                  variant="outline"
+                  className="w-full border-2 border-primary/30 rounded-xl h-12"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Copy Code
+                </Button>
+              </div>
+            </Card>
 
             {/* Recovery Option: Join someone else instead */}
             <div className="text-center">
@@ -161,28 +202,8 @@ export default function Home() {
                 Join Someone Else's Code
               </Button>
             </div>
-
-            {/* Secondary: Preview Samples */}
-            <div className="text-center space-y-2">
-              <p className="text-xs text-muted-foreground">
-                While you wait, see what rituals look like:
-              </p>
-              <Button 
-                onClick={() => navigate('/rituals')} 
-                variant="ghost"
-                size="sm"
-                className="text-xs"
-              >
-                Preview Sample Rituals
-              </Button>
-            </div>
           </motion.div>
         </div>
-        <ShareDrawer 
-          open={shareOpen} 
-          onOpenChange={setShareOpen}
-          coupleCode={couple.couple_code}
-        />
         <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
       </StrictMobileViewport>
     );
@@ -279,11 +300,6 @@ export default function Home() {
           </motion.div>
         </div>
       </div>
-      <ShareDrawer 
-        open={shareOpen} 
-        onOpenChange={setShareOpen}
-        coupleCode={couple.couple_code}
-      />
       <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
     </StrictMobileViewport>
   );

@@ -200,12 +200,6 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
                 </div>
               </div>
 
-              <Button
-                onClick={handleClose}
-                className="w-full bg-gradient-ritual text-white hover:opacity-90 h-12 rounded-xl"
-              >
-                Done
-              </Button>
             </div>
           </>
         )}

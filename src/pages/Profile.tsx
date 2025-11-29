@@ -1,7 +1,7 @@
 import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { LogOut, Share2, UserPlus, UserMinus, MapPin } from 'lucide-react';
+import { LogOut, UserPlus, UserMinus, MapPin, Copy, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -10,7 +10,6 @@ import { LocationToggle, City } from '@/components/LocationToggle';
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useSEO, addStructuredData, getLocationStructuredData } from '@/hooks/useSEO';
-import { ShareDrawer } from '@/components/ShareDrawer';
 import { JoinDrawer } from '@/components/JoinDrawer';
 
 export default function Profile() {
@@ -18,8 +17,8 @@ export default function Profile() {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState<City>('New York');
   const [loading, setLoading] = useState(true);
-  const [shareOpen, setShareOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // SEO for profile page
   useSEO({
@@ -151,12 +150,37 @@ export default function Profile() {
               <>
                 <Card className="p-4 bg-white/90">
                   <Button
-                    onClick={() => setShareOpen(true)}
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(couple.couple_code);
+                        setCopied(true);
+                        toast({
+                          title: "Code copied!",
+                          description: `Your couple code: ${couple.couple_code}`,
+                        });
+                        setTimeout(() => setCopied(false), 2000);
+                      } catch (error) {
+                        toast({
+                          title: "Failed to copy",
+                          description: "Please try again",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
                     variant="ghost"
                     className="w-full justify-start"
                   >
-                    <Share2 className="w-5 h-5 mr-3" />
-                    <span>Share Couple Code</span>
+                    {copied ? (
+                      <>
+                        <Check className="w-5 h-5 mr-3" />
+                        <span>Code Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-5 h-5 mr-3" />
+                        <span>Copy Couple Code</span>
+                      </>
+                    )}
                   </Button>
                 </Card>
 
@@ -201,13 +225,6 @@ export default function Profile() {
             <p>Made with 💕 for shared moments</p>
           </div>
         </div>
-        {couple && (
-          <ShareDrawer 
-            open={shareOpen} 
-            onOpenChange={setShareOpen}
-            coupleCode={couple.couple_code}
-          />
-        )}
         <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
       </div>
     </StrictMobileViewport>
