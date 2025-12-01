@@ -35,12 +35,22 @@ export const AppShell = ({ children }: AppShellProps) => {
       ? currentCycle.partner_two_input
       : currentCycle.partner_one_input;
     
-    if (userSubmitted && partnerSubmitted && currentCycle.synthesized_output) {
+    // Both submitted and agreed on ritual
+    if (currentCycle.agreement_reached && currentCycle.agreed_ritual) {
       return '/rituals';
     }
+    
+    // Both submitted, has synthesized output but no agreement yet
+    if (userSubmitted && partnerSubmitted && currentCycle.synthesized_output) {
+      return '/picker';
+    }
+    
+    // User submitted, waiting for partner
     if (userSubmitted) {
       return '/home';
     }
+    
+    // Neither submitted yet
     return '/input';
   };
 

@@ -1,7 +1,7 @@
 import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { LogOut, UserPlus, UserMinus, MapPin, Copy, Check } from 'lucide-react';
+import { LogOut, UserPlus, UserMinus, MapPin, Copy, Check, Calendar, Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -11,9 +11,10 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useSEO, addStructuredData, getLocationStructuredData } from '@/hooks/useSEO';
 import { JoinDrawer } from '@/components/JoinDrawer';
+import { format } from 'date-fns';
 
 export default function Profile() {
-  const { user, couple, partnerProfile, leaveCouple } = useCouple();
+  const { user, couple, partnerProfile, leaveCouple, currentCycle } = useCouple();
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState<City>('New York');
   const [loading, setLoading] = useState(true);
@@ -131,6 +132,33 @@ export default function Profile() {
             className="space-y-3"
           >
             {/* Location Preference */}
+            {/* This Week's Ritual */}
+            {currentCycle?.agreement_reached && currentCycle?.agreed_ritual && (
+              <Card 
+                className="p-4 bg-gradient-ritual text-white cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate('/rituals')}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Heart className="w-4 h-4" fill="currentColor" />
+                      <span className="text-xs font-semibold">This Week's Ritual</span>
+                    </div>
+                    <h3 className="font-bold text-lg">{currentCycle.agreed_ritual.title}</h3>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-xs opacity-90">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    <span>{format(new Date(currentCycle.agreed_date), 'MMM d')}</span>
+                  </div>
+                  {currentCycle.agreed_time && (
+                    <span>at {currentCycle.agreed_time}</span>
+                  )}
+                </div>
+              </Card>
+            )}
+
             <Card className="p-4 bg-white/90">
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">

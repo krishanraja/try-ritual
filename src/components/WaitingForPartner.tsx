@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { motion } from 'framer-motion';
-import { Clock, Heart, Sparkles, RotateCcw } from 'lucide-react';
+import { Clock, Heart, Sparkles, RotateCcw, Lightbulb } from 'lucide-react';
 import { RitualCarousel } from './RitualCarousel';
 import { useSampleRituals } from '@/hooks/useSampleRituals';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCouple } from '@/contexts/CoupleContext';
+import { CelebrationScreen } from './CelebrationScreen';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +40,35 @@ export const WaitingForPartner = ({
   const [isNudging, setIsNudging] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const { rituals } = useSampleRituals();
+
+  // Listen for partner completion in realtime
+  useEffect(() => {
+    const channel = supabase
+      .channel(`cycle-updates-${currentCycleId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'weekly_cycles',
+        filter: `id=eq.${currentCycleId}`
+      }, async (payload: any) => {
+        const isPartnerOne = couple?.partner_one === user?.id;
+        const partnerSubmitted = isPartnerOne
+          ? payload.new.partner_two_input
+          : payload.new.partner_one_input;
+
+        if (partnerSubmitted) {
+          // Partner just completed! Show celebration
+          setShowCelebration(true);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentCycleId, couple, user]);
 
   const handleNudge = async () => {
     setIsNudging(true);
@@ -97,6 +126,18 @@ export const WaitingForPartner = ({
       setShowClearDialog(false);
     }
   };
+
+  if (showCelebration) {
+    return (
+      <CelebrationScreen
+        message="Both vibes are in! ✨"
+        onComplete={async () => {
+          await refreshCycle();
+          navigate('/picker');
+        }}
+      />
+    );
+  }
 
   if (showSamples) {
     return (
@@ -166,7 +207,7 @@ export const WaitingForPartner = ({
       </motion.div>
 
       {/* Message */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-3">
         <h2 className="text-2xl font-bold">You're All Set! ✨</h2>
         <p className="text-muted-foreground">
           Waiting for <span className="font-semibold text-foreground">{partnerName}</span> to share their vibe
@@ -176,6 +217,19 @@ export const WaitingForPartner = ({
             "{weeklyTheme}"
           </p>
         )}
+        
+        {/* Inspiration tip */}
+        <Card className="p-3 bg-primary/5 border-primary/20 max-w-sm mx-auto">
+          <div className="flex items-start gap-2">
+            <Lightbulb className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div className="text-left">
+              <p className="text-xs font-semibold text-primary mb-1">Did you know?</p>
+              <p className="text-xs text-muted-foreground">
+                Couples who share 2-3 rituals per week report 40% higher relationship satisfaction
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Actions */}
@@ -186,7 +240,7 @@ export const WaitingForPartner = ({
           className="w-full h-12 rounded-xl bg-gradient-ritual text-white hover:opacity-90 transition-opacity flex items-center gap-2"
         >
           <Heart className="w-4 h-4" />
-          {isNudging ? 'Sending...' : `Send Gentle Reminder to ${partnerName}`}
+          {isNudging ? 'Sending...' : `Give ${partnerName} a cheeky nudge 💕`}
         </Button>
         
         {!canNudge() && (

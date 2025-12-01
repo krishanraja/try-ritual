@@ -124,6 +124,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ritual_feedback: {
+        Row: {
+          connection_rating: number | null
+          couple_id: string
+          created_at: string
+          did_complete: boolean | null
+          id: string
+          notes: string | null
+          updated_at: string
+          weekly_cycle_id: string
+          would_repeat: string | null
+        }
+        Insert: {
+          connection_rating?: number | null
+          couple_id: string
+          created_at?: string
+          did_complete?: boolean | null
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          weekly_cycle_id: string
+          would_repeat?: string | null
+        }
+        Update: {
+          connection_rating?: number | null
+          couple_id?: string
+          created_at?: string
+          did_complete?: boolean | null
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          weekly_cycle_id?: string
+          would_repeat?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_feedback_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ritual_feedback_weekly_cycle_id_fkey"
+            columns: ["weekly_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ritual_library: {
         Row: {
           budget_band: string

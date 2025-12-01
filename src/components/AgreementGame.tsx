@@ -5,7 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
-import { Sparkles, Calendar, Clock } from 'lucide-react';
+import { Sparkles, Calendar, Clock, Download, Share2 } from 'lucide-react';
+import { downloadICS } from '@/utils/calendarUtils';
+import { shareToWhatsApp } from '@/utils/shareUtils';
 
 interface Preference {
   rank: number;
@@ -28,7 +30,7 @@ export const AgreementGame = ({
   cycleId
 }: AgreementGameProps) => {
   const [stage, setStage] = useState<'compare' | 'resolve' | 'done'>('compare');
-  const [selectedOption, setSelectedOption] = useState<'mine' | 'theirs' | null>(null);
+  const [selectedOption, setSelectedOption] = useState<'mine' | 'theirs' | 'coin' | null>(null);
 
   // Find overlaps
   const myTop = myPreferences.find(p => p.rank === 1)?.ritual;
@@ -83,17 +85,64 @@ export const AgreementGame = ({
       if (error) throw error;
 
       confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-      toast.success('Agreement reached! 🎉');
       setStage('done');
-      
-      setTimeout(() => {
-        onAgreementReached(finalRitual, finalDate, finalTime);
-      }, 2000);
+      setSelectedOption(choice);
 
     } catch (error) {
       console.error('Error reaching agreement:', error);
       toast.error('Failed to save agreement');
     }
+  };
+
+  const handleAddToCalendar = () => {
+    if (stage !== 'done') return;
+    
+    const finalRitual = selectedOption === 'mine' 
+      ? myTop 
+      : selectedOption === 'theirs' 
+      ? partnerTop.ritual_data 
+      : myTop;
+    
+    const finalDate = selectedOption === 'mine'
+      ? myPreferences.find(p => p.rank === 1)?.proposedDate
+      : new Date(partnerTop.proposed_date);
+    
+    const finalTime = selectedOption === 'mine'
+      ? myPreferences.find(p => p.rank === 1)?.proposedTime
+      : partnerTop.proposed_time;
+
+    downloadICS(finalRitual, finalDate, finalTime);
+    toast.success('Calendar event downloaded! 📅');
+  };
+
+  const handleShare = () => {
+    if (stage !== 'done') return;
+    
+    const finalRitual = selectedOption === 'mine' 
+      ? myTop 
+      : selectedOption === 'theirs' 
+      ? partnerTop.ritual_data 
+      : myTop;
+
+    shareToWhatsApp(finalRitual);
+  };
+
+  const handleContinue = () => {
+    const finalRitual = selectedOption === 'mine' 
+      ? myTop 
+      : selectedOption === 'theirs' 
+      ? partnerTop.ritual_data 
+      : myTop;
+    
+    const finalDate = selectedOption === 'mine'
+      ? myPreferences.find(p => p.rank === 1)?.proposedDate?.toISOString().split('T')[0]!
+      : partnerTop.proposed_date;
+    
+    const finalTime = selectedOption === 'mine'
+      ? myPreferences.find(p => p.rank === 1)?.proposedTime!
+      : partnerTop.proposed_time || '19:00';
+
+    onAgreementReached(finalRitual, finalDate, finalTime);
   };
 
   if (perfectMatch) {
@@ -240,14 +289,44 @@ export const AgreementGame = ({
   }
 
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="flex items-center justify-center h-full p-4">
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="text-center"
+        className="text-center max-w-sm w-full space-y-4"
       >
         <Sparkles className="w-16 h-16 mx-auto mb-4 text-primary" />
         <h2 className="text-2xl font-bold">Agreement Reached! 🎉</h2>
+        <p className="text-sm text-muted-foreground">
+          Your ritual is set! Add it to your calendar or share with friends.
+        </p>
+        
+        <div className="space-y-2">
+          <Button
+            onClick={handleAddToCalendar}
+            variant="outline"
+            className="w-full h-12 flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Add to Calendar
+          </Button>
+          
+          <Button
+            onClick={handleShare}
+            variant="outline"
+            className="w-full h-12 flex items-center gap-2"
+          >
+            <Share2 className="w-4 h-4" />
+            Share via WhatsApp
+          </Button>
+
+          <Button
+            onClick={handleContinue}
+            className="w-full h-12 bg-gradient-ritual text-white"
+          >
+            View Your Rituals
+          </Button>
+        </div>
       </motion.div>
     </div>
   );

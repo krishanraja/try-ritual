@@ -4,15 +4,16 @@ import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
-import { Heart, Sparkles, Share2, X } from 'lucide-react';
+import { Heart, Sparkles, Share2, X, Calendar, Clock } from 'lucide-react';
 import { StreakBadge } from '@/components/StreakBadge';
 import { RitualLogo } from '@/components/RitualLogo';
 import { WaitingForPartner } from '@/components/WaitingForPartner';
 import { StrictMobileViewport } from '@/components/StrictMobileViewport';
 import { SynthesisAnimation } from '@/components/SynthesisAnimation';
 import { CreateCoupleDialog } from '@/components/CreateCoupleDialog';
-
 import { JoinDrawer } from '@/components/JoinDrawer';
+import { PostRitualCheckin } from '@/components/PostRitualCheckin';
+import { format, isPast, parseISO } from 'date-fns';
 
 export default function Home() {
   const { user, couple, partnerProfile, currentCycle, loading } = useCouple();
@@ -20,8 +21,8 @@ export default function Home() {
   const [nudgeBannerDismissed, setNudgeBannerDismissed] = useState(false);
   const [slowLoading, setSlowLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  
   const [joinOpen, setJoinOpen] = useState(false);
+  const [showPostRitualCheckin, setShowPostRitualCheckin] = useState(false);
 
   // Show slow loading indicator after 3 seconds
   useEffect(() => {
@@ -54,12 +55,17 @@ export default function Home() {
     }
   }, [user, loading]);
 
-  // Smart redirect: Auto-navigate to rituals when ready
+  // Smart redirect: Auto-navigate to rituals or picker when ready
   useEffect(() => {
     if (currentCycle?.synthesized_output && couple?.partner_two) {
-      navigate('/rituals');
+      // If agreement reached, go to rituals, otherwise go to picker
+      if (currentCycle.agreement_reached) {
+        navigate('/rituals');
+      } else {
+        navigate('/picker');
+      }
     }
-  }, [currentCycle?.synthesized_output, couple?.partner_two, navigate]);
+  }, [currentCycle?.synthesized_output, currentCycle?.agreement_reached, couple?.partner_two, navigate]);
 
   // Auto-redirect to input when couple is complete
   useEffect(() => {
@@ -75,6 +81,31 @@ export default function Home() {
       navigate('/input');
     }
   }, [couple, currentCycle, user, loading, navigate]);
+
+  // Check if should show post-ritual checkin
+  useEffect(() => {
+    if (!currentCycle?.agreed_date || !currentCycle?.agreed_time || !couple?.id) return;
+
+    const ritualDateTime = parseISO(`${currentCycle.agreed_date}T${currentCycle.agreed_time}`);
+    const hasRitualPassed = isPast(ritualDateTime);
+
+    if (hasRitualPassed && !showPostRitualCheckin) {
+      // Check if feedback already exists
+      const checkFeedback = async () => {
+        const { data } = await (await import('@/integrations/supabase/client')).supabase
+          .from('ritual_feedback')
+          .select('id')
+          .eq('weekly_cycle_id', currentCycle.id)
+          .eq('couple_id', couple.id)
+          .single();
+        
+        if (!data) {
+          setShowPostRitualCheckin(true);
+        }
+      };
+      checkFeedback();
+    }
+  }, [currentCycle, couple, showPostRitualCheckin]);
 
   if (loading) {
     return (
@@ -241,10 +272,26 @@ export default function Home() {
             currentCycleId={currentCycle.id}
             lastNudgedAt={currentCycle.nudged_at}
           />
+          {showPostRitualCheckin && currentCycle?.agreed_ritual && (
+            <PostRitualCheckin
+              coupleId={couple.id}
+              cycleId={currentCycle.id}
+              ritualTitle={currentCycle.agreed_ritual.title}
+              onComplete={() => setShowPostRitualCheckin(false)}
+              onDismiss={() => setShowPostRitualCheckin(false)}
+            />
+          )}
         </div>
       </StrictMobileViewport>
     );
   }
+
+  // Check if ritual time has passed
+  const hasAgreedRitual = currentCycle?.agreement_reached && currentCycle?.agreed_ritual;
+  const ritualHasPassed = hasAgreedRitual && 
+    currentCycle?.agreed_date && 
+    currentCycle?.agreed_time &&
+    isPast(parseISO(`${currentCycle.agreed_date}T${currentCycle.agreed_time}`));
 
   return (
     <StrictMobileViewport>
@@ -282,24 +329,80 @@ export default function Home() {
 
         {/* Main Content - Centered */}
         <div className="flex-1 px-4 pb-4 flex flex-col justify-center">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-            <Card className="p-6 bg-card/90 backdrop-blur-sm text-center space-y-4">
-              <div className="w-12 h-12 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">
-                <Heart className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold mb-1">Ready for This Week?</h2>
-                <p className="text-xs text-muted-foreground">
-                  Share your preferences to create rituals with {partnerProfile?.name || 'your partner'}
-                </p>
-              </div>
-              <Button onClick={() => navigate('/input')} className="w-full bg-gradient-ritual text-white h-12 rounded-xl">
-                Start Input
-              </Button>
-            </Card>
-          </motion.div>
+          {ritualHasPassed && hasAgreedRitual ? (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+              <Card className="p-6 bg-primary/5 border-primary/20 text-center space-y-4">
+                <Heart className="w-12 h-12 mx-auto text-primary" fill="currentColor" />
+                <div>
+                  <h2 className="text-xl font-bold mb-2">How was your ritual?</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {currentCycle.agreed_ritual.title}
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setShowPostRitualCheckin(true)}
+                  className="w-full bg-gradient-ritual text-white h-12 rounded-xl"
+                >
+                  Share Your Experience
+                </Button>
+              </Card>
+            </motion.div>
+          ) : hasAgreedRitual ? (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+              <Card
+                onClick={() => navigate('/rituals')}
+                className="p-6 cursor-pointer hover:shadow-lg transition-all bg-gradient-ritual text-white border-0 active:scale-95"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold">This Week's Ritual</h2>
+                    <Heart className="w-10 h-10" fill="currentColor" />
+                  </div>
+                  <p className="text-lg font-semibold">{currentCycle.agreed_ritual.title}</p>
+                  <div className="flex items-center gap-3 text-sm opacity-90">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{format(new Date(currentCycle.agreed_date), 'MMM d')}</span>
+                    </div>
+                    {currentCycle.agreed_time && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{currentCycle.agreed_time}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          ) : (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+              <Card className="p-6 bg-card/90 backdrop-blur-sm text-center space-y-4">
+                <div className="w-12 h-12 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">
+                  <Heart className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold mb-1">Ready for This Week?</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Share your preferences to create rituals with {partnerProfile?.name || 'your partner'}
+                  </p>
+                </div>
+                <Button onClick={() => navigate('/input')} className="w-full bg-gradient-ritual text-white h-12 rounded-xl">
+                  Start Input
+                </Button>
+              </Card>
+            </motion.div>
+          )}
         </div>
       </div>
+      {showPostRitualCheckin && hasAgreedRitual && (
+        <PostRitualCheckin
+          coupleId={couple.id}
+          cycleId={currentCycle.id}
+          ritualTitle={currentCycle.agreed_ritual.title}
+          onComplete={() => setShowPostRitualCheckin(false)}
+          onDismiss={() => setShowPostRitualCheckin(false)}
+        />
+      )}
       <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
     </StrictMobileViewport>
   );
