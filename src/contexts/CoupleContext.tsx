@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 interface CoupleContextType {
@@ -12,7 +11,7 @@ interface CoupleContextType {
   loading: boolean;
   refreshCouple: () => Promise<void>;
   refreshCycle: () => Promise<void>;
-  leaveCouple: () => Promise<void>;
+  leaveCouple: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const CoupleContext = createContext<CoupleContextType | null>(null);
@@ -167,12 +166,7 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'couples' }, async (payload: any) => {
           // Check if partner just joined
           if (payload.eventType === 'UPDATE' && payload.new.partner_two && !payload.old?.partner_two) {
-            const coupleData = await fetchCouple(user.id);
-            const partnerName = partnerProfile?.name || 'Your partner';
-            toast.success(`🎉 ${partnerName} joined!`, {
-              description: 'Time to create rituals together',
-              duration: 5000
-            });
+            await fetchCouple(user.id);
             // Redirect both users to /input
             navigate('/input');
           } else {
@@ -197,8 +191,6 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
           }
           
           if (synthesisReady) {
-            const partnerName = partnerProfile?.name || 'Your partner';
-            toast.success(`✨ ${partnerName} finished! Your rituals are ready`, { duration: 5000 });
             navigate('/rituals');
           }
         })
@@ -219,10 +211,9 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
     if (couple) await fetchCycle(couple.id);
   };
 
-  const leaveCouple = async () => {
+  const leaveCouple = async (): Promise<{ success: boolean; error?: string }> => {
     if (!couple || !user) {
-      toast.error("No couple to leave");
-      return;
+      return { success: false, error: "No couple to leave" };
     }
     
     try {
@@ -255,11 +246,11 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
       setCouple(null);
       setPartnerProfile(null);
       setCurrentCycle(null);
-      toast.success("Left couple successfully");
       navigate('/home');
+      return { success: true };
     } catch (error: any) {
       console.error('Error leaving couple:', error);
-      toast.error(`Failed to leave couple: ${error.message}`);
+      return { success: false, error: error.message || 'Failed to leave couple' };
     }
   };
 

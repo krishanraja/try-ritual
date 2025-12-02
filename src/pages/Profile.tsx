@@ -8,8 +8,8 @@ import { motion } from 'framer-motion';
 import { StrictMobileViewport } from '@/components/StrictMobileViewport';
 import { LocationToggle, City } from '@/components/LocationToggle';
 import { useState, useEffect } from 'react';
-import { toast } from '@/hooks/use-toast';
 import { useSEO, addStructuredData, getLocationStructuredData } from '@/hooks/useSEO';
+import { NotificationContainer } from '@/components/InlineNotification';
 import { JoinDrawer } from '@/components/JoinDrawer';
 import { format } from 'date-fns';
 
@@ -20,6 +20,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [joinOpen, setJoinOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   // SEO for profile page
   useSEO({
@@ -76,17 +77,12 @@ export default function Profile() {
 
       if (error) throw error;
       
-      toast({
-        title: "Location updated",
-        description: `Your rituals will now be tailored for ${city}`,
-      });
+      setNotification({ type: 'success', message: `Rituals will now be tailored for ${city}` });
+      setTimeout(() => setNotification(null), 3000);
     } catch (error) {
       console.error('Error updating city:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update location",
-        variant: "destructive",
-      });
+      setNotification({ type: 'error', message: 'Failed to update location' });
+      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -97,7 +93,12 @@ export default function Profile() {
 
   const handleLeaveCouple = async () => {
     if (confirm('Are you sure you want to leave this couple? This cannot be undone.')) {
-      await leaveCouple();
+      const result = await leaveCouple();
+      if (result.success) {
+        setNotification({ type: 'success', message: 'Left couple successfully' });
+      } else {
+        setNotification({ type: 'error', message: result.error || 'Failed to leave couple' });
+      }
     }
   };
 
@@ -131,7 +132,12 @@ export default function Profile() {
             transition={{ delay: 0.1 }}
             className="space-y-3"
           >
-            {/* Location Preference */}
+            {/* Inline Notifications */}
+            <NotificationContainer 
+              notification={notification} 
+              onDismiss={() => setNotification(null)} 
+            />
+
             {/* This Week's Ritual */}
             {currentCycle?.agreement_reached && currentCycle?.agreed_ritual && (
               <Card 
@@ -182,17 +188,14 @@ export default function Profile() {
                       try {
                         await navigator.clipboard.writeText(couple.couple_code);
                         setCopied(true);
-                        toast({
-                          title: "Code copied!",
-                          description: `Your couple code: ${couple.couple_code}`,
-                        });
-                        setTimeout(() => setCopied(false), 2000);
+                        setNotification({ type: 'success', message: `Code copied: ${couple.couple_code}` });
+                        setTimeout(() => {
+                          setCopied(false);
+                          setNotification(null);
+                        }, 2000);
                       } catch (error) {
-                        toast({
-                          title: "Failed to copy",
-                          description: "Please try again",
-                          variant: "destructive",
-                        });
+                        setNotification({ type: 'error', message: 'Failed to copy code' });
+                        setTimeout(() => setNotification(null), 3000);
                       }
                     }}
                     variant="ghost"

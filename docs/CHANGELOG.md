@@ -8,20 +8,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Added
-- Comprehensive project documentation (README, ARCHITECTURE, USER-FLOWS, etc.)
-- Database constraint for preventing duplicate weekly cycles
-- In-context notification system replacing excessive toasts
+### Added - v1.4 (UX Overhaul - 2024-12-02)
+- Comprehensive project documentation in `/docs` folder:
+  - README.md (project overview, purpose, mission, vision)
+  - ARCHITECTURE.md (technical stack, database schema, edge functions)
+  - USER-FLOWS.md (journey diagrams, state machines)
+  - DESIGN-SYSTEM.md (colors, typography, components)
+  - ERROR-PATTERNS.md (lessons learned, prevention strategies)
+  - DATABASE.md (complete schema documentation)
+  - API.md (edge function documentation)
+  - HANDOFF.md (developer guide)
+  - SECURITY.md (RLS policies, auth flow)
+  - ROADMAP.md (future features)
+- `InlineNotification` component for contextual user feedback
+- `NotificationContainer` wrapper component for notification state management
+- Database unique constraint on `weekly_cycles (couple_id, week_start_date)`
+- Performance indexes:
+  - `idx_weekly_cycles_incomplete` for faster incomplete cycle queries
+  - `idx_ritual_memories_highly_rated` for high-rated memories (rating >= 4)
 
 ### Changed
-- Simplified `fetchCycle` logic to find most recent incomplete cycle
-- Streamlined Home.tsx state routing
-- Improved AppShell navigation logic
+- **Profile Page**: Replaced all toast notifications with inline feedback system
+  - Location updates: Show inline success/error messages (3s auto-dismiss for success)
+  - Code copying: Show inline confirmation instead of toast
+  - Leave couple errors: Display contextual error messages
+- **CoupleContext**: 
+  - Updated `leaveCouple()` to return `{ success: boolean; error?: string }` instead of showing toasts
+  - Removed sonner toast dependency
+  - Removed navigation toasts (partner joined, rituals ready)
+- **Profile handleLeaveCouple**: Now consumes result object and shows inline notification
 
 ### Fixed
-- Week boundary bug causing users to see wrong state after week change
-- Stale navigation state when clicking "This Week" nav item
-- Realtime synchronization race conditions
+- **Database integrity**: Cleaned up 5 duplicate weekly_cycles records
+- **Data constraints**: Prevented future duplicate cycles with unique constraint
+- **UX Pattern**: Eliminated toast notification fatigue by moving to contextual feedback
+
+### Removed
+- All toast notifications from Profile page
+- Sonner toast dependency from CoupleContext
+- Auto-dismissing toasts for user-initiated actions
 
 ---
 
@@ -172,16 +197,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Known Issues
 
 ### High Priority
-- [ ] Duplicate weekly_cycles possible (no unique constraint)
-- [ ] Excessive toast notifications
 - [ ] Missing loading skeletons
 - [ ] No error boundaries
+- [ ] Navigation can feel unintuitive in some edge cases
 
 ### Medium Priority
 - [ ] synthesized_output structure inconsistent in old cycles
-- [ ] Navigation can feel unintuitive
 - [ ] No onboarding tutorial
-- [ ] Partner status not always clear
+- [ ] Partner status not always clear in all states
 
 ### Low Priority
 - [ ] No dark mode
