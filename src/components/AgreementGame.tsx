@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import { Sparkles, Calendar, Clock, Download, Share2 } from 'lucide-react';
 import { downloadICS } from '@/utils/calendarUtils';
 import { shareToWhatsApp } from '@/utils/shareUtils';
+import { NotificationContainer } from './InlineNotification';
 
 interface Preference {
   rank: number;
@@ -31,6 +31,7 @@ export const AgreementGame = ({
 }: AgreementGameProps) => {
   const [stage, setStage] = useState<'compare' | 'resolve' | 'done'>('compare');
   const [selectedOption, setSelectedOption] = useState<'mine' | 'theirs' | 'coin' | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   // Find overlaps
   const myTop = myPreferences.find(p => p.rank === 1)?.ritual;
@@ -60,7 +61,7 @@ export const AgreementGame = ({
           myPreferences.find(p => p.rank === 1)?.proposedTime! :
           partnerTop.proposed_time || '19:00';
         
-        toast.info(flip ? '🪙 Your pick won!' : '🪙 Their pick won!');
+        setNotification({ type: 'info', message: flip ? '🪙 Your pick won!' : '🪙 Their pick won!' });
       } else if (choice === 'mine') {
         finalRitual = myTop;
         finalDate = myPreferences.find(p => p.rank === 1)?.proposedDate?.toISOString().split('T')[0]!;
@@ -90,7 +91,7 @@ export const AgreementGame = ({
 
     } catch (error) {
       console.error('Error reaching agreement:', error);
-      toast.error('Failed to save agreement');
+      setNotification({ type: 'error', message: 'Failed to save agreement' });
     }
   };
 
@@ -112,7 +113,7 @@ export const AgreementGame = ({
       : partnerTop.proposed_time;
 
     downloadICS(finalRitual, finalDate, finalTime);
-    toast.success('Calendar event downloaded! 📅');
+    setNotification({ type: 'success', message: 'Calendar event downloaded! 📅' });
   };
 
   const handleShare = () => {
@@ -148,6 +149,14 @@ export const AgreementGame = ({
   if (perfectMatch) {
     return (
       <div className="p-4">
+        {notification && (
+          <div className="mb-4">
+            <NotificationContainer
+              notification={notification}
+              onDismiss={() => setNotification(null)}
+            />
+          </div>
+        )}
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

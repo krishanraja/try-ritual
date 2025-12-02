@@ -6,47 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased]
+## v1.4 (UX Overhaul)
+**Date**: 2025-12-02
 
-### Added - v1.4 (UX Overhaul - 2024-12-02)
-- Comprehensive project documentation in `/docs` folder:
-  - README.md (project overview, purpose, mission, vision)
-  - ARCHITECTURE.md (technical stack, database schema, edge functions)
-  - USER-FLOWS.md (journey diagrams, state machines)
-  - DESIGN-SYSTEM.md (colors, typography, components)
-  - ERROR-PATTERNS.md (lessons learned, prevention strategies)
-  - DATABASE.md (complete schema documentation)
-  - API.md (edge function documentation)
-  - HANDOFF.md (developer guide)
-  - SECURITY.md (RLS policies, auth flow)
-  - ROADMAP.md (future features)
-- `InlineNotification` component for contextual user feedback
-- `NotificationContainer` wrapper component for notification state management
-- Database unique constraint on `weekly_cycles (couple_id, week_start_date)`
-- Performance indexes:
-  - `idx_weekly_cycles_incomplete` for faster incomplete cycle queries
-  - `idx_ritual_memories_highly_rated` for high-rated memories (rating >= 4)
+### Added
+- Profile page with couple code management and settings
+- Inline notification system replacing generic toasts across entire app:
+  - `InlineNotification` component for contextual feedback
+  - `NotificationContainer` wrapper for state management
+- Database optimizations:
+  - Unique constraint on `weekly_cycles (couple_id, week_start_date)`
+  - Index `idx_weekly_cycles_incomplete` for faster queries
+  - Index `idx_ritual_memories_highly_rated` for highly-rated memories
+- TypeScript type definitions for database tables (`src/types/database.ts`)
+- Race condition handling in cycle creation with unique constraint error handling
+- Security: Enabled leaked password protection in auth settings
 
 ### Changed
-- **Profile Page**: Replaced all toast notifications with inline feedback system
-  - Location updates: Show inline success/error messages (3s auto-dismiss for success)
-  - Code copying: Show inline confirmation instead of toast
-  - Leave couple errors: Display contextual error messages
-- **CoupleContext**: 
-  - Updated `leaveCouple()` to return `{ success: boolean; error?: string }` instead of showing toasts
-  - Removed sonner toast dependency
-  - Removed navigation toasts (partner joined, rituals ready)
-- **Profile handleLeaveCouple**: Now consumes result object and shows inline notification
+- **Complete notification refactor** - Replaced toast notifications with contextual inline feedback in:
+  - Profile page (location updates, couple code, leave couple)
+  - QuickInput page (cycle creation, submission, errors)
+  - WaitingForPartner (nudges, clear answers)
+  - JoinDrawer (join validation, success)
+  - AgreementGame (coin flips, calendar downloads)
+  - PostRitualCheckin (silent failures, no blocking toasts)
+  - RitualPicker (ranking, scheduling, errors)
+  - RitualCards (completions, errors)
+  - MagneticInput (synthesis flow)
+- **CoupleContext improvements**:
+  - Now uses proper TypeScript types (Couple, Profile, WeeklyCycle)
+  - `leaveCouple()` returns result objects instead of showing toasts
+  - Removed toast dependencies and side effects
+  - Cleaner separation of concerns
+- Version display updated to v1.4.0 throughout app
+- Leave couple notification now visible before navigation (1.5s delay)
 
 ### Fixed
-- **Database integrity**: Cleaned up 5 duplicate weekly_cycles records
-- **Data constraints**: Prevented future duplicate cycles with unique constraint
-- **UX Pattern**: Eliminated toast notification fatigue by moving to contextual feedback
+- Race condition when both partners create `weekly_cycle` simultaneously
+- Duplicate weekly cycles cleaned up (5 duplicates removed)
+- Leave couple notification timing issue
+- Type safety improved across couple context and database interactions
 
-### Removed
-- All toast notifications from Profile page
-- Sonner toast dependency from CoupleContext
-- Auto-dismissing toasts for user-initiated actions
+### Technical
+- All files migrated away from `sonner` toast library
+- Result-oriented function design (return objects vs side effects)
+- Database constraints prevent duplicate data at source
+- Performance indexes added for common queries
 
 ---
 

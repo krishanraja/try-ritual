@@ -95,7 +95,8 @@ export default function Profile() {
     if (confirm('Are you sure you want to leave this couple? This cannot be undone.')) {
       const result = await leaveCouple();
       if (result.success) {
-        setNotification({ type: 'success', message: 'Left couple successfully' });
+        setNotification({ type: 'success', message: 'You have left the couple' });
+        setTimeout(() => navigate('/home'), 1500);
       } else {
         setNotification({ type: 'error', message: result.error || 'Failed to leave couple' });
       }
@@ -150,7 +151,7 @@ export default function Profile() {
                       <Heart className="w-4 h-4" fill="currentColor" />
                       <span className="text-xs font-semibold">This Week's Ritual</span>
                     </div>
-                    <h3 className="font-bold text-lg">{currentCycle.agreed_ritual.title}</h3>
+                    <h3 className="font-bold text-lg">{(currentCycle.agreed_ritual as any)?.title || 'This Week\'s Ritual'}</h3>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs opacity-90">
@@ -252,7 +253,7 @@ export default function Profile() {
           </motion.div>
 
           <div className="text-center text-sm text-muted-foreground pt-4">
-            <p>Ritual v1.0</p>
+            <p>Ritual v1.4</p>
             <p>Made with 💕 for shared moments</p>
           </div>
         </div>

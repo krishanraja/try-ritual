@@ -7,9 +7,9 @@ import { Clock, Heart, Sparkles, RotateCcw, Lightbulb } from 'lucide-react';
 import { RitualCarousel } from './RitualCarousel';
 import { useSampleRituals } from '@/hooks/useSampleRituals';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useCouple } from '@/contexts/CoupleContext';
 import { CelebrationScreen } from './CelebrationScreen';
+import { NotificationContainer } from './InlineNotification';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +41,7 @@ export const WaitingForPartner = ({
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const { rituals } = useSampleRituals();
 
   // Listen for partner completion in realtime
@@ -79,12 +80,10 @@ export const WaitingForPartner = ({
 
       if (error) throw error;
 
-      toast.success(`Nudge sent! ${partnerName} will see a reminder when they open the app`, {
-        duration: 4000
-      });
+      setNotification({ type: 'success', message: `Nudge sent! ${partnerName} will see a reminder when they open the app` });
     } catch (error) {
       console.error('Error sending nudge:', error);
-      toast.error('Failed to send reminder');
+      setNotification({ type: 'error', message: 'Failed to send reminder' });
     } finally {
       setIsNudging(false);
     }
@@ -115,12 +114,12 @@ export const WaitingForPartner = ({
 
       if (error) throw error;
 
-      toast.success('Your answers have been cleared. Ready to start fresh!');
+      setNotification({ type: 'success', message: 'Your answers have been cleared. Ready to start fresh!' });
       await refreshCycle();
-      navigate('/input');
+      setTimeout(() => navigate('/input'), 1500);
     } catch (error) {
       console.error('Error clearing answers:', error);
-      toast.error('Failed to clear answers. Please try again.');
+      setNotification({ type: 'error', message: 'Failed to clear answers. Please try again.' });
     } finally {
       setIsClearing(false);
       setShowClearDialog(false);
@@ -176,6 +175,16 @@ export const WaitingForPartner = ({
       animate={{ opacity: 1, y: 0 }}
       className="h-full flex flex-col items-center justify-center px-6 py-8 gap-6"
     >
+      {/* Notification */}
+      {notification && (
+        <div className="w-full max-w-sm">
+          <NotificationContainer
+            notification={notification}
+            onDismiss={() => setNotification(null)}
+          />
+        </div>
+      )}
+
       {/* Animated Icon */}
       <motion.div
         animate={{ 

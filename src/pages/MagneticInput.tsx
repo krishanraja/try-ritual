@@ -6,13 +6,14 @@ import { MagneticCanvas } from '@/components/MagneticCanvas';
 import { StrictMobileViewport } from '@/components/StrictMobileViewport';
 import { motion } from 'framer-motion';
 import { Loader2, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
+import { NotificationContainer } from '@/components/InlineNotification';
 
 export default function MagneticInput() {
   const { user, couple, currentCycle, loading } = useCouple();
   const navigate = useNavigate();
   const [weeklyCycleId, setWeeklyCycleId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -21,8 +22,8 @@ export default function MagneticInput() {
     }
 
     if (!couple) {
-      toast.error('Please create or join a couple first');
-      navigate('/home');
+      setNotification({ type: 'error', message: 'Please create or join a couple first' });
+      setTimeout(() => navigate('/home'), 2000);
       return;
     }
 
@@ -58,8 +59,8 @@ export default function MagneticInput() {
           .single();
 
         if (error) {
-          toast.error('Failed to create weekly cycle');
-          navigate('/home');
+          setNotification({ type: 'error', message: 'Failed to create weekly cycle' });
+          setTimeout(() => navigate('/home'), 2000);
           return;
         }
 
@@ -109,16 +110,16 @@ export default function MagneticInput() {
           })
           .eq('id', weeklyCycleId);
 
-        toast.success('✨ Your rituals have been created!');
-        navigate('/rituals');
+        setNotification({ type: 'success', message: '✨ Your rituals have been created!' });
+        setTimeout(() => navigate('/rituals'), 1500);
       } else {
         // Waiting for partner
-        toast.success('Canvas saved! Waiting for your partner...');
-        navigate('/home');
+        setNotification({ type: 'success', message: 'Canvas saved! Waiting for your partner...' });
+        setTimeout(() => navigate('/home'), 1500);
       }
     } catch (error) {
       console.error('Error generating rituals:', error);
-      toast.error('Failed to generate rituals');
+      setNotification({ type: 'error', message: 'Failed to generate rituals' });
     } finally {
       setIsGenerating(false);
     }
@@ -156,6 +157,14 @@ export default function MagneticInput() {
 
   return (
     <StrictMobileViewport>
+      {notification && (
+        <div className="absolute top-4 left-4 right-4 z-50">
+          <NotificationContainer
+            notification={notification}
+            onDismiss={() => setNotification(null)}
+          />
+        </div>
+      )}
       <MagneticCanvas weeklyCycleId={weeklyCycleId} onComplete={handleComplete} />
     </StrictMobileViewport>
   );

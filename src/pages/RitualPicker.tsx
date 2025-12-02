@@ -7,12 +7,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RitualLogo } from '@/components/RitualLogo';
 import { StrictMobileViewport } from '@/components/StrictMobileViewport';
 import { Calendar } from '@/components/ui/calendar';
-import { toast } from 'sonner';
 import { Clock, DollarSign, Calendar as CalendarIcon, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgreementGame } from '@/components/AgreementGame';
 import { cn } from '@/lib/utils';
 import { useSEO } from '@/hooks/useSEO';
+import { NotificationContainer } from '@/components/InlineNotification';
 
 interface Ritual {
   id: string | number;
@@ -34,6 +34,7 @@ export default function RitualPicker() {
   const [step, setStep] = useState<'rank' | 'schedule' | 'waiting' | 'agreement'>('rank');
   const [partnerPreferences, setPartnerPreferences] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   // SEO for ritual picker page
   useSEO({
@@ -113,7 +114,7 @@ export default function RitualPicker() {
         };
       } catch (error) {
         console.error('Error loading data:', error);
-        toast.error('Failed to load rituals');
+        setNotification({ type: 'error', message: 'Failed to load rituals' });
       } finally {
         setLoading(false);
       }
@@ -153,7 +154,7 @@ export default function RitualPicker() {
 
   const handleSubmitRankings = async () => {
     if (!selectedRanks[1] || !selectedRanks[2] || !selectedRanks[3]) {
-      toast.error('Please select all 3 preferences');
+      setNotification({ type: 'error', message: 'Please select all 3 preferences' });
       return;
     }
 
@@ -162,7 +163,7 @@ export default function RitualPicker() {
 
   const handleSubmitSchedule = async () => {
     if (!proposedDate) {
-      toast.error('Please pick a date');
+      setNotification({ type: 'error', message: 'Please pick a date' });
       return;
     }
 
@@ -191,16 +192,24 @@ export default function RitualPicker() {
 
       if (error) throw error;
 
-      toast.success('Preferences submitted! ⭐');
-      setStep('waiting');
+      setNotification({ type: 'success', message: 'Preferences submitted! ⭐' });
+      setTimeout(() => setStep('waiting'), 1000);
     } catch (error) {
       console.error('Error submitting:', error);
-      toast.error('Failed to submit preferences');
+      setNotification({ type: 'error', message: 'Failed to submit preferences' });
     }
   };
 
   const renderRankingStep = () => (
     <div className="h-full flex flex-col p-4">
+      {notification && (
+        <div className="flex-none mb-3">
+          <NotificationContainer
+            notification={notification}
+            onDismiss={() => setNotification(null)}
+          />
+        </div>
+      )}
       <div className="flex-none text-center mb-4">
         <h2 className="text-xl font-bold mb-2">Pick Your Top 3</h2>
         <p className="text-sm text-muted-foreground">

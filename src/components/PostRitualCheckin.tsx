@@ -4,7 +4,6 @@ import { Card } from './ui/card';
 import { motion } from 'framer-motion';
 import { Heart, X, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 interface PostRitualCheckinProps {
   coupleId: string;
@@ -40,14 +39,13 @@ export const PostRitualCheckin = ({
 
       if (error) throw error;
 
-      toast.success('Thanks for sharing! 💕');
       setStep('done');
       setTimeout(() => {
         onComplete();
       }, 1500);
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      toast.error('Failed to save feedback');
+      // Silently fail - don't block user flow
     }
   };
 

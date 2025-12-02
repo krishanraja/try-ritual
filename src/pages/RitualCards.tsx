@@ -7,11 +7,11 @@ import { RitualCarousel } from '@/components/RitualCarousel';
 import { RitualLogo } from '@/components/RitualLogo';
 import { StrictMobileViewport } from '@/components/StrictMobileViewport';
 import { useSampleRituals } from '@/hooks/useSampleRituals';
-import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { usePresence } from '@/hooks/usePresence';
 import { UserCircle } from 'lucide-react';
 import { useSEO } from '@/hooks/useSEO';
+import { NotificationContainer } from '@/components/InlineNotification';
 
 interface AgreedRitual {
   agreed_ritual?: any;
@@ -36,6 +36,7 @@ export default function RitualCards() {
   const [rituals, setRituals] = useState<Ritual[]>([]);
   const [completions, setCompletions] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const navigate = useNavigate();
 
   // SEO for ritual cards page
@@ -73,7 +74,7 @@ export default function RitualCards() {
         }
       } catch (error) {
         console.error('Error loading rituals:', error);
-        toast.error('Failed to load rituals');
+        setNotification({ type: 'error', message: 'Failed to load rituals' });
       } finally {
         setLoading(false);
       }
@@ -88,7 +89,7 @@ export default function RitualCards() {
         if (payload.new.weekly_cycle_id === currentCycle.id) {
           setCompletions(prev => new Set([...prev, payload.new.ritual_title]));
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          toast.success('Ritual completed! 🎉');
+          setNotification({ type: 'success', message: 'Ritual completed! 🎉' });
         }
       })
       .subscribe();
@@ -100,7 +101,7 @@ export default function RitualCards() {
 
   const handleComplete = async (ritual: Ritual) => {
     if (isShowingSamples) {
-      toast.info('Create real rituals with your partner to track completions!');
+      setNotification({ type: 'info', message: 'Create real rituals with your partner to track completions!' });
       return;
     }
     if (!currentCycle || completions.has(ritual.title)) return;
@@ -113,7 +114,7 @@ export default function RitualCards() {
 
       setCompletions(prev => new Set([...prev, ritual.title]));
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      toast.success('Marked as complete! 🎉');
+      setNotification({ type: 'success', message: 'Marked as complete! 🎉' });
 
       // Update streak
       if (couple) {
@@ -150,7 +151,7 @@ export default function RitualCards() {
       }
     } catch (error) {
       console.error('Error marking complete:', error);
-      toast.error('Failed to mark as complete');
+      setNotification({ type: 'error', message: 'Failed to mark as complete' });
     }
   };
 
@@ -184,6 +185,16 @@ export default function RitualCards() {
   return (
     <StrictMobileViewport>
       <div className="h-full bg-gradient-warm flex flex-col">
+        {/* Notification */}
+        {notification && (
+          <div className="flex-none px-4 pt-3">
+            <NotificationContainer
+              notification={notification}
+              onDismiss={() => setNotification(null)}
+            />
+          </div>
+        )}
+
         {/* Header - Compact */}
         <div className="flex-none px-4 pt-3 pb-2">
           <div className="flex items-center justify-between mb-2">
