@@ -1,13 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { User } from '@supabase/supabase-js';
+import type { Couple, Profile, WeeklyCycle } from '@/types/database';
 
 interface CoupleContextType {
-  user: any;
+  user: User | null;
   session: any;
-  couple: any;
-  partnerProfile: any;
-  currentCycle: any;
+  couple: Couple | null;
+  partnerProfile: Profile | null;
+  currentCycle: WeeklyCycle | null;
   loading: boolean;
   refreshCouple: () => Promise<void>;
   refreshCycle: () => Promise<void>;
@@ -17,11 +19,11 @@ interface CoupleContextType {
 const CoupleContext = createContext<CoupleContextType | null>(null);
 
 export const CoupleProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<any>(null);
-  const [couple, setCouple] = useState<any>(null);
-  const [partnerProfile, setPartnerProfile] = useState<any>(null);
-  const [currentCycle, setCurrentCycle] = useState<any>(null);
+  const [couple, setCouple] = useState<Couple | null>(null);
+  const [partnerProfile, setPartnerProfile] = useState<Profile | null>(null);
+  const [currentCycle, setCurrentCycle] = useState<WeeklyCycle | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -58,7 +60,7 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
       if (partnerId) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, name, email')
+          .select('*')
           .eq('id', partnerId)
           .maybeSingle();
         

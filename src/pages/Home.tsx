@@ -283,7 +283,7 @@ export default function Home() {
             <PostRitualCheckin
               coupleId={couple.id}
               cycleId={currentCycle.id}
-              ritualTitle={currentCycle.agreed_ritual.title}
+              ritualTitle={(currentCycle.agreed_ritual as any)?.title || 'Ritual'}
               onComplete={() => setShowPostRitualCheckin(false)}
               onDismiss={() => setShowPostRitualCheckin(false)}
             />
@@ -343,7 +343,7 @@ export default function Home() {
                 <div>
                   <h2 className="text-xl font-bold mb-2">How was your ritual?</h2>
                   <p className="text-sm text-muted-foreground">
-                    {currentCycle.agreed_ritual.title}
+                    {(currentCycle.agreed_ritual as any)?.title || 'Your ritual'}
                   </p>
                 </div>
                 <Button 
@@ -365,7 +365,7 @@ export default function Home() {
                     <h2 className="text-2xl font-bold">This Week's Ritual</h2>
                     <Heart className="w-10 h-10" fill="currentColor" />
                   </div>
-                  <p className="text-lg font-semibold">{currentCycle.agreed_ritual.title}</p>
+                  <p className="text-lg font-semibold">{(currentCycle.agreed_ritual as any)?.title || 'This Week\'s Ritual'}</p>
                   <div className="flex items-center gap-3 text-sm opacity-90">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
@@ -405,7 +405,7 @@ export default function Home() {
         <PostRitualCheckin
           coupleId={couple.id}
           cycleId={currentCycle.id}
-          ritualTitle={currentCycle.agreed_ritual.title}
+          ritualTitle={(currentCycle.agreed_ritual as any)?.title || 'Ritual'}
           onComplete={() => setShowPostRitualCheckin(false)}
           onDismiss={() => setShowPostRitualCheckin(false)}
         />

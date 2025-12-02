@@ -9,9 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { SynthesisAnimation } from '@/components/SynthesisAnimation';
 import { useSEO } from '@/hooks/useSEO';
+import { NotificationContainer } from '@/components/InlineNotification';
 
 const QUESTIONS = [
   {
@@ -50,6 +50,7 @@ export default function QuickInput() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   // SEO for input page
   useSEO({
@@ -64,8 +65,8 @@ export default function QuickInput() {
     }
 
     if (!couple) {
-      toast.error('Please create or join a couple first');
-      navigate('/home');
+      setNotification({ type: 'error', message: 'Please create or join a couple first' });
+      setTimeout(() => navigate('/home'), 2000);
       return;
     }
 
@@ -138,8 +139,23 @@ export default function QuickInput() {
           .single();
 
         if (error) {
-          toast.error('Failed to create weekly cycle');
-          navigate('/home');
+          // Check for unique constraint violation
+          if (error.code === '23505') {
+            // Race condition: cycle was just created by partner, retry fetch
+            const { data: retryCycle } = await supabase
+              .from('weekly_cycles')
+              .select('*')
+              .eq('couple_id', couple.id)
+              .eq('week_start_date', weekStartStr)
+              .maybeSingle();
+            
+            if (retryCycle) {
+              setWeeklyCycleId(retryCycle.id);
+              return;
+            }
+          }
+          setNotification({ type: 'error', message: 'Failed to create weekly cycle' });
+          setTimeout(() => navigate('/home'), 2000);
           return;
         }
 
@@ -229,16 +245,13 @@ export default function QuickInput() {
         await refreshCycle();
         navigate('/picker');
       } else {
-        toast.success('All set! We\'ll notify you when your partner is ready', {
-          duration: 4000
-        });
+        setNotification({ type: 'success', message: 'All set! We\'ll notify you when your partner is ready' });
         await refreshCycle();
-        // Small delay to ensure state propagates before navigation
-        setTimeout(() => navigate('/home'), 100);
+        setTimeout(() => navigate('/home'), 2000);
       }
     } catch (error) {
       console.error('Error submitting answers:', error);
-      toast.error('Failed to save answers');
+      setNotification({ type: 'error', message: 'Failed to save answers' });
       setIsSubmitting(false);
       setIsSynthesizing(false);
     }
@@ -284,6 +297,16 @@ export default function QuickInput() {
             Question {currentStep + 1} of 5
           </p>
         </div>
+
+        {/* Notification */}
+        {notification && (
+          <div className="flex-none px-4 pt-2">
+            <NotificationContainer
+              notification={notification}
+              onDismiss={() => setNotification(null)}
+            />
+          </div>
+        )}
 
         {/* Question Content */}
         <div className="flex-1 px-4 py-4 overflow-y-auto min-h-0">

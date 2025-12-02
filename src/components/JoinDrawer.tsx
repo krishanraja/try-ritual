@@ -3,10 +3,10 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from './ui/drawer';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useCouple } from '@/contexts/CoupleContext';
+import { NotificationContainer } from './InlineNotification';
 
 interface JoinDrawerProps {
   open: boolean;
@@ -16,6 +16,7 @@ interface JoinDrawerProps {
 export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { refreshCouple, user } = useCouple();
@@ -31,14 +32,14 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
 
   const handleJoin = async () => {
     if (!user) {
-      toast.error('Not authenticated');
+      setNotification({ type: 'error', message: 'Not authenticated' });
       return;
     }
 
     const cleanCode = code.replace(/-/g, '').toUpperCase();
     
     if (cleanCode.length !== 8) {
-      toast.error('Code must be 8 characters');
+      setNotification({ type: 'error', message: 'Code must be 8 characters' });
       return;
     }
 
@@ -81,11 +82,13 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
 
       await refreshCouple();
       
-      toast.success('Successfully joined! 🎉');
-      onOpenChange(false);
-      navigate('/input');
+      setNotification({ type: 'success', message: 'Successfully joined! 🎉' });
+      setTimeout(() => {
+        onOpenChange(false);
+        navigate('/input');
+      }, 1500);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to join couple');
+      setNotification({ type: 'error', message: error.message || 'Failed to join couple' });
     } finally {
       setLoading(false);
     }
@@ -102,6 +105,12 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
         </DrawerHeader>
 
         <div className="px-6 pb-8 space-y-6">
+          {notification && (
+            <NotificationContainer
+              notification={notification}
+              onDismiss={() => setNotification(null)}
+            />
+          )}
           <div className="space-y-2">
             <Label htmlFor="code">Couple Code</Label>
             <Input
