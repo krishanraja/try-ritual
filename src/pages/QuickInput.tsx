@@ -233,7 +233,8 @@ export default function QuickInput() {
           duration: 4000
         });
         await refreshCycle();
-        navigate('/home');
+        // Small delay to ensure state propagates before navigation
+        setTimeout(() => navigate('/home'), 100);
       }
     } catch (error) {
       console.error('Error submitting answers:', error);

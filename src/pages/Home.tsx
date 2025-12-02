@@ -16,13 +16,20 @@ import { PostRitualCheckin } from '@/components/PostRitualCheckin';
 import { format, isPast, parseISO } from 'date-fns';
 
 export default function Home() {
-  const { user, couple, partnerProfile, currentCycle, loading } = useCouple();
+  const { user, couple, partnerProfile, currentCycle, loading, refreshCycle } = useCouple();
   const navigate = useNavigate();
   const [nudgeBannerDismissed, setNudgeBannerDismissed] = useState(false);
   const [slowLoading, setSlowLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [showPostRitualCheckin, setShowPostRitualCheckin] = useState(false);
+
+  // Force refresh cycle data when Home mounts to ensure fresh state after navigation
+  useEffect(() => {
+    if (couple?.id && !loading) {
+      refreshCycle();
+    }
+  }, []); // Run once on mount
 
   // Show slow loading indicator after 3 seconds
   useEffect(() => {
