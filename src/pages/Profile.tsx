@@ -15,6 +15,7 @@ import { BucketListManager } from '@/components/BucketListManager';
 import { LeaveConfirmDialog } from '@/components/LeaveConfirmDialog';
 import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 import { PremiumSection } from '@/components/PremiumSection';
+import { NotificationSettings } from '@/components/NotificationSettings';
 import { usePremium } from '@/hooks/usePremium';
 import { format } from 'date-fns';
 
@@ -206,6 +207,9 @@ export default function Profile() {
 
             {/* Premium Section */}
             {couple && <PremiumSection />}
+
+            {/* Notification Settings */}
+            <NotificationSettings />
 
             {/* Bucket List Section */}
             {couple && <BucketListManager />}

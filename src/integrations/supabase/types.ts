@@ -105,6 +105,7 @@ export type Database = {
       }
       couples: {
         Row: {
+          applied_promo_code: string | null
           code_expires_at: string | null
           couple_code: string
           created_at: string
@@ -120,6 +121,7 @@ export type Database = {
           synthesis_ready: boolean | null
         }
         Insert: {
+          applied_promo_code?: string | null
           code_expires_at?: string | null
           couple_code: string
           created_at?: string
@@ -135,6 +137,7 @@ export type Database = {
           synthesis_ready?: boolean | null
         }
         Update: {
+          applied_promo_code?: string | null
           code_expires_at?: string | null
           couple_code?: string
           created_at?: string
@@ -187,6 +190,33 @@ export type Database = {
           id?: string
           name?: string
           preferred_city?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -452,6 +482,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      surprise_rituals: {
+        Row: {
+          completed_at: string | null
+          couple_id: string
+          created_at: string | null
+          delivered_at: string | null
+          id: string
+          month: string
+          opened_at: string | null
+          ritual_data: Json
+        }
+        Insert: {
+          completed_at?: string | null
+          couple_id: string
+          created_at?: string | null
+          delivered_at?: string | null
+          id?: string
+          month: string
+          opened_at?: string | null
+          ritual_data: Json
+        }
+        Update: {
+          completed_at?: string | null
+          couple_id?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          id?: string
+          month?: string
+          opened_at?: string | null
+          ritual_data?: Json
+        }
+        Relationships: []
       }
       weekly_cycles: {
         Row: {

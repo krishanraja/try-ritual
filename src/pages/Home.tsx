@@ -13,10 +13,13 @@ import { SynthesisAnimation } from '@/components/SynthesisAnimation';
 import { CreateCoupleDialog } from '@/components/CreateCoupleDialog';
 import { JoinDrawer } from '@/components/JoinDrawer';
 import { EnhancedPostRitualCheckin } from '@/components/EnhancedPostRitualCheckin';
+import { SurpriseRitualCard } from '@/components/SurpriseRitualCard';
+import { useSurpriseRitual } from '@/hooks/useSurpriseRitual';
 import { format, isPast, parseISO } from 'date-fns';
 
 export default function Home() {
   const { user, couple, partnerProfile, currentCycle, loading, refreshCycle } = useCouple();
+  const { surprise, hasUnopened, refresh: refreshSurprise } = useSurpriseRitual();
   const navigate = useNavigate();
   const [nudgeBannerDismissed, setNudgeBannerDismissed] = useState(false);
   const [slowLoading, setSlowLoading] = useState(false);
@@ -338,7 +341,16 @@ export default function Home() {
         )}
 
         {/* Main Content - Centered */}
-        <div className="flex-1 px-4 pb-4 flex flex-col justify-center">
+        <div className="flex-1 px-4 pb-4 flex flex-col justify-center gap-4">
+          {/* Surprise Ritual Card - Premium Only */}
+          {surprise && !surprise.completed_at && (
+            <SurpriseRitualCard
+              surprise={surprise}
+              onOpen={refreshSurprise}
+              onComplete={refreshSurprise}
+            />
+          )}
+
           {ritualHasPassed && hasAgreedRitual ? (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
               <Card className="p-6 bg-primary/5 border-primary/20 text-center space-y-4">

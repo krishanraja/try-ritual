@@ -108,6 +108,32 @@ serve(async (req) => {
 
     if (error) throw error;
 
+    // Send push notification to partner
+    const partnerId = couple.partner_one === user.id ? couple.partner_two : couple.partner_one;
+    if (partnerId) {
+      try {
+        const sendPushUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push`;
+        await fetch(sendPushUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
+          },
+          body: JSON.stringify({
+            user_id: partnerId,
+            title: "💕 Your partner is waiting!",
+            body: "They're excited to create this week's ritual with you",
+            url: "/input",
+            type: "nudge"
+          })
+        });
+        console.log(`[NUDGE] Push notification sent to partner ${partnerId}`);
+      } catch (pushError) {
+        console.error("[NUDGE] Error sending push:", pushError);
+        // Don't fail the nudge if push fails
+      }
+    }
+
     console.log(`[NUDGE] Sent for cycle ${cycleId} by user ${user.id} (premium: ${isPremium}, count: ${nudgeCount + 1})`);
 
     return new Response(
