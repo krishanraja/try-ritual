@@ -9,6 +9,7 @@ import { StrictMobileViewport } from "@/components/StrictMobileViewport";
 import { useSEO } from '@/hooks/useSEO';
 import { NotificationContainer } from '@/components/InlineNotification';
 import { Check, X } from 'lucide-react';
+import { AnimatedGradientBackground } from '@/components/AnimatedGradientBackground';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -113,7 +114,8 @@ const Auth = () => {
 
   return (
     <StrictMobileViewport>
-      <div className="h-full bg-gradient-warm flex items-center justify-center p-4">
+      <div className="h-full flex items-center justify-center p-4 relative">
+        <AnimatedGradientBackground variant="warm" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

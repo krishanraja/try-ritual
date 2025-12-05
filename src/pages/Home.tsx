@@ -15,6 +15,7 @@ import { JoinDrawer } from '@/components/JoinDrawer';
 import { EnhancedPostRitualCheckin } from '@/components/EnhancedPostRitualCheckin';
 import { SurpriseRitualCard } from '@/components/SurpriseRitualCard';
 import { useSurpriseRitual } from '@/hooks/useSurpriseRitual';
+import { AnimatedGradientBackground } from '@/components/AnimatedGradientBackground';
 import { format, isPast, parseISO } from 'date-fns';
 
 export default function Home() {
@@ -120,10 +121,11 @@ export default function Home() {
   if (loading) {
     return (
       <StrictMobileViewport>
-        <div className="h-full bg-gradient-warm flex flex-col items-center justify-center gap-4">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="h-full flex flex-col items-center justify-center gap-4 relative">
+          <AnimatedGradientBackground variant="calm" />
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin relative z-10" />
           {slowLoading && (
-            <p className="text-sm text-muted-foreground animate-pulse">
+            <p className="text-sm text-muted-foreground animate-pulse relative z-10">
               Reconnecting...
             </p>
           )}
@@ -137,8 +139,9 @@ export default function Home() {
   if (!couple) {
     return (
       <StrictMobileViewport>
-        <div className="h-full bg-gradient-warm flex flex-col items-center justify-center p-4">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center space-y-6 max-w-sm">
+        <div className="h-full flex flex-col items-center justify-center p-4 relative">
+          <AnimatedGradientBackground variant="warm" />
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center space-y-6 max-w-sm relative z-10">
             <RitualLogo size="md" className="mx-auto" />
             <div>
               <h1 className="text-xl font-bold mb-2">Welcome to Ritual</h1>
@@ -164,11 +167,12 @@ export default function Home() {
   if (!couple.partner_two) {
     return (
       <StrictMobileViewport>
-        <div className="h-full bg-gradient-warm flex flex-col justify-center px-4">
-          <motion.div 
+        <div className="h-full flex flex-col justify-center px-4 relative">
+          <AnimatedGradientBackground variant="warm" />
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6 max-w-sm mx-auto"
+            className="space-y-6 max-w-sm mx-auto relative z-10"
           >
             {/* Waiting status */}
             <div className="text-center space-y-3">
@@ -276,8 +280,9 @@ export default function Home() {
     const partnerName = partnerProfile?.name || 'your partner';
     return (
       <StrictMobileViewport>
-        <div className="h-full bg-gradient-warm">
-          <WaitingForPartner 
+        <div className="h-full relative">
+          <AnimatedGradientBackground variant="calm" />
+          <WaitingForPartner
             partnerName={partnerName}
             currentCycleId={currentCycle.id}
             lastNudgedAt={currentCycle.nudged_at}
@@ -308,7 +313,9 @@ export default function Home() {
 
   return (
     <StrictMobileViewport>
-      <div className="h-full bg-gradient-warm flex flex-col">
+      <div className="h-full flex flex-col relative">
+        <AnimatedGradientBackground variant="warm" />
+        
         {/* Compact Header */}
         <div className="flex-none px-4 pt-4 pb-2">
           <div className="flex items-center justify-between mb-2">

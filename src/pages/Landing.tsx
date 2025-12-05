@@ -5,6 +5,7 @@ import { X, MapPin, Heart, Sparkles, TrendingUp } from 'lucide-react';
 import { RitualLogo } from '@/components/RitualLogo';
 import { useState, useEffect } from 'react';
 import { useSEO, addStructuredData } from '@/hooks/useSEO';
+import { AnimatedGradientBackground } from '@/components/AnimatedGradientBackground';
 export default function Landing() {
   const navigate = useNavigate();
   const {
@@ -36,7 +37,9 @@ export default function Landing() {
       featureList: ['AI-powered ritual suggestions', 'Location-based activities in London, Sydney, Melbourne, and New York', 'Partner synchronization and ranking', 'Streak tracking and gamification', 'Calendar integration']
     });
   }, []);
-  return <div className="h-screen bg-gradient-warm overflow-hidden flex flex-col">
+  return <div className="h-screen overflow-hidden flex flex-col relative">
+      <AnimatedGradientBackground variant="warm" />
+      
       {/* Authenticated User Banner */}
       {user && showAuthBanner && <div className="flex-none px-4 py-2 bg-primary/10 backdrop-blur-sm border-b border-primary/20">
           <div className="flex items-center justify-between">
