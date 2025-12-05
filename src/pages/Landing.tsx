@@ -109,6 +109,8 @@ export default function Landing() {
           <span>·</span>
           <button onClick={() => navigate('/privacy')} className="hover:text-foreground transition-colors">Privacy</button>
           <span>·</span>
+          <button onClick={() => navigate('/contact')} className="hover:text-foreground transition-colors">Contact</button>
+          <span>·</span>
           <span>© {new Date().getFullYear()} Mindmaker LLC</span>
         </div>
       </footer>

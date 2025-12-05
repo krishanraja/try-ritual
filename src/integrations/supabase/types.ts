@@ -103,6 +103,36 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       couples: {
         Row: {
           applied_promo_code: string | null
@@ -515,6 +545,97 @@ export type Database = {
           ritual_data?: Json
         }
         Relationships: []
+      }
+      user_analytics_events: {
+        Row: {
+          couple_id: string | null
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          page: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          couple_id?: string | null
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          page?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          couple_id?: string | null
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          page?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_analytics_events_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_feedback: {
+        Row: {
+          context: Json | null
+          couple_id: string | null
+          created_at: string
+          feedback_type: string
+          id: string
+          message: string | null
+          page_context: string | null
+          rating: number | null
+          sentiment: string | null
+          user_id: string | null
+          user_journey_stage: string | null
+        }
+        Insert: {
+          context?: Json | null
+          couple_id?: string | null
+          created_at?: string
+          feedback_type: string
+          id?: string
+          message?: string | null
+          page_context?: string | null
+          rating?: number | null
+          sentiment?: string | null
+          user_id?: string | null
+          user_journey_stage?: string | null
+        }
+        Update: {
+          context?: Json | null
+          couple_id?: string | null
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          message?: string | null
+          page_context?: string | null
+          rating?: number | null
+          sentiment?: string | null
+          user_id?: string | null
+          user_journey_stage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedback_couple_id_fkey"
+            columns: ["couple_id"]
+            isOneToOne: false
+            referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_cycles: {
         Row: {
