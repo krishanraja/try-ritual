@@ -6,6 +6,7 @@ import { RitualLogo } from '@/components/RitualLogo';
 import { useState, useEffect } from 'react';
 import { useSEO, addStructuredData } from '@/hooks/useSEO';
 import { AnimatedGradientBackground } from '@/components/AnimatedGradientBackground';
+import { motion } from 'framer-motion';
 export default function Landing() {
   const navigate = useNavigate();
   const {
@@ -55,7 +56,13 @@ export default function Landing() {
       {/* Main content - vertically centered */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 space-y-4 sm:space-y-6 relative z-10 overflow-y-auto">
         {/* Logo - responsive sizing */}
-        <RitualLogo size="2xl" variant="full" className="max-w-[560px] sm:max-w-[800px] md:max-w-[1120px] flex-shrink-0" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <RitualLogo size="2xl" variant="full" className="max-w-[560px] sm:max-w-[800px] md:max-w-[1120px] flex-shrink-0" />
+        </motion.div>
         
         {/* Heading */}
         <div className="text-center space-y-3 sm:space-y-4">
