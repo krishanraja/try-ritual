@@ -338,8 +338,8 @@ export default function Home() {
           </motion.div>
         )}
 
-        {/* Main Content - Centered */}
-        <div className="flex-1 px-4 pb-4 flex flex-col justify-center gap-4">
+        {/* Main Content - Centered with bottom padding for nav */}
+        <div className="flex-1 px-4 pb-24 flex flex-col justify-center gap-4">
           {/* Surprise Ritual Card - Premium Only */}
           {surprise && !surprise.completed_at && (
             <SurpriseRitualCard

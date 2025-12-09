@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
-import { X, MapPin, Heart, Sparkles, TrendingUp } from 'lucide-react';
+import { MapPin, Heart, Sparkles, TrendingUp } from 'lucide-react';
 import { RitualLogo } from '@/components/RitualLogo';
 import { useState, useEffect } from 'react';
 import { useSEO, addStructuredData } from '@/hooks/useSEO';
@@ -10,9 +10,16 @@ import { motion } from 'framer-motion';
 export default function Landing() {
   const navigate = useNavigate();
   const {
-    user
+    user,
+    loading
   } = useCouple();
-  const [showAuthBanner, setShowAuthBanner] = useState(true);
+
+  // Auto-redirect authenticated users to home
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/home', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   // SEO optimization
   useSEO({
@@ -38,20 +45,17 @@ export default function Landing() {
       featureList: ['AI-powered ritual suggestions', 'Location-based activities in London, Sydney, Melbourne, and New York', 'Partner synchronization and ranking', 'Streak tracking and gamification', 'Calendar integration']
     });
   }, []);
+  // Show loading state while checking auth to prevent flash
+  if (loading) {
+    return (
+      <div className="h-screen overflow-hidden flex flex-col relative">
+        <AnimatedGradientBackground variant="warm" />
+      </div>
+    );
+  }
+
   return <div className="h-screen overflow-hidden flex flex-col relative">
       <AnimatedGradientBackground variant="warm" />
-      
-      {/* Authenticated User Banner */}
-      {user && showAuthBanner && <div className="flex-none px-4 py-2 bg-primary/10 backdrop-blur-sm border-b border-primary/20 relative z-10">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-foreground">
-              You're signed in! <button onClick={() => navigate('/home')} className="underline font-semibold">Go to Dashboard →</button>
-            </p>
-            <button onClick={() => setShowAuthBanner(false)} className="text-muted-foreground hover:text-foreground">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>}
 
       {/* Main content - vertically centered */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 space-y-4 sm:space-y-6 relative z-10 overflow-y-auto">
