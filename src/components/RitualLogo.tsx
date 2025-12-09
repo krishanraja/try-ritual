@@ -8,33 +8,41 @@ interface RitualLogoProps {
   className?: string;
 }
 
-const sizeClasses = {
-  xs: 'max-h-6',    // 24px height
-  sm: 'max-h-8',    // 32px height
-  md: 'max-h-16',   // 64px height
-  lg: 'max-h-20',   // 80px height
-  xl: 'max-h-24',   // 96px height
-  '2xl': 'max-h-48', // 192px height
+const sizeConfig = {
+  xs: { class: 'max-h-6', width: 24, height: 24 },
+  sm: { class: 'max-h-8', width: 32, height: 32 },
+  md: { class: 'max-h-16', width: 64, height: 64 },
+  lg: { class: 'max-h-20', width: 80, height: 80 },
+  xl: { class: 'max-h-24', width: 96, height: 96 },
+  '2xl': { class: 'max-h-48', width: 192, height: 192 },
 };
 
 export function RitualLogo({ size = 'md', variant = 'full', className }: RitualLogoProps) {
   const src = variant === 'full' ? ritualLogoFull : ritualIcon;
+  const config = sizeConfig[size];
   
   return (
     <img
       src={src}
       alt="Ritual"
-      className={cn('w-auto h-auto object-contain', sizeClasses[size], className)}
+      width={config.width}
+      height={config.height}
+      fetchPriority="high"
+      className={cn('w-auto h-auto object-contain', config.class, className)}
     />
   );
 }
 
 export function RitualIcon({ size = 'sm', className }: Omit<RitualLogoProps, 'variant'>) {
+  const config = sizeConfig[size];
+  
   return (
     <img
       src={ritualIcon}
       alt="Ritual"
-      className={cn('w-auto h-auto object-contain', sizeClasses[size], className)}
+      width={config.width}
+      height={config.height}
+      className={cn('w-auto h-auto object-contain', config.class, className)}
     />
   );
 }
