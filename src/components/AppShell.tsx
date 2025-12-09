@@ -54,11 +54,17 @@ export const AppShell = ({ children }: AppShellProps) => {
     return '/input';
   };
 
+  // "This Week" matches any of these routes
+  const thisWeekRoutes = ['/input', '/picker', '/rituals'];
+  const thisWeekRoute = getThisWeekRoute();
+  
+  const isThisWeekActive = thisWeekRoutes.includes(location.pathname);
+  
   const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: getThisWeekRoute(), icon: Calendar, label: 'This Week' },
-    { path: '/history', icon: Clock, label: 'History' },
-    { path: '/profile', icon: User, label: 'Profile' }
+    { path: '/', icon: Home, label: 'Home', isActive: location.pathname === '/' },
+    { path: thisWeekRoute, icon: Calendar, label: 'This Week', isActive: isThisWeekActive },
+    { path: '/history', icon: Clock, label: 'History', isActive: location.pathname === '/history' },
+    { path: '/profile', icon: User, label: 'Profile', isActive: location.pathname === '/profile' }
   ];
 
   return (
@@ -109,19 +115,31 @@ export const AppShell = ({ children }: AppShellProps) => {
           className="flex-none flex items-center justify-around px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border/50 z-50 pb-safe"
         >
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
             const Icon = item.icon;
             
             return (
               <button
-                key={item.path}
+                key={item.label}
                 onClick={() => navigate(item.path)}
-                className={`flex flex-col items-center gap-1 transition-colors ${
-                  isActive ? 'text-primary' : 'text-muted-foreground'
+                className={`relative flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-all duration-200 ${
+                  item.isActive 
+                    ? 'text-primary' 
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Icon className="w-6 h-6" />
-                <span className="text-xs font-medium">{item.label}</span>
+                {/* Active indicator background */}
+                {item.isActive && (
+                  <motion.div
+                    layoutId="nav-active-bg"
+                    className="absolute inset-0 bg-primary/10 rounded-lg"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <Icon className={`relative z-10 w-6 h-6 transition-transform ${item.isActive ? 'scale-110' : ''}`} />
+                <span className={`relative z-10 text-xs font-medium ${item.isActive ? 'font-semibold' : ''}`}>
+                  {item.label}
+                </span>
               </button>
             );
           })}
