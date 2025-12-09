@@ -96,7 +96,7 @@ export const AppShell = ({ children }: AppShellProps) => {
           className="flex-none flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/50 z-50"
         >
           <button onClick={() => navigate('/')} className="focus:outline-none">
-            <RitualLogo size="sm" variant={location.pathname === '/' ? 'full' : 'icon'} />
+            <RitualLogo size="sm" variant="icon" />
           </button>
           
           <div className="flex items-center gap-3">

@@ -412,6 +412,10 @@ export default function Landing() {
 
         {/* Main Content */}
         <div className="flex-1 px-4 pb-24 flex flex-col justify-center gap-4 relative z-10">
+          {/* Full Logo - Homepage branding */}
+          <div className="flex justify-center mb-2">
+            <RitualLogo size="lg" variant="full" />
+          </div>
           {/* Surprise Ritual Card */}
           {surprise && !surprise.completed_at && (
             <SurpriseRitualCard
