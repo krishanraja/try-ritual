@@ -20,7 +20,7 @@ import { format, isPast, parseISO } from 'date-fns';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user, couple, partnerProfile, currentCycle, loading, refreshCycle } = useCouple();
+  const { user, couple, partnerProfile, currentCycle, loading, refreshCycle, hasKnownSession } = useCouple();
   const { surprise, refresh: refreshSurprise } = useSurpriseRitual();
   
   const [createOpen, setCreateOpen] = useState(false);
@@ -107,17 +107,40 @@ export default function Landing() {
     });
   }, []);
 
-  // Loading state
+  // Loading state - show skeleton matching expected destination to prevent flash
   if (loading) {
+    // If we have a cached session, show dashboard-like skeleton (with lg logo)
+    // Otherwise show marketing-like skeleton (with 2xl logo)
+    if (hasKnownSession) {
+      return (
+        <div className="h-full flex flex-col relative">
+          <AnimatedGradientBackground variant="warm" />
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 relative z-10">
+            <RitualLogo size="lg" variant="full" className="opacity-80" />
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            {slowLoading && (
+              <p className="text-sm text-muted-foreground animate-pulse">
+                Reconnecting...
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    // No cached session - show marketing-style skeleton
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-4 relative">
-        <AnimatedGradientBackground variant="calm" />
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin relative z-10" />
-        {slowLoading && (
-          <p className="text-sm text-muted-foreground animate-pulse relative z-10">
-            Reconnecting...
-          </p>
-        )}
+      <div className="h-full flex flex-col relative">
+        <AnimatedGradientBackground variant="warm" />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 relative z-10">
+          <RitualLogo size="2xl" variant="full" className="opacity-80 max-w-[560px] sm:max-w-[800px]" />
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          {slowLoading && (
+            <p className="text-sm text-muted-foreground animate-pulse">
+              Loading...
+            </p>
+          )}
+        </div>
       </div>
     );
   }

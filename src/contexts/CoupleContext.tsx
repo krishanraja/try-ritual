@@ -4,6 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import type { Couple, PartnerProfile, WeeklyCycle } from '@/types/database';
 
+// Check localStorage for existing Supabase session token (instant, synchronous)
+const checkCachedSession = (): boolean => {
+  try {
+    const storageKey = `sb-gdojuuzlxpxftsfkmneu-auth-token`;
+    const cached = localStorage.getItem(storageKey);
+    return !!cached;
+  } catch {
+    return false;
+  }
+};
+
 interface CoupleContextType {
   user: User | null;
   session: any;
@@ -11,6 +22,7 @@ interface CoupleContextType {
   partnerProfile: PartnerProfile | null;
   currentCycle: WeeklyCycle | null;
   loading: boolean;
+  hasKnownSession: boolean; // True if localStorage has cached session (for instant UI decisions)
   refreshCouple: () => Promise<void>;
   refreshCycle: () => Promise<void>;
   leaveCouple: () => Promise<{ success: boolean; error?: string }>;
@@ -19,6 +31,8 @@ interface CoupleContextType {
 const CoupleContext = createContext<CoupleContextType | null>(null);
 
 export const CoupleProvider = ({ children }: { children: ReactNode }) => {
+  // Check cached session SYNCHRONOUSLY on first render (no flash)
+  const [hasKnownSession] = useState(() => checkCachedSession());
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<any>(null);
   const [couple, setCouple] = useState<Couple | null>(null);
@@ -266,6 +280,7 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
       partnerProfile,
       currentCycle,
       loading,
+      hasKnownSession,
       refreshCouple,
       refreshCycle,
       leaveCouple,
