@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,20 +9,31 @@ import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { AppShell } from "@/components/AppShell";
 import { ContextualFeedback } from "@/components/ContextualFeedback";
 import { PageTransition } from "@/components/PageTransition";
+
+// Critical: Landing page loads immediately for fast LCP
 import Landing from "./pages/Landing";
-import Home from "./pages/Home";
-import Auth from "./pages/Auth";
-import QuickInput from "./pages/QuickInput";
-import RitualCards from "./pages/RitualCards";
-import RitualPicker from "./pages/RitualPicker";
-import History from "./pages/History";
-import Profile from "./pages/Profile";
-import Contact from "./pages/Contact";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import NotFound from "./pages/NotFound";
+
+// Code-split non-critical routes for smaller initial bundle
+const Home = lazy(() => import("./pages/Home"));
+const Auth = lazy(() => import("./pages/Auth"));
+const QuickInput = lazy(() => import("./pages/QuickInput"));
+const RitualCards = lazy(() => import("./pages/RitualCards"));
+const RitualPicker = lazy(() => import("./pages/RitualPicker"));
+const History = lazy(() => import("./pages/History"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
+
+// Minimal loading fallback for lazy routes
+const LazyFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -30,17 +42,17 @@ const AnimatedRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
-        <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
-        <Route path="/home" element={<PageTransition><Home /></PageTransition>} />
-        <Route path="/input" element={<PageTransition><QuickInput /></PageTransition>} />
-        <Route path="/picker" element={<PageTransition><RitualPicker /></PageTransition>} />
-        <Route path="/rituals" element={<PageTransition><RitualCards /></PageTransition>} />
-        <Route path="/history" element={<PageTransition><History /></PageTransition>} />
-        <Route path="/profile" element={<PageTransition><Profile /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-        <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
-        <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        <Route path="/auth" element={<Suspense fallback={<LazyFallback />}><PageTransition><Auth /></PageTransition></Suspense>} />
+        <Route path="/home" element={<Suspense fallback={<LazyFallback />}><PageTransition><Home /></PageTransition></Suspense>} />
+        <Route path="/input" element={<Suspense fallback={<LazyFallback />}><PageTransition><QuickInput /></PageTransition></Suspense>} />
+        <Route path="/picker" element={<Suspense fallback={<LazyFallback />}><PageTransition><RitualPicker /></PageTransition></Suspense>} />
+        <Route path="/rituals" element={<Suspense fallback={<LazyFallback />}><PageTransition><RitualCards /></PageTransition></Suspense>} />
+        <Route path="/history" element={<Suspense fallback={<LazyFallback />}><PageTransition><History /></PageTransition></Suspense>} />
+        <Route path="/profile" element={<Suspense fallback={<LazyFallback />}><PageTransition><Profile /></PageTransition></Suspense>} />
+        <Route path="/contact" element={<Suspense fallback={<LazyFallback />}><PageTransition><Contact /></PageTransition></Suspense>} />
+        <Route path="/terms" element={<Suspense fallback={<LazyFallback />}><PageTransition><Terms /></PageTransition></Suspense>} />
+        <Route path="/privacy" element={<Suspense fallback={<LazyFallback />}><PageTransition><Privacy /></PageTransition></Suspense>} />
+        <Route path="*" element={<Suspense fallback={<LazyFallback />}><PageTransition><NotFound /></PageTransition></Suspense>} />
       </Routes>
     </AnimatePresence>
   );
