@@ -380,10 +380,9 @@ export default function Landing() {
       <div className="h-full flex flex-col relative">
         <AnimatedGradientBackground variant="warm" />
         
-        {/* Compact Header with Logo */}
-        <div className="flex-none px-4 pt-4 pb-2 relative z-10">
-          <div className="flex items-center justify-between mb-2">
-            <RitualLogo size="md" variant="full" />
+        {/* Streak Badge Header - Logo handled by AppShell */}
+        <div className="flex-none px-4 pt-2 pb-2 relative z-10">
+          <div className="flex items-center justify-end">
             <StreakBadge />
           </div>
         </div>

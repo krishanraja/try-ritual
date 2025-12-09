@@ -6,6 +6,7 @@ import { useCouple } from '@/contexts/CoupleContext';
 import { JoinDrawer } from './JoinDrawer';
 import { CreateCoupleDialog } from './CreateCoupleDialog';
 import { StatusIndicator } from './StatusIndicator';
+import { RitualLogo } from './RitualLogo';
 import { motion } from 'framer-motion';
 
 interface AppShellProps {
@@ -95,11 +96,7 @@ export const AppShell = ({ children }: AppShellProps) => {
           className="flex-none flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/50 z-50"
         >
           <button onClick={() => navigate('/')} className="focus:outline-none">
-            <img 
-              src="/favicon.png" 
-              alt="Ritual" 
-              className="h-8 w-auto object-contain"
-            />
+            <RitualLogo size="sm" variant="full" />
           </button>
           
           <div className="flex items-center gap-3">

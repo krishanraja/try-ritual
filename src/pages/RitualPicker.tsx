@@ -279,15 +279,20 @@ export default function RitualPicker() {
         </div>
       </div>
 
-      {/* Ritual Cards */}
-      <div className="flex-1 space-y-2 overflow-y-auto min-h-0 pb-2">
-        {rituals.slice(0, isPremium ? rituals.length : ritualsToShow).map((ritual, idx) => {
+      {/* Ritual Cards - Show all but limit selection for free users */}
+      <div className="flex-1 space-y-2 overflow-y-auto min-h-0 pb-24">
+        {rituals.map((ritual, idx) => {
+          const isLocked = !isPremium && idx >= ritualsToShow;
           const currentRank = Object.entries(selectedRanks).find(([_, r]) => r?.title === ritual.title)?.[0];
           return (
             <motion.div
               key={idx}
-              whileTap={{ scale: 0.98 }}
+              whileTap={!isLocked ? { scale: 0.98 } : undefined}
               onClick={() => {
+                if (isLocked) {
+                  setShowUpgradeModal(true);
+                  return;
+                }
                 const nextRank = !currentRank ? 
                   (selectedRanks[1] ? (selectedRanks[2] ? 3 : 2) : 1) : 
                   parseInt(currentRank);
@@ -295,7 +300,8 @@ export default function RitualPicker() {
               }}
             >
               <Card className={cn(
-                "cursor-pointer transition-all active:scale-[0.98]",
+                "transition-all",
+                isLocked ? "opacity-60 cursor-pointer" : "cursor-pointer active:scale-[0.98]",
                 currentRank ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/30"
               )}>
                 <CardContent className="p-3">
@@ -314,7 +320,11 @@ export default function RitualPicker() {
                         </span>
                       </div>
                     </div>
-                    {currentRank ? (
+                    {isLocked ? (
+                      <div className="flex-none w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground font-medium">PRO</span>
+                      </div>
+                    ) : currentRank ? (
                       <div className="flex-none w-10 h-10 rounded-full bg-gradient-ritual text-white flex items-center justify-center font-bold text-lg shadow-md">
                         {currentRank}
                       </div>
@@ -330,13 +340,6 @@ export default function RitualPicker() {
           );
         })}
         
-        {/* Locked rituals prompt for free users */}
-        {!isPremium && rituals.length > ritualsToShow && (
-          <LockedRitualsPrompt 
-            count={rituals.length - ritualsToShow} 
-            onClick={() => setShowUpgradeModal(true)} 
-          />
-        )}
       </div>
       
       {/* Upgrade Modal */}
@@ -346,7 +349,7 @@ export default function RitualPicker() {
         highlightFeature="rituals"
       />
 
-      <div className="flex-none pt-2 pb-20">
+      <div className="flex-none pt-2 pb-24">
         <Button
           onClick={handleSubmitRankings}
           disabled={!selectedRanks[1] || !selectedRanks[2] || !selectedRanks[3]}
@@ -390,7 +393,7 @@ export default function RitualPicker() {
         </div>
       </div>
 
-      <div className="flex-none flex gap-2 pt-4 pb-20">
+      <div className="flex-none flex gap-2 pt-4 pb-24">
         <Button
           onClick={() => setStep('rank')}
           variant="outline"
