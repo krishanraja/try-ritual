@@ -113,11 +113,12 @@ serve(async (req) => {
     if (partnerId) {
       try {
         const sendPushUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push`;
+        const internalSecret = Deno.env.get("INTERNAL_FUNCTION_SECRET");
         await fetch(sendPushUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`
+            "x-internal-secret": internalSecret || ""
           },
           body: JSON.stringify({
             user_id: partnerId,

@@ -127,7 +127,7 @@ serve(async (req) => {
 
       // Send push notifications to both partners
       const sendPushUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push`;
-      const authHeader = `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`;
+      const internalSecret = Deno.env.get("INTERNAL_FUNCTION_SECRET");
 
       for (const partnerId of [couple.partner_one, couple.partner_two]) {
         if (partnerId) {
@@ -136,7 +136,7 @@ serve(async (req) => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": authHeader
+                "x-internal-secret": internalSecret || ""
               },
               body: JSON.stringify({
                 user_id: partnerId,
