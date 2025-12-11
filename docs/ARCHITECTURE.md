@@ -16,10 +16,12 @@
 - **Database:** PostgreSQL
 - **Authentication:** Supabase Auth (email/password)
 - **Realtime:** Supabase Realtime (presence & database changes)
-- **Storage:** Supabase Storage (for future photo uploads)
+- **Storage:** Supabase Storage (`ritual-photos` bucket)
 - **Edge Functions:** Deno runtime
   - `synthesize-rituals` - AI ritual generation
   - `nudge-partner` - Partner reminder system
+  - `send-push` - Web push notifications
+  - `notify-partner-completion` - Completion notifications
 
 ### AI Integration
 - **Provider:** Lovable AI Gateway
@@ -52,7 +54,7 @@
 ┌─────────────────────────────────────────┐
 │        Page Components                   │
 │  - Home, QuickInput, RitualPicker       │
-│  - RitualCards, History, Profile        │
+│  - RitualCards, Memories, Profile       │
 └─────────────────────────────────────────┘
 ```
 
@@ -74,8 +76,12 @@ auth.users (Supabase managed)
     │             │     └──→ ritual_preferences
     │             │
     │             ├──→ ritual_memories
+    │             │     └──→ memory_reactions
+    │             │
     │             ├──→ ritual_streaks
     │             └──→ ritual_suggestions
+    │
+    ├──→ push_subscriptions
     │
     └──→ ritual_library (global)
 ```
@@ -84,52 +90,7 @@ auth.users (Supabase managed)
 - 1 couple has many weekly_cycles (one per week)
 - 1 weekly_cycle has 0-1 feedback, many preferences, many completions
 - 1 couple has many memories, 1 streak record, many suggestions
-
-### Realtime Synchronization
-
-The app uses Supabase Realtime to keep partners in sync:
-
-```typescript
-// Subscribe to couple changes
-supabase
-  .channel('couples')
-  .on('postgres_changes', {
-    event: '*',
-    schema: 'public',
-    table: 'couples'
-  }, handleCoupleChange)
-  .subscribe()
-
-// Subscribe to cycle changes
-supabase
-  .channel('weekly_cycles')
-  .on('postgres_changes', {
-    event: '*',
-    schema: 'public',
-    table: 'weekly_cycles'
-  }, handleCycleChange)
-  .subscribe()
-```
-
-**Pattern:** On any change, refresh context and show toast notification to inform user of partner actions.
-
-### Navigation State Machine
-
-The app uses a state machine approach to determine navigation:
-
-```
-Couple State → Cycle State → User State → Route
-
-States:
-1. No couple → Landing/Create
-2. No partner_two → Show Code
-3. User hasn't submitted → /input
-4. Waiting for partner → Home (waiting component)
-5. Both submitted, no synthesis → Home (synthesis animation)
-6. Synthesis ready, no agreement → /picker
-7. Agreement reached → /rituals
-8. Ritual passed → Home (post-checkin)
-```
+- 1 memory has many reactions (one per partner)
 
 ## Component Architecture
 
@@ -145,15 +106,19 @@ App
     │   ├── Home
     │   │   ├── WaitingForPartner
     │   │   ├── SynthesisAnimation
-    │   │   └── PostRitualCheckin
+    │   │   └── EnhancedPostRitualCheckin
+    │   │       ├── PhotoCapture
+    │   │       └── MemoryReactions
     │   ├── QuickInput
-    │   │   └── MagneticCanvas
+    │   │   └── CardDrawInput
     │   ├── RitualPicker
     │   │   ├── RitualCarousel
     │   │   └── AgreementGame
     │   ├── RitualCards
     │   │   └── CelebrationScreen
-    │   ├── History
+    │   ├── Memories
+    │   │   ├── MemoryCard
+    │   │   └── MemoryReactions
     │   └── Profile
     └── Bottom Nav
 ```
@@ -182,10 +147,9 @@ App
   </div>
 </div>
 
-// ❌ WRONG: Using StrictMobileViewport or fixed heights
-<StrictMobileViewport>  // DELETED - never use
-  <div className="h-[100dvh]">  // NEVER inside pages
-    <div className="pb-24">  // NEVER padding hacks
+// ❌ WRONG: Using fixed heights
+<div className="h-[100dvh]">  // NEVER inside pages
+  <div className="pb-24">  // NEVER padding hacks
 ```
 
 **Key Rules:**
@@ -201,22 +165,19 @@ Every async operation shows loading state with timeout-based "slow loading" indi
 **3. Optimistic Updates**
 UI updates immediately, with rollback on error.
 
-**4. Skeleton Loading**
-(TODO: Not yet implemented consistently)
-
 ## Edge Functions
 
 ### synthesize-rituals
 
 **Purpose:** Generate personalized rituals using Lovable AI
 
-**Input:**
+**Input (Card-based v1.6+):**
 ```typescript
 {
   action: 'synthesize' | 'swap',
   coupleId: string,
-  partnerOneInput: { energy, availability, budget, craving, desire },
-  partnerTwoInput: { energy, availability, budget, craving, desire },
+  partnerOneInput: { selectedCards: string[], desire?: string },
+  partnerTwoInput: { selectedCards: string[], desire?: string },
   userCity: string,
   currentRitual?: object // for swap action
 }
@@ -236,36 +197,51 @@ UI updates immediately, with rollback on error.
 }
 ```
 
-**Key Features:**
-- Fetches historical data (completions, memories)
-- Avoids repeating past rituals
-- Learns from highly-rated experiences
-- Location and season aware
-- Includes "surprise factor" requirement
+### send-push
 
-### nudge-partner
-
-**Purpose:** Send reminder to partner who hasn't submitted
+**Purpose:** Send web push notifications to users
 
 **Input:**
 ```typescript
 {
-  cycleId: string
+  user_id: string,
+  title: string,
+  body: string,
+  url?: string,
+  type?: 'completion' | 'nudge' | 'general'
 }
 ```
 
-**Rate Limit:** Once per hour per cycle
+**Security:** Requires `x-internal-secret` header (function-to-function only)
 
 **Output:**
 ```typescript
-{ success: boolean, message: string }
+{
+  success: boolean,
+  sent: number,
+  failed: number,
+  total: number
+}
+```
+
+### notify-partner-completion
+
+**Purpose:** Notify partner when ritual is completed
+
+**Input:**
+```typescript
+{
+  coupleId: string,
+  ritualTitle: string,
+  memoryId?: string
+}
 ```
 
 **Flow:**
-1. Verify user is part of couple
-2. Check rate limit (1 hour cooldown)
-3. Update `nudged_at` timestamp
-4. Partner sees nudge banner on next refresh
+1. Get current user's name
+2. Determine partner's user_id
+3. Call send-push with completion notification
+4. Partner receives: "💕 {name} completed '{ritual}' - tap to see!"
 
 ## Security Model
 
@@ -284,8 +260,25 @@ UI updates immediately, with rollback on error.
 - Anyone can view joinable couples (where partner_two IS NULL)
 - Partner one can delete couple
 - Partner two can leave couple (sets partner_two to NULL)
+- Memory reactions: Only couple members can view/add
 
-See [SECURITY.md](./SECURITY.md) for detailed policy documentation.
+### Edge Function Security
+- `send-push` requires internal secret header
+- All other functions require valid JWT
+- Service role key used only for admin operations
+
+## Routing Notes
+
+**IMPORTANT:** The home route is `/`, NOT `/home`. Always use `navigate('/')` when redirecting to the home/landing page.
+
+**Route Map:**
+- `/` - Landing (unauthenticated) or Home (authenticated)
+- `/auth` - Sign in / Sign up
+- `/input` - Weekly card draw input
+- `/picker` - Ritual voting carousel
+- `/rituals` - Scheduled ritual view
+- `/memories` - Photo memory gallery
+- `/profile` - User settings
 
 ## Performance Considerations
 
@@ -296,58 +289,9 @@ See [SECURITY.md](./SECURITY.md) for detailed policy documentation.
 3. **Debouncing:** Input handlers debounced
 4. **Realtime Throttling:** Realtime updates batched to prevent UI thrashing
 5. **Query Caching:** React Query caches with smart invalidation
+6. **Image Compression:** Client-side compression before upload (~500KB target)
 
 ### Bundle Size
 - Main bundle: ~150KB gzipped
 - Lazy routes: 10-30KB each
 - Total initial load: <200KB
-
-## Error Handling
-
-### Strategy
-1. **Try-Catch Blocks:** All async operations wrapped
-2. **Error Boundaries:** Top-level error boundary (TODO)
-3. **Fallback UI:** Error states for every component
-4. **Logging:** Console logging for debugging
-5. **User Feedback:** Toast notifications for errors
-
-### Common Error Patterns
-See [ERROR-PATTERNS.md](./ERROR-PATTERNS.md)
-
-## Development Workflow
-
-### Local Development
-```bash
-npm install
-npm run dev  # Starts on localhost:5173
-```
-
-### Environment Variables
-```
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_SUPABASE_PROJECT_ID=
-```
-
-Auto-configured via Lovable Cloud integration.
-
-### Testing
-Currently no automated tests. Testing done manually in preview environment.
-
-### Deployment
-Automatic on push to main. Edge functions deploy automatically.
-
-## Routing Notes
-
-**IMPORTANT:** The home route is `/`, NOT `/home`. Always use `navigate('/')` when redirecting to the home/landing page. The `/home` route does not exist and will result in a 404 error.
-
-## Future Architecture Improvements
-
-1. **Error Boundaries:** Add React error boundaries to all pages
-2. **Suspense:** Use React Suspense for loading states
-3. **Query Optimization:** Add indexes to frequently-queried columns
-4. **Caching Layer:** Add Redis for session/state caching
-5. **Monitoring:** Add Sentry or similar for error tracking
-6. **Analytics:** Add PostHog or similar for usage analytics
-7. **Testing:** Add unit and integration tests
-8. **E2E Testing:** Add Playwright for critical flows

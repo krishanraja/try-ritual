@@ -20,10 +20,19 @@ auth.users (Supabase managed)
     │             │     └──→ ritual_preferences (weekly_cycle_id FK)
     │             │
     │             ├──→ ritual_memories (couple_id FK)
+    │             │     │
+    │             │     └──→ memory_reactions (memory_id FK)
+    │             │
     │             ├──→ ritual_streaks (couple_id FK, 1:1)
-    │             └──→ ritual_suggestions (couple_id FK)
+    │             ├──→ ritual_suggestions (couple_id FK)
+    │             └──→ surprise_rituals (couple_id FK)
+    │
+    ├──→ push_subscriptions (user_id FK)
     │
     └──→ ritual_library (global, no FK)
+
+Storage:
+    └──→ ritual-photos bucket (couple_id scoped folders)
 ```
 
 ---
@@ -68,7 +77,7 @@ Represents a couple's ritual space.
 | is_active | boolean | Yes | true | Soft delete flag |
 | preferred_city | text | Yes | 'New York' | Default city for rituals |
 | current_cycle_week_start | date | Yes | - | Cached week start (denormalized) |
-| synthesis_ready | boolean | Yes | false | Legacy flag (TODO: remove) |
+| synthesis_ready | boolean | Yes | false | Legacy flag (deprecated) |
 | created_at | timestamptz | No | now() | Creation timestamp |
 
 **Indexes:**
@@ -109,32 +118,43 @@ Represents one week's ritual cycle for a couple.
 | agreed_date | date | Yes | - | Scheduled date |
 | agreed_time | time | Yes | - | Scheduled time |
 | nudged_at | timestamptz | Yes | - | Last nudge timestamp |
-| canvas_state_one | jsonb | Yes | - | P1's MagneticCanvas state (legacy) |
-| canvas_state_two | jsonb | Yes | - | P2's MagneticCanvas state (legacy) |
-| sync_completed_at | timestamptz | Yes | - | Legacy field |
+| swaps_used | integer | Yes | 0 | Number of ritual swaps used |
+| nudge_count | integer | Yes | 0 | Number of nudges sent |
+| canvas_state_one | jsonb | Yes | - | ⚠️ DEPRECATED - Legacy MagneticCanvas state |
+| canvas_state_two | jsonb | Yes | - | ⚠️ DEPRECATED - Legacy MagneticCanvas state |
+| sync_completed_at | timestamptz | Yes | - | ⚠️ DEPRECATED - Legacy field |
 | created_at | timestamptz | No | now() | Creation timestamp |
 
 **Indexes:**
 - PRIMARY KEY (id)
 - INDEX (couple_id)
 - INDEX (week_start_date)
-- **TODO:** UNIQUE (couple_id, week_start_date)
+- UNIQUE (couple_id, week_start_date)
 
 **RLS Policies:**
 - Users can view their cycles
 - Users can insert their cycles
 - Users can update their cycles
+- Users can delete empty cycles
 
 **JSONB Schemas:**
 
-**partner_one_input / partner_two_input:**
+**partner_one_input / partner_two_input (Card-based - v1.6+):**
+```json
+{
+  "selectedCards": ["adventure", "cozy", "romantic"],
+  "desire": "string" // Optional free text
+}
+```
+
+**partner_one_input / partner_two_input (Legacy format):**
 ```json
 {
   "energy": "high" | "medium" | "low" | "variable",
   "availability": "30min" | "1-2hrs" | "3+hrs" | "flexible",
   "budget": "$" | "$$" | "$$$" | "free",
   "craving": "intimacy" | "adventure" | "relaxation" | "creativity" | "spontaneity",
-  "desire": "string" // Optional free text
+  "desire": "string"
 }
 ```
 
@@ -152,99 +172,33 @@ Represents one week's ritual cycle for a couple.
 ]
 ```
 
-**agreed_ritual:**
-```json
-{
-  "title": "string",
-  "description": "string",
-  "time_estimate": "string",
-  "budget_band": "string",
-  "category": "string",
-  "why": "string" // optional
-}
-```
-
 ---
 
-### ritual_preferences
+### memory_reactions
 
-Stores each partner's ranked ritual choices during voting.
+Stores emoji reactions on ritual memories from partners.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
 | id | uuid | No | gen_random_uuid() | PK |
-| weekly_cycle_id | uuid | No | - | FK to weekly_cycles.id |
-| user_id | uuid | No | - | Which partner voted |
-| ritual_title | text | No | - | Title of chosen ritual |
-| rank | integer | No | - | 1, 2, or 3 |
-| ritual_data | jsonb | No | - | Full ritual object |
-| proposed_date | date | Yes | - | Suggested date |
-| proposed_time | time | Yes | - | Suggested time |
-| created_at | timestamptz | No | now() | Creation timestamp |
+| memory_id | uuid | No | - | FK to ritual_memories.id |
+| user_id | uuid | No | - | User who reacted |
+| reaction | text | No | - | Emoji: ❤️, 🔥, 😍, 🥹, 👏 |
+| created_at | timestamptz | Yes | now() | Creation timestamp |
 
 **Indexes:**
 - PRIMARY KEY (id)
-- INDEX (weekly_cycle_id)
-- INDEX (user_id)
+- UNIQUE (memory_id, user_id) - One reaction per user per memory
 
 **RLS Policies:**
-- Users can view their couple's preferences
-- Users can insert their preferences
-- Users can update their preferences
-- Users can delete their preferences
+- Couple members can view reactions on their memories
+- Couple members can add reactions to their memories
+- Users can update their own reactions
+- Users can delete their own reactions
 
----
-
-### completions
-
-Tracks when a ritual is marked as completed.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | uuid | No | gen_random_uuid() | PK |
-| weekly_cycle_id | uuid | No | - | FK to weekly_cycles.id |
-| ritual_title | text | No | - | Completed ritual title |
-| completed_at | timestamptz | No | now() | Completion timestamp |
-| created_at | timestamptz | No | now() | Record creation |
-
-**Indexes:**
-- PRIMARY KEY (id)
-- INDEX (weekly_cycle_id)
-
-**RLS Policies:**
-- Users can view their completions
-- Users can insert their completions
-
----
-
-### ritual_feedback
-
-Stores post-ritual check-in feedback.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | uuid | No | gen_random_uuid() | PK |
-| couple_id | uuid | No | - | FK to couples.id |
-| weekly_cycle_id | uuid | No | - | FK to weekly_cycles.id |
-| did_complete | boolean | Yes | - | True if completed |
-| connection_rating | integer | Yes | - | 1-5 stars |
-| would_repeat | text | Yes | - | "yes" | "no" | "maybe" |
-| notes | text | Yes | - | Free-form reflection |
-| created_at | timestamptz | No | now() | Creation timestamp |
-| updated_at | timestamptz | No | now() | Update timestamp |
-
-**Indexes:**
-- PRIMARY KEY (id)
-- INDEX (couple_id)
-- INDEX (weekly_cycle_id)
-- UNIQUE (weekly_cycle_id) // One feedback per cycle
-
-**RLS Policies:**
-- Users can view their couple's feedback
-- Users can insert their couple's feedback
-- Users can update their couple's feedback
-
-**Trigger:** `update_updated_at_column()` on UPDATE
+**Constraints:**
+- CHECK (reaction IN ('❤️', '🔥', '😍', '🥹', '👏'))
+- FOREIGN KEY (memory_id) REFERENCES ritual_memories(id) ON DELETE CASCADE
 
 ---
 
@@ -261,7 +215,9 @@ Long-term storage of completed rituals with photos and notes.
 | completion_date | date | No | - | When completed |
 | rating | integer | Yes | - | 1-5 stars |
 | notes | text | Yes | - | Reflection |
-| photo_url | text | Yes | - | Storage URL (future) |
+| photo_url | text | Yes | - | Storage URL for photo |
+| is_tradition | boolean | Yes | false | Marked as tradition |
+| tradition_count | integer | Yes | 1 | Times completed |
 | created_at | timestamptz | No | now() | Creation timestamp |
 | updated_at | timestamptz | No | now() | Update timestamp |
 
@@ -269,7 +225,7 @@ Long-term storage of completed rituals with photos and notes.
 - PRIMARY KEY (id)
 - INDEX (couple_id)
 - INDEX (completion_date)
-- INDEX (rating) WHERE rating >= 4 // For high-rated queries
+- INDEX (rating) WHERE rating >= 4
 
 **RLS Policies:**
 - Users can view their couple's memories
@@ -277,92 +233,56 @@ Long-term storage of completed rituals with photos and notes.
 - Users can update their couple's memories
 - Users can delete their couple's memories
 
-**Trigger:** `update_updated_at_column()` on UPDATE
-
 ---
 
-### ritual_streaks
+### push_subscriptions
 
-Tracks couples' completion streaks.
+Stores web push notification subscriptions.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
 | id | uuid | No | gen_random_uuid() | PK |
-| couple_id | uuid | No | - | FK to couples.id (UNIQUE) |
-| current_streak | integer | No | 0 | Current consecutive weeks |
-| longest_streak | integer | No | 0 | All-time longest streak |
-| last_completion_date | date | Yes | - | Date of last completion |
-| created_at | timestamptz | No | now() | Creation timestamp |
-| updated_at | timestamptz | No | now() | Update timestamp |
+| user_id | uuid | No | - | User who subscribed |
+| endpoint | text | No | - | Push service endpoint URL |
+| p256dh | text | No | - | Public key for encryption |
+| auth | text | No | - | Auth secret for encryption |
+| created_at | timestamptz | Yes | now() | Creation timestamp |
 
 **Indexes:**
 - PRIMARY KEY (id)
-- UNIQUE (couple_id)
 
 **RLS Policies:**
-- Users can view their couple's streak
-- Users can insert their couple's streak
-- Users can update their couple's streak
-
-**Trigger:** `update_updated_at_column()` on UPDATE
-
-**Business Logic:**
-- Increment `current_streak` when ritual completed within 7 days of `last_completion_date`
-- Reset `current_streak` to 1 if gap > 7 days
-- Update `longest_streak` if `current_streak` exceeds it
+- Users can view their own subscriptions
+- Users can insert their own subscriptions
+- Users can update their own subscriptions
+- Users can delete their own subscriptions
 
 ---
 
-### ritual_suggestions
+## Storage Buckets
 
-AI-generated proactive ritual suggestions (future feature).
+### ritual-photos
 
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | uuid | No | gen_random_uuid() | PK |
-| couple_id | uuid | No | - | FK to couples.id |
-| suggested_ritual | jsonb | No | - | Ritual object |
-| reason | text | No | - | Why suggested |
-| based_on_history | jsonb | Yes | - | Context data |
-| shown_at | timestamptz | No | now() | When shown |
-| accepted | boolean | Yes | - | Did they use it? |
-| created_at | timestamptz | No | now() | Creation timestamp |
+Stores photos uploaded during post-ritual check-in.
 
-**Indexes:**
-- PRIMARY KEY (id)
-- INDEX (couple_id)
-- INDEX (shown_at)
+| Property | Value |
+|----------|-------|
+| **Name** | ritual-photos |
+| **Public** | Yes |
+| **File Size Limit** | 5MB |
+| **Allowed MIME Types** | image/jpeg, image/png, image/webp |
 
-**RLS Policies:**
-- System can create suggestions (INSERT policy: true)
-- Users can view their couple's suggestions
-- Users can update their couple's suggestions (mark accepted)
-
----
-
-### ritual_library
-
-Global library of ritual templates (currently unused).
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | uuid | No | gen_random_uuid() | PK |
-| title | text | No | - | Ritual title |
-| description | text | No | - | Description |
-| category | text | No | - | Category tag |
-| time_estimate | text | No | - | e.g. "1-2 hours" |
-| budget_band | text | No | - | "$", "$$", etc. |
-| constraints | jsonb | Yes | '{}' | Additional metadata |
-| created_at | timestamptz | No | now() | Creation timestamp |
-
-**Indexes:**
-- PRIMARY KEY (id)
-- INDEX (category)
+**Folder Structure:**
+```
+ritual-photos/
+  └── {couple_id}/
+      └── {timestamp}-{filename}.jpg
+```
 
 **RLS Policies:**
-- Anyone can view ritual library (SELECT: true)
-
-**Note:** Currently not used. Rituals generated fresh by AI each time.
+- Users can upload to their couple's folder
+- Users can view their couple's photos
+- Users can delete their couple's photos
 
 ---
 
@@ -395,7 +315,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 **Purpose:** Auto-update `updated_at` timestamp on row update.
 
-**Used By:** ritual_feedback, ritual_memories, ritual_streaks
+**Used By:** ritual_feedback, ritual_memories, ritual_streaks, bucket_list_items
 
 ```sql
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
@@ -409,40 +329,51 @@ $$ LANGUAGE plpgsql SET search_path = public;
 
 ---
 
-## Indexes
+### is_partner()
 
-### Current Indexes
-- All PRIMARY KEY columns
-- All FOREIGN KEY columns
-- `couples.couple_code` (UNIQUE)
-- `weekly_cycles.week_start_date`
-- `ritual_memories.completion_date`
-- `ritual_memories.rating WHERE rating >= 4`
-- `ritual_library.category`
+**Purpose:** Check if a given profile_id is the current user's partner.
 
-### TODO: Add Indexes
-- `weekly_cycles (couple_id, week_start_date)` - UNIQUE constraint
-- `completions.completed_at` - For historical queries
-- `ritual_suggestions.shown_at` - For recent suggestions
+```sql
+CREATE OR REPLACE FUNCTION public.is_partner(profile_id uuid)
+RETURNS boolean AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM couples
+    WHERE is_active = true
+    AND (
+      (partner_one = auth.uid() AND partner_two = profile_id)
+      OR (partner_two = auth.uid() AND partner_one = profile_id)
+    )
+  )
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
+```
 
 ---
 
-## Data Constraints
+### get_partner_name()
 
-### Couple Code Generation
-- 6 uppercase alphanumeric characters
-- Excludes ambiguous characters (O, 0, I, 1)
-- Generated in application code, not database
-- Validated as UNIQUE on INSERT
+**Purpose:** Securely get partner's name without exposing email.
 
-### Week Start Date
-- Always Monday (day 1 of week)
-- Calculated in application: `date.setDate(date.getDate() - date.getDay())`
-- Format: YYYY-MM-DD
+```sql
+CREATE OR REPLACE FUNCTION public.get_partner_name(partner_id uuid)
+RETURNS text AS $$
+  SELECT name FROM profiles WHERE id = partner_id AND is_partner(partner_id)
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
+```
 
-### JSON Schema Validation
-- Currently done in application code
-- TODO: Add database-level JSON schema validation
+---
+
+## Deprecations
+
+### Legacy MagneticCanvas Fields (v1.6)
+The following fields on `weekly_cycles` are deprecated and no longer used:
+- `canvas_state_one` - Was used for MagneticCanvas P1 state
+- `canvas_state_two` - Was used for MagneticCanvas P2 state
+- `sync_completed_at` - Was used for MagneticCanvas sync
+
+These fields remain for backwards compatibility but will be removed in a future migration.
+
+### Legacy synthesis_ready (v1.3)
+The `couples.synthesis_ready` field is no longer used. Synthesis state is determined by checking `weekly_cycles.synthesized_output IS NOT NULL`.
 
 ---
 
@@ -450,34 +381,9 @@ $$ LANGUAGE plpgsql SET search_path = public;
 
 See `supabase/migrations/` directory for full history.
 
-**Key Migrations:**
-- 20250101_create_profiles.sql
-- 20250102_create_couples.sql
-- 20250103_create_weekly_cycles.sql
-- 20250104_create_completions.sql
-- 20250105_create_ritual_feedback.sql
-- 20250106_create_ritual_preferences.sql
-- 20250107_create_ritual_memories.sql
-- 20250108_create_ritual_streaks.sql
-- 20250109_create_ritual_suggestions.sql
-- 20250110_create_ritual_library.sql
-- **TODO:** 20250201_add_unique_couple_week.sql
-
----
-
-## Backup & Recovery
-
-**Automated Backups:** Handled by Supabase (daily)
-
-**Manual Backup:**
-```bash
-pg_dump -h db.PROJECT_ID.supabase.co -U postgres dbname > backup.sql
-```
-
-**Restore:**
-```bash
-psql -h db.PROJECT_ID.supabase.co -U postgres dbname < backup.sql
-```
+**Recent Migrations:**
+- `20251211_create_memory_reactions.sql` - Partner reactions table
+- `20251211_create_ritual_photos_bucket.sql` - Photo storage bucket
 
 ---
 
@@ -496,31 +402,3 @@ psql -h db.PROJECT_ID.supabase.co -U postgres dbname < backup.sql
 ### Connection Pooling
 - Supabase uses PgBouncer automatically
 - No need for client-side pooling
-
----
-
-## Future Database Improvements
-
-1. **Add Unique Constraints:**
-   - `weekly_cycles (couple_id, week_start_date)`
-
-2. **Add Partial Indexes:**
-   - `WHERE is_active = true`
-   - `WHERE agreement_reached = false`
-
-3. **Add JSON Schema Validation:**
-   - Validate input/output structure at DB level
-
-4. **Add Materialized Views:**
-   - Pre-compute historical statistics
-   - Leaderboards, aggregate stats
-
-5. **Add Database-Level Defaults:**
-   - Default city based on user location
-   - Auto-populate week_start_date
-
-6. **Add Cascade Delete Rules:**
-   - When couple deleted, clean up cycles/preferences/etc.
-
-7. **Add Soft Delete:**
-   - Instead of DELETE, set `deleted_at` timestamp

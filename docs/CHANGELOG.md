@@ -6,6 +6,74 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## v1.6.0 (Ritual Experience Redesign)
+**Date**: 2025-12-11
+
+### 🎉 Major Features
+
+#### Card Draw Input (Replaces QuickInput)
+- **New Component**: `CardDrawInput.tsx` - Tap-based mood card selection
+- 12 beautifully designed mood cards with emojis, labels, and gradient colors
+- Max 5 selections per user
+- Real-time partner progress display ("Partner picked X cards")
+- ~30 second completion time (same as before, more engaging)
+
+#### Photo Memories
+- **New Component**: `PhotoCapture.tsx` - Client-side image compression & upload
+- Storage bucket `ritual-photos` with proper RLS policies
+- Photos compressed to ~500KB before upload
+- Upload progress indicator with preview
+- Integrated into post-ritual check-in flow
+
+#### Memories Gallery (Replaces History)
+- **New Page**: `Memories.tsx` - Polaroid-style memory grid
+- Photo display with gradient fallback
+- Rating hearts, tradition badges, partner reactions
+- Stats summary: total rituals, streak, traditions, photos
+- Empty state with encouraging message
+
+#### Partner Reactions
+- **New Table**: `memory_reactions` with RLS policies
+- **New Component**: `MemoryReactions.tsx` - Emoji reaction picker
+- 5 reaction options: ❤️ 🔥 😍 🥹 👏
+- Real-time reaction display on memory cards
+
+#### Partner Notifications
+- **New Edge Function**: `notify-partner-completion` - Triggers on ritual completion
+- **Updated**: `send-push` now sends actual web push notifications
+- Uses VAPID keys for push authentication
+- Auto-cleanup of expired subscriptions
+
+#### Streak Badge Evolution
+- Visual progression based on streak length:
+  - Week 1: 🌱 Seedling
+  - Week 2-3: 🌿 Growing
+  - Week 4-7: 🔥 On Fire
+  - Week 8+: 💎 Legendary
+- Hover/tap to see badge name
+
+### 🗑️ Removed (Dead Code Cleanup)
+- `MagneticCanvas.tsx` - Unused experimental input
+- `MagneticInput.tsx` - Unused page
+- `EmotionalToken.tsx` - Only used by MagneticCanvas
+- `PartnerGhost.tsx` - Only used by MagneticCanvas
+- `useMagneticSync.ts` - Only used by MagneticCanvas
+- `magneticCanvas.ts` types - Only used by above
+- `History.tsx` - Replaced by Memories.tsx
+
+### 🔧 Technical Changes
+- Updated `synthesize-rituals` to accept card-based input format
+- Navigation: `/history` → `/memories`
+- Added `memory_reactions` table with full CRUD RLS
+- Added `ritual-photos` storage bucket with couple-scoped RLS
+
+### 📊 Database Changes
+- **New Table**: `memory_reactions` (id, memory_id, user_id, reaction, created_at)
+- **New Storage**: `ritual-photos` bucket (public, 5MB limit, image types only)
+- **Deprecated**: `weekly_cycles.canvas_state_one/two`, `sync_completed_at` (documented as legacy)
+
+---
+
 ## v1.5.0 (UX Stability Overhaul)
 **Date**: 2025-12-11
 
