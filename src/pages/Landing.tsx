@@ -21,6 +21,7 @@ import { format, isPast, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import ritualBackgroundVideo from '@/assets/ritual-background.mp4';
 import ritualVideoPoster from '@/assets/ritual-video-poster.jpg';
+import { OnboardingModal } from '@/components/OnboardingModal';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -34,6 +35,8 @@ export default function Landing() {
   const [slowLoading, setSlowLoading] = useState(false);
   const [showPostRitualCheckin, setShowPostRitualCheckin] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ name: string } | null>(null);
 
   // Force refresh cycle data when page mounts
   useEffect(() => {
@@ -61,6 +64,31 @@ export default function Landing() {
       }
     }
   }, [user, loading]);
+
+  // Fetch user profile for personalization
+  useEffect(() => {
+    if (user && !loading) {
+      const fetchProfile = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+        if (data) setUserProfile(data);
+      };
+      fetchProfile();
+    }
+  }, [user, loading]);
+
+  // Show onboarding for first-time users
+  useEffect(() => {
+    if (user && !loading && !couple) {
+      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [user, loading, couple]);
 
   // No auto-redirect - let users stay on home and navigate manually
 
@@ -113,8 +141,15 @@ export default function Landing() {
     });
   }, []);
 
-  // Loading state - show skeleton matching expected destination to prevent flash
+  // Loading state - show skeleton matching expected destination with contextual messages
   if (loading) {
+    // Contextual loading messages
+    const getLoadingMessage = () => {
+      if (!hasKnownSession) return 'Loading...';
+      if (slowLoading) return 'Reconnecting to your space...';
+      return 'Finding your rituals...';
+    };
+
     // If we have a cached session, show dashboard-like skeleton (with lg logo)
     // Otherwise show marketing-like skeleton (with 2xl logo)
     if (hasKnownSession) {
@@ -124,11 +159,9 @@ export default function Landing() {
           <div className="flex-1 flex flex-col items-center justify-center gap-4 relative z-10">
             <RitualLogo size="lg" variant="full" className="opacity-80" />
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            {slowLoading && (
-              <p className="text-sm text-muted-foreground animate-pulse">
-                Reconnecting...
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground animate-pulse">
+              {getLoadingMessage()}
+            </p>
           </div>
         </div>
       );
@@ -141,11 +174,9 @@ export default function Landing() {
         <div className="flex-1 flex flex-col items-center justify-center gap-4 relative z-10">
           <RitualLogo size="2xl" variant="full" className="opacity-80 max-w-[560px] sm:max-w-[800px]" />
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          {slowLoading && (
-            <p className="text-sm text-muted-foreground animate-pulse">
-              Loading...
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground animate-pulse">
+            {getLoadingMessage()}
+          </p>
         </div>
       </div>
     );
@@ -241,8 +272,12 @@ export default function Landing() {
     );
   }
 
-  // Logged in but no couple: Show welcome screen
+  // Logged in but no couple: Show welcome screen with value proposition
   if (!couple) {
+    const welcomeMessage = userProfile?.name 
+      ? `Welcome back, ${userProfile.name}!` 
+      : 'Build connection, one ritual at a time';
+    
     return (
       <div className="h-full flex flex-col relative">
         <AnimatedGradientBackground variant="warm" />
@@ -251,8 +286,32 @@ export default function Landing() {
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center space-y-6 max-w-sm">
             <RitualLogo size="xl" variant="full" className="mx-auto" />
             <div>
-              <h1 className="text-xl font-bold mb-2">Welcome to Ritual</h1>
-              <p className="text-sm text-muted-foreground">Create weekly rituals together</p>
+              <h1 className="text-xl font-bold mb-2">{welcomeMessage}</h1>
+              <p className="text-sm text-muted-foreground mb-4">
+                Weekly rituals designed for couples who want to grow together.
+              </p>
+              
+              {/* Value proposition bullets */}
+              <div className="space-y-2 text-left bg-white/60 backdrop-blur-sm rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-3 h-3 text-pink-600" />
+                  </div>
+                  <span>Pick weekly activities together</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-3 h-3 text-purple-600" />
+                  </div>
+                  <span>AI finds ideas you'll both love</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-6 h-6 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="w-3 h-3 text-teal-600" />
+                  </div>
+                  <span>Track memories & build streaks</span>
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <Button onClick={() => setCreateOpen(true)} className="w-full bg-gradient-ritual text-white h-12 rounded-xl">
@@ -261,11 +320,15 @@ export default function Landing() {
               <Button onClick={() => setJoinOpen(true)} variant="outline" className="w-full h-12 rounded-xl">
                 I Have a Code
               </Button>
+              <p className="text-xs text-muted-foreground pt-2">
+                Has your partner already started? Ask them for the code!
+              </p>
             </div>
           </motion.div>
         </div>
         <CreateCoupleDialog open={createOpen} onOpenChange={setCreateOpen} />
         <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
+        <OnboardingModal open={showOnboarding} onComplete={() => setShowOnboarding(false)} />
       </div>
     );
   }
@@ -306,8 +369,18 @@ export default function Landing() {
               </div>
               <h1 className="text-2xl font-bold">Waiting for Partner...</h1>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Share your code to invite someone special
+                Your partner needs to join using your code
               </p>
+            </div>
+            
+            {/* Clear instructions */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 text-sm space-y-2">
+              <p className="font-medium text-foreground">How they join:</p>
+              <ol className="text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>They sign in at tryritual.co</li>
+                <li>Click "I Have a Code"</li>
+                <li>Enter your code below</li>
+              </ol>
             </div>
 
             <Card className="p-6 bg-white/90 backdrop-blur-sm">

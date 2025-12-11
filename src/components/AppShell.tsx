@@ -83,8 +83,15 @@ export const AppShell = ({ children }: AppShellProps) => {
   // Check if ritual space is accessible (couple exists with partner)
   const hasRitualSpace = couple && couple.partner_two;
   
+  // Dynamic home label based on state
+  const getHomeLabel = (): string => {
+    if (!couple) return 'Home';
+    if (!couple.partner_two) return 'Waiting';
+    return 'Dashboard';
+  };
+  
   const navItems: NavItem[] = [
-    { path: '/', icon: Home, label: 'Home', isActive: location.pathname === '/' },
+    { path: '/', icon: Home, label: getHomeLabel(), isActive: location.pathname === '/' },
     { path: thisWeekRoute, icon: Calendar, label: 'This Week', isActive: isThisWeekActive, stepLabel: getThisWeekStepLabel(), disabled: !hasRitualSpace },
     { path: '/history', icon: Clock, label: 'History', isActive: location.pathname === '/history', disabled: !hasRitualSpace },
     { path: '/profile', icon: User, label: 'Profile', isActive: location.pathname === '/profile' }

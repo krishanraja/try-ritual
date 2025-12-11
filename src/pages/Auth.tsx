@@ -7,10 +7,16 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { useSEO } from '@/hooks/useSEO';
 import { NotificationContainer } from '@/components/InlineNotification';
-import { Check, X } from 'lucide-react';
+import { Check, X, Heart, Sparkles, Users } from 'lucide-react';
 import { AnimatedGradientBackground } from '@/components/AnimatedGradientBackground';
 import { RitualLogo } from '@/components/RitualLogo';
+import { useIsMobile } from '@/hooks/use-mobile';
+import ritualBackgroundVideo from '@/assets/ritual-background.mp4';
+import ritualVideoPoster from '@/assets/ritual-video-poster.jpg';
+
 const Auth = () => {
+  const isMobile = useIsMobile();
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState("");
@@ -111,10 +117,27 @@ const Auth = () => {
     }
   };
 
+  // Mobile video background component
+  const MobileVideoBackground = () => isMobile ? (
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      poster={ritualVideoPoster}
+      onCanPlayThrough={() => setVideoLoaded(true)}
+      className="fixed inset-0 z-[1] w-full h-full object-cover pointer-events-none opacity-20"
+    >
+      <source src={ritualBackgroundVideo} type="video/mp4" />
+    </video>
+  ) : null;
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex-1 flex items-center justify-center p-4 relative overflow-y-auto min-h-0">
         <AnimatedGradientBackground variant="warm" />
+        <MobileVideoBackground />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -127,11 +150,31 @@ const Auth = () => {
             </div>
             
             <h1 className="text-2xl font-bold text-center mb-2 text-foreground">
-              {isLogin ? "Welcome back" : "Create your ritual"}
+              {isLogin ? "Welcome back" : "Join thousands of couples"}
             </h1>
-            <p className="text-center text-muted-foreground mb-6">
-              {isLogin ? "Sign in to continue your journey" : "Start your shared ritual journey"}
+            <p className="text-center text-muted-foreground mb-4">
+              {isLogin 
+                ? "Your partner might be waiting for you" 
+                : "Building deeper connections, one ritual at a time"}
             </p>
+            
+            {/* Value proposition for signup */}
+            {!isLogin && (
+              <div className="flex justify-center gap-4 mb-6 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Heart className="w-3 h-3 text-pink-500" />
+                  <span>Weekly rituals</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-purple-500" />
+                  <span>AI-powered</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3 text-teal-500" />
+                  <span>For couples</span>
+                </div>
+              </div>
+            )}
 
             {/* Inline Notification */}
             {notification && (
