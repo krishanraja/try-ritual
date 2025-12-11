@@ -19,6 +19,7 @@ import { useSurpriseRitual } from '@/hooks/useSurpriseRitual';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { format, isPast, parseISO } from 'date-fns';
 import ritualBackgroundVideo from '@/assets/ritual-background.mp4';
+import ritualVideoPoster from '@/assets/ritual-video-poster.jpg';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -149,7 +150,7 @@ export default function Landing() {
     );
   }
 
-  // Mobile video background component - optimized for fast loading
+  // Mobile video background component - optimized for fast loading with poster
   const MobileVideoBackground = () => isMobile ? (
     <video
       autoPlay
@@ -157,8 +158,9 @@ export default function Landing() {
       muted
       playsInline
       preload="auto"
+      poster={ritualVideoPoster}
       onCanPlayThrough={() => setVideoLoaded(true)}
-      className={`fixed inset-0 z-[1] w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${videoLoaded ? 'opacity-20' : 'opacity-0'}`}
+      className={`fixed inset-0 z-[1] w-full h-full object-cover pointer-events-none opacity-20`}
     >
       <source src={ritualBackgroundVideo} type="video/mp4" />
     </video>
