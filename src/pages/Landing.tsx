@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MapPin, Heart, Sparkles, TrendingUp, Share2, X, Calendar, Clock } from 'lucide-react';
+import { MapPin, Heart, Sparkles, TrendingUp, Share2, X, Calendar, Clock, MessageSquare, Copy } from 'lucide-react';
 import { RitualLogo } from '@/components/RitualLogo';
 import { useState, useEffect } from 'react';
 import { useSEO, addStructuredData } from '@/hooks/useSEO';
@@ -356,62 +356,54 @@ export default function Landing() {
       <div className="h-full flex flex-col relative">
         <AnimatedGradientBackground variant="warm" />
         <MobileVideoBackground />
-        <div className="flex-1 flex flex-col justify-center px-4 relative z-10 overflow-y-auto min-h-0">
+        <div className="flex-1 flex flex-col justify-center px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6 max-w-sm mx-auto"
+            className="space-y-4 max-w-sm mx-auto text-center"
           >
-            <div className="text-center space-y-3">
-              <RitualLogo size="lg" variant="full" className="mx-auto mb-4" />
-              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center animate-pulse">
-                <Heart className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold">Waiting for Partner...</h1>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Your partner needs to join using your code
-              </p>
+            <RitualLogo size="md" variant="full" className="mx-auto" />
+            
+            <div className="w-12 h-12 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center animate-pulse">
+              <Heart className="w-6 h-6 text-white" />
             </div>
             
-            {/* Clear instructions */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 text-sm space-y-2">
-              <p className="font-medium text-foreground">How they join:</p>
-              <ol className="text-muted-foreground space-y-1 list-decimal list-inside">
-                <li>They sign in at tryritual.co</li>
-                <li>Click "I Have a Code"</li>
-                <li>Enter your code below</li>
-              </ol>
+            <div>
+              <h1 className="text-xl font-bold">Waiting for Partner</h1>
+              <p className="text-sm text-muted-foreground">
+                Share your code so they can join
+              </p>
             </div>
 
-            <Card className="p-6 bg-white/90 backdrop-blur-sm">
-              <p className="text-sm text-muted-foreground mb-2 text-center">Your Couple Code</p>
-              <p className="text-5xl font-bold text-primary tracking-wider mb-6 text-center">
+            <Card className="p-4 bg-white/90 backdrop-blur-sm">
+              <p className="text-xs text-muted-foreground mb-1">Your Couple Code</p>
+              <p className="text-3xl font-bold text-primary tracking-wider mb-4">
                 {couple.couple_code}
               </p>
               
-              <div className="space-y-2">
+              {/* Icon-only share buttons in a row */}
+              <div className="flex justify-center gap-3">
                 <Button
                   onClick={() => {
-                    const text = `Try this 2-min ritual generator with me! 💕\n\nUse code: ${couple.couple_code}\n\nGet personalized date ideas based on our combined vibes. Takes 2 minutes total.`;
-                    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-                    window.open(url, '_blank');
+                    const text = `Join our ritual space! 💕 Code: ${couple.couple_code}\n\ntryritual.co`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
                   }}
-                  className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white h-12 rounded-xl"
+                  className="w-12 h-12 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white p-0"
+                  title="Share via WhatsApp"
                 >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share via WhatsApp
+                  <Share2 className="w-5 h-5" />
                 </Button>
                 
                 <Button
                   onClick={() => {
-                    const text = `Join our ritual space! Use code: ${couple.couple_code}`;
+                    const text = `Join our ritual space! Code: ${couple.couple_code}`;
                     window.location.href = `sms:&body=${encodeURIComponent(text)}`;
                   }}
                   variant="outline"
-                  className="w-full border-2 border-primary/30 rounded-xl h-12"
+                  className="w-12 h-12 rounded-full border-2 border-primary/30 p-0"
+                  title="Share via SMS"
                 >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share via SMS
+                  <MessageSquare className="w-5 h-5" />
                 </Button>
                 
                 <Button
@@ -423,24 +415,19 @@ export default function Landing() {
                     }
                   }}
                   variant="outline"
-                  className="w-full border-2 border-primary/30 rounded-xl h-12"
+                  className="w-12 h-12 rounded-full border-2 border-primary/30 p-0"
+                  title="Copy Code"
                 >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Copy Code
+                  <Copy className="w-5 h-5" />
                 </Button>
               </div>
             </Card>
-
-            <p className="text-center text-xs text-muted-foreground">
-              Your partner hasn't joined yet. Share the code above to get started together!
-            </p>
             
-            {/* Cancel option for users who created by accident */}
             <button 
               onClick={handleCancelSpace}
-              className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors py-2"
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
             >
-              Changed your mind? Cancel this space
+              Cancel this space
             </button>
           </motion.div>
         </div>
