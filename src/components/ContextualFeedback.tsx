@@ -33,18 +33,22 @@ export const ContextualFeedback = () => {
   const { toast } = useToast();
   const { user, couple } = useCouple();
 
-  // Check if we should show NPS prompt (once per 7 days)
+  // Check if we should show NPS prompt (once per 7 days, only for active couples after 5 min)
   useEffect(() => {
     const lastNps = localStorage.getItem('last_nps_prompt');
     const daysSinceNps = lastNps ? (Date.now() - parseInt(lastNps)) / (1000 * 60 * 60 * 24) : 999;
-    if (daysSinceNps > 7 && user && !hasShownThisSession) {
+    
+    // Only show if user has a paired couple (meaningful engagement)
+    const hasMeaningfulEngagement = couple?.partner_two;
+    
+    if (daysSinceNps > 7 && user && hasMeaningfulEngagement && !hasShownThisSession) {
       const timer = setTimeout(() => {
         setShowNps(true);
         setHasShownThisSession(true);
-      }, 30000); // Show after 30 seconds on page
+      }, 300000); // Show after 5 minutes, not 30 seconds
       return () => clearTimeout(timer);
     }
-  }, [user, hasShownThisSession]);
+  }, [user, couple, hasShownThisSession]);
 
   const contextPrompt = CONTEXT_PROMPTS[location.pathname] || { prompt: 'Share your thoughts', type: 'general' };
 

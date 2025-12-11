@@ -149,11 +149,26 @@ export default function Landing() {
     );
   }
 
+  // Mobile video background component
+  const MobileVideoBackground = () => isMobile ? (
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      onLoadedData={() => setVideoLoaded(true)}
+      className={`fixed inset-0 z-[1] w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${videoLoaded ? 'opacity-20' : 'opacity-0'}`}
+    >
+      <source src={ritualBackgroundVideo} type="video/mp4" />
+    </video>
+  ) : null;
+
   // Not logged in: Show marketing landing page
   if (!user) {
     return (
       <div className="h-full flex flex-col relative">
         <AnimatedGradientBackground variant="warm" />
+        <MobileVideoBackground />
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 space-y-4 sm:space-y-6 relative z-10 overflow-y-auto min-h-0">
           <motion.div
@@ -227,6 +242,7 @@ export default function Landing() {
     return (
       <div className="h-full flex flex-col relative">
         <AnimatedGradientBackground variant="warm" />
+        <MobileVideoBackground />
         <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center space-y-6 max-w-sm">
             <RitualLogo size="xl" variant="full" className="mx-auto" />
@@ -255,6 +271,7 @@ export default function Landing() {
     return (
       <div className="h-full flex flex-col relative">
         <AnimatedGradientBackground variant="warm" />
+        <MobileVideoBackground />
         <div className="flex-1 flex flex-col justify-center px-4 relative z-10 overflow-y-auto min-h-0">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -393,19 +410,7 @@ export default function Landing() {
     <div className="h-full flex flex-col relative">
       <AnimatedGradientBackground variant="warm" />
       
-      {/* Mobile-only video background - fades in when loaded */}
-      {isMobile && (
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          onLoadedData={() => setVideoLoaded(true)}
-          className={`fixed inset-0 z-[1] w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${videoLoaded ? 'opacity-20' : 'opacity-0'}`}
-        >
-          <source src={ritualBackgroundVideo} type="video/mp4" />
-        </video>
-      )}
+      <MobileVideoBackground />
       
       {/* Streak Badge Header - Logo handled by AppShell */}
       <div className="flex-none px-4 pt-2 pb-2 relative z-10">
