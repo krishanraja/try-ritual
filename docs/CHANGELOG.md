@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## v1.5.0 (UX Stability Overhaul)
+**Date**: 2025-12-11
+
+### Fixed
+- **Sign-out redirect**: Users now return to branded landing page (`/`) instead of unbranded `/auth` page
+- **Accidental couple creation**: CreateCoupleDialog now requires explicit user confirmation before creating a couple record
+- **Race condition**: Added `coupleLoading` state to prevent random homepage flashing during auth/couple data loading
+
+### Added
+- Two-step confirmation flow in CreateCoupleDialog (preview → confirm → share)
+- "Cancel this space" option on Waiting for Partner screen for users who created a couple by accident
+- Debug logging for loading state transitions in CoupleContext
+- Branded `/auth` page with RitualLogo
+
+### Changed
+- CreateCoupleDialog no longer auto-creates couple on dialog open
+- Improved messaging on Waiting for Partner screen
+- Auth page now has consistent branding with rest of app
+
+### UX Improvements
+- Clear escape hatch for accidentally created couples
+- Explicit user consent required before any data is written
+- Consistent branding across all pages
+
+---
+
 ## v1.4.1 (Security Audit)
 **Date**: 2025-12-09
 

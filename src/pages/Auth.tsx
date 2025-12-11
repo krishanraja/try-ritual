@@ -9,7 +9,7 @@ import { useSEO } from '@/hooks/useSEO';
 import { NotificationContainer } from '@/components/InlineNotification';
 import { Check, X } from 'lucide-react';
 import { AnimatedGradientBackground } from '@/components/AnimatedGradientBackground';
-
+import { RitualLogo } from '@/components/RitualLogo';
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
@@ -121,7 +121,12 @@ const Auth = () => {
           className="w-full max-w-md relative z-10"
         >
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-card">
-            <h1 className="text-3xl font-bold text-center mb-2 text-foreground">
+            {/* Branded Logo */}
+            <div className="flex justify-center mb-6">
+              <RitualLogo size="md" variant="full" />
+            </div>
+            
+            <h1 className="text-2xl font-bold text-center mb-2 text-foreground">
               {isLogin ? "Welcome back" : "Create your ritual"}
             </h1>
             <p className="text-center text-muted-foreground mb-6">

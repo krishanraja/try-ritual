@@ -174,7 +174,9 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (user) {
       setCoupleLoading(true);
+      console.log('[LOADING STATE] Starting couple fetch', { authLoading: loading, coupleLoading: true, hasUser: !!user });
       fetchCouple(user.id).then((coupleData) => {
+        console.log('[LOADING STATE] Couple fetch complete', { hasCouple: !!coupleData });
         if (coupleData) {
           fetchCycle(coupleData.id);
         }

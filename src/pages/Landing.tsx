@@ -18,6 +18,7 @@ import { StreakBadge } from '@/components/StreakBadge';
 import { useSurpriseRitual } from '@/hooks/useSurpriseRitual';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { format, isPast, parseISO } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 import ritualBackgroundVideo from '@/assets/ritual-background.mp4';
 import ritualVideoPoster from '@/assets/ritual-video-poster.jpg';
 
@@ -271,6 +272,23 @@ export default function Landing() {
 
   // Waiting for partner to join
   if (!couple.partner_two) {
+    const handleCancelSpace = async () => {
+      try {
+        // Delete the couple since partner hasn't joined
+        const { error } = await supabase
+          .from('couples')
+          .delete()
+          .eq('id', couple.id);
+        
+        if (error) throw error;
+        
+        // Refresh context to clear couple
+        window.location.reload();
+      } catch (error) {
+        console.error('Error cancelling space:', error);
+      }
+    };
+
     return (
       <div className="h-full flex flex-col relative">
         <AnimatedGradientBackground variant="warm" />
@@ -343,6 +361,14 @@ export default function Landing() {
             <p className="text-center text-xs text-muted-foreground">
               Your partner hasn't joined yet. Share the code above to get started together!
             </p>
+            
+            {/* Cancel option for users who created by accident */}
+            <button 
+              onClick={handleCancelSpace}
+              className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors py-2"
+            >
+              Changed your mind? Cancel this space
+            </button>
           </motion.div>
         </div>
       </div>

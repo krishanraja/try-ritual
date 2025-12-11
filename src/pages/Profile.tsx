@@ -113,7 +113,7 @@ export default function Profile() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/auth');
+    navigate('/');
   };
 
   const handleLeaveCouple = async () => {

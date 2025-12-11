@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, MessageCircle, Mail, AlertCircle } from "lucide-react";
+import { Copy, Check, MessageCircle, Mail, AlertCircle, Heart } from "lucide-react";
 import { RitualLogo } from "@/components/RitualLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { useCouple } from "@/contexts/CoupleContext";
@@ -18,21 +18,18 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
   const [loading, setLoading] = useState(false);
   const [isExistingCouple, setIsExistingCouple] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasConfirmed, setHasConfirmed] = useState(false);
   const { refreshCouple } = useCouple();
 
-  useEffect(() => {
-    if (open && !coupleCode) {
-      generateOrFetchCode();
-    }
-  }, [open]);
-
-  const generateOrFetchCode = async () => {
+  // Only generate code when user explicitly confirms - NOT on dialog open
+  const handleCreateSpace = async () => {
     setLoading(true);
     setError(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setError("Please sign in first");
+        setLoading(false);
         return;
       }
 
@@ -56,6 +53,7 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
       if (existingCouple) {
         setCoupleCode(existingCouple.couple_code);
         setIsExistingCouple(true);
+        setHasConfirmed(true);
         setLoading(false);
         return;
       }
@@ -100,6 +98,7 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
 
           setCoupleCode(code);
           setIsExistingCouple(false);
+          setHasConfirmed(true);
           await refreshCouple();
           break;
         }
@@ -123,10 +122,12 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
   };
 
   const handleClose = () => {
-    setCoupleCode("");
+    // Only reset if they haven't created a couple yet
+    if (!hasConfirmed) {
+      setCoupleCode("");
+      setError(null);
+    }
     setCopied(false);
-    setIsExistingCouple(false);
-    setError(null);
     onOpenChange(false);
   };
 
@@ -147,11 +148,56 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
           <div className="py-8 text-center space-y-4">
             <AlertCircle className="w-12 h-12 mx-auto text-destructive" />
             <p className="text-destructive">{error}</p>
-            <Button onClick={generateOrFetchCode} variant="outline">
+            <Button onClick={handleCreateSpace} variant="outline">
               Try Again
             </Button>
           </div>
+        ) : !hasConfirmed ? (
+          // Step 1: Confirmation screen - NO couple created yet
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-center font-bold text-foreground">
+                Create Your Ritual Space
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 pt-4">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">
+                  <Heart className="w-10 h-10 text-white" />
+                </div>
+                <p className="text-muted-foreground">
+                  Ready to start your shared ritual journey? You'll get a unique code to share with your partner.
+                </p>
+                <div className="bg-primary/5 rounded-xl p-4 text-left space-y-2">
+                  <p className="text-sm font-medium">What happens next:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• We'll create a unique couple code for you</li>
+                    <li>• Share it with your partner via WhatsApp or SMS</li>
+                    <li>• Once they join, you can start your first ritual!</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Button
+                  onClick={handleCreateSpace}
+                  className="w-full bg-gradient-ritual text-white h-12 rounded-xl"
+                >
+                  <Heart className="w-4 h-4 mr-2" />
+                  Create My Space
+                </Button>
+                <Button
+                  onClick={handleClose}
+                  variant="ghost"
+                  className="w-full h-10 rounded-xl text-muted-foreground"
+                >
+                  Maybe Later
+                </Button>
+              </div>
+            </div>
+          </>
         ) : (
+          // Step 2: Couple created, show sharing options
           <>
             <DialogHeader>
               <DialogTitle className="text-2xl text-center font-bold text-foreground">
@@ -220,7 +266,6 @@ export const CreateCoupleDialog = ({ open, onOpenChange }: CreateCoupleDialogPro
                   </Button>
                 </div>
               </div>
-
             </div>
           </>
         )}
