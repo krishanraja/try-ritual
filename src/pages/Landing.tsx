@@ -149,14 +149,15 @@ export default function Landing() {
     );
   }
 
-  // Mobile video background component
+  // Mobile video background component - optimized for fast loading
   const MobileVideoBackground = () => isMobile ? (
     <video
       autoPlay
       loop
       muted
       playsInline
-      onLoadedData={() => setVideoLoaded(true)}
+      preload="auto"
+      onCanPlayThrough={() => setVideoLoaded(true)}
       className={`fixed inset-0 z-[1] w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${videoLoaded ? 'opacity-20' : 'opacity-0'}`}
     >
       <source src={ritualBackgroundVideo} type="video/mp4" />
