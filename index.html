@@ -16,9 +16,12 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet"></noscript>
     
-    <!-- Preload Logo Assets for instant rendering -->
+    <!-- Preload critical assets for instant rendering -->
     <link rel="preload" as="image" href="/ritual-logo-full.png" type="image/png" fetchpriority="high" />
     <link rel="preload" as="image" href="/ritual-poster.jpg" type="image/jpeg" fetchpriority="high" />
+    
+    <!-- Preload video for mobile devices -->
+    <link rel="preload" as="video" href="/src/assets/ritual-background.mp4" media="(max-width: 768px)" />
     
     <!-- Icons & Favicon -->
     <link rel="icon" href="/favicon.png" type="image/png" />
@@ -98,13 +101,22 @@
     }
     </script>
   </head>
-
   <body>
     <!-- Native splash screen - renders before React loads (~50ms) -->
-    <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:url('/ritual-poster.jpg') center/cover no-repeat;">
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,69,19,0.65),rgba(0,0,0,0.55))"></div>
-      <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;" fetchpriority="high" />
+    <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('/ritual-poster.jpg') center/cover no-repeat;">
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,69,19,0.75),rgba(0,0,0,0.65))"></div>
+      <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;animation:pulse-logo 2s ease-in-out infinite;">
+      <p style="position:relative;margin-top:16px;font-family:system-ui,sans-serif;font-size:14px;color:rgba(255,255,255,0.9);opacity:0;animation:fade-in-tagline 0.5s ease-out 0.3s forwards;">Re-love your partner</p>
     </div>
+    <style>
+      @keyframes pulse-logo {
+        0%, 100% { transform: scale(1); opacity: 0.9; }
+        50% { transform: scale(1.03); opacity: 1; }
+      }
+      @keyframes fade-in-tagline {
+        to { opacity: 1; }
+      }
+    </style>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

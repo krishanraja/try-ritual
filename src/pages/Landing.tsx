@@ -140,13 +140,19 @@ export default function Landing() {
     });
   }, []);
 
-  // Loading state - show skeleton matching expected destination with contextual messages
+  // Loading state - show skeleton matching expected destination with personalized messages
   if (loading) {
-    // Contextual loading messages
+    // Personalized contextual loading messages
     const getLoadingMessage = () => {
       if (!hasKnownSession) return 'Loading...';
-      if (slowLoading) return 'Reconnecting to your space...';
-      return 'Finding your rituals...';
+      if (slowLoading) {
+        return partnerProfile?.name 
+          ? `Reconnecting with ${partnerProfile.name}...` 
+          : 'Reconnecting to your space...';
+      }
+      return partnerProfile?.name 
+        ? `Finding rituals with ${partnerProfile.name}...` 
+        : 'Finding your rituals...';
     };
 
     // If we have a cached session, show dashboard-like skeleton (with lg logo)
@@ -161,6 +167,9 @@ export default function Landing() {
             <p className="text-sm text-muted-foreground animate-pulse">
               {getLoadingMessage()}
             </p>
+            {slowLoading && (
+              <p className="text-xs text-muted-foreground/70 mt-2">Almost there...</p>
+            )}
           </div>
         </div>
       );
