@@ -183,20 +183,38 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
         setCoupleLoading(false);
       }).catch(() => setCoupleLoading(false));
 
-      // Realtime subscriptions
+      // Realtime subscriptions with improved sync
+      console.log('[REALTIME] Setting up couples channel for user:', user.id);
       const couplesChannel = supabase
         .channel('couples-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'couples' }, async (payload: any) => {
+          console.log('[REALTIME] Couples change detected:', payload.eventType, payload);
+          
           // Check if partner just joined
           if (payload.eventType === 'UPDATE' && payload.new.partner_two && !payload.old?.partner_two) {
+            console.log('[REALTIME] Partner joined! Refreshing couple data...');
+            // Refresh multiple times to ensure data is consistent
             await fetchCouple(user.id);
+            setTimeout(() => fetchCouple(user.id), 300);
+            setTimeout(() => fetchCouple(user.id), 800);
             // Redirect both users to /input
             navigate('/input');
-          } else {
+          } else if (payload.eventType === 'UPDATE') {
+            // Partner two left or other update
+            console.log('[REALTIME] Couple updated, refreshing...');
             await fetchCouple(user.id);
+          } else if (payload.eventType === 'DELETE') {
+            // Couple was deleted
+            console.log('[REALTIME] Couple deleted, clearing state...');
+            setCouple(null);
+            setPartnerProfile(null);
+            setCurrentCycle(null);
+            navigate('/');
           }
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log('[REALTIME] Couples channel status:', status);
+        });
 
       const cyclesChannel = supabase
         .channel('cycles-changes')
