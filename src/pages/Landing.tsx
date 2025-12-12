@@ -164,7 +164,7 @@ export default function Landing() {
           <div className="flex-1 flex flex-col items-center justify-center gap-4 relative z-10">
             <RitualLogo size="lg" variant="full" className="opacity-80" />
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground animate-pulse">
+            <p className="text-sm text-muted-foreground">
               {getLoadingMessage()}
             </p>
             {slowLoading && (
@@ -182,7 +182,7 @@ export default function Landing() {
         <div className="flex-1 flex flex-col items-center justify-center gap-4 relative z-10">
           <RitualLogo size="2xl" variant="full" className="opacity-80 max-w-[560px] sm:max-w-[800px]" />
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground animate-pulse">
+          <p className="text-sm text-muted-foreground">
             {getLoadingMessage()}
           </p>
         </div>
@@ -291,7 +291,7 @@ export default function Landing() {
         <AnimatedGradientBackground variant="warm" showVideoBackdrop />
         <MobileVideoBackground />
         <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-center space-y-6 max-w-sm">
+          <div className="text-center space-y-6 max-w-sm">
             <RitualLogo size="xl" variant="full" className="mx-auto" />
             <div>
               <h1 className="text-xl font-bold mb-2">{welcomeMessage}</h1>
@@ -332,7 +332,7 @@ export default function Landing() {
                 Has your partner already started? Ask them for the code!
               </p>
             </div>
-          </motion.div>
+          </div>
         </div>
         <CreateCoupleDialog open={createOpen} onOpenChange={setCreateOpen} />
         <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
@@ -372,7 +372,7 @@ export default function Landing() {
           >
             <RitualLogo size="md" variant="full" className="mx-auto" />
             
-            <div className="w-12 h-12 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center animate-pulse">
+            <div className="w-12 h-12 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">
               <Heart className="w-6 h-6 text-white" />
             </div>
             

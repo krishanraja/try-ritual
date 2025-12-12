@@ -107,18 +107,9 @@
     <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('/ritual-poster.jpg') center/cover no-repeat;">
       <!-- Gradient uses design system colors: --purple (270 55% 55%) and --background (220 20% 97%) -->
       <div style="position:absolute;inset:0;background:linear-gradient(180deg, hsla(270, 40%, 92%, 0.85), hsla(220, 20%, 97%, 0.95))"></div>
-      <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;animation:pulse-logo 2s ease-in-out infinite;">
-      <p style="position:relative;margin-top:16px;font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:500;color:hsla(220,30%,15%,0.8);opacity:0;animation:fade-in-tagline 0.5s ease-out 0.3s forwards;">Re-love your partner</p>
+      <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;">
+      <p style="position:relative;margin-top:16px;font-family:'DM Sans',system-ui,sans-serif;font-size:14px;font-weight:500;color:hsla(220,30%,15%,0.8);">Re-love your partner</p>
     </div>
-    <style>
-      @keyframes pulse-logo {
-        0%, 100% { transform: scale(1); opacity: 0.95; }
-        50% { transform: scale(1.02); opacity: 1; }
-      }
-      @keyframes fade-in-tagline {
-        to { opacity: 1; }
-      }
-    </style>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

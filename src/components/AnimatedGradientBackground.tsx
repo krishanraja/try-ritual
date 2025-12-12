@@ -42,19 +42,19 @@ export function AnimatedGradientBackground({
       {/* Base gradient - matches splash overlay transition target */}
       <div className="absolute inset-0 bg-gradient-calm" />
       
-      {/* Animated blob 1 - top right - using CSS animation */}
+      {/* Static blob 1 - top right */}
       <div
-        className={`absolute -top-20 -right-20 w-80 h-80 rounded-full ${colors.blob1} opacity-40 blur-3xl animate-blob-1`}
+        className={`absolute -top-20 -right-20 w-80 h-80 rounded-full ${colors.blob1} opacity-40 blur-3xl`}
       />
       
-      {/* Animated blob 2 - bottom left - using CSS animation */}
+      {/* Static blob 2 - bottom left */}
       <div
-        className={`absolute -bottom-32 -left-32 w-96 h-96 rounded-full ${colors.blob2} opacity-30 blur-3xl animate-blob-2`}
+        className={`absolute -bottom-32 -left-32 w-96 h-96 rounded-full ${colors.blob2} opacity-30 blur-3xl`}
       />
       
-      {/* Animated blob 3 - center - using CSS animation */}
+      {/* Static blob 3 - center */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full ${colors.blob3} opacity-20 blur-3xl animate-blob-3`}
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full ${colors.blob3} opacity-20 blur-3xl`}
       />
     </div>
   );
