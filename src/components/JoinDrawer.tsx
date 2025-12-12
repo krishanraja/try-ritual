@@ -44,96 +44,33 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
     }
 
     setLoading(true);
-    console.log('[JOIN] Starting join flow for user:', user.id);
+    const formattedCode = `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}`;
+    console.log('[JOIN] Calling join_couple_with_code for:', formattedCode);
 
     try {
-      // Format to XXXX-XXXX
-      const formattedCode = `${cleanCode.slice(0, 4)}-${cleanCode.slice(4)}`;
-      console.log('[JOIN] Validating code:', formattedCode);
+      // Use SECURITY DEFINER function - bypasses RLS, guaranteed to work
+      const { data, error } = await supabase
+        .rpc('join_couple_with_code', { input_code: formattedCode });
 
-      // Use secure validation function to prevent code enumeration
-      const { data: validationResult, error: validationError } = await supabase
-        .rpc('validate_couple_code', { input_code: formattedCode });
-
-      if (validationError) {
-        console.error('[JOIN] Validation error:', validationError);
-        throw validationError;
+      if (error) {
+        console.error('[JOIN] RPC error:', error);
+        throw new Error(error.message);
       }
 
-      // Validation
-      if (!validationResult || validationResult.length === 0) {
-        console.log('[JOIN] Code not found or invalid');
-        throw new Error('Code not found or expired. Check with your partner.');
+      // Parse the JSONB result
+      const result = data as { success: boolean; error?: string; couple_id?: string };
+
+      if (!result?.success) {
+        console.error('[JOIN] Join failed:', result?.error);
+        throw new Error(result?.error || 'Failed to join couple');
       }
 
-      const coupleId = validationResult[0].couple_id;
-      console.log('[JOIN] Code valid, couple ID:', coupleId);
+      console.log('[JOIN] ✅ Successfully joined couple:', result.couple_id);
 
-      // Verify we're not joining our own couple
-      const { data: coupleCheck } = await supabase
-        .from('couples')
-        .select('partner_one')
-        .eq('id', coupleId)
-        .single();
-
-      if (coupleCheck?.partner_one === user.id) {
-        throw new Error("You can't join your own code!");
-      }
-
-      // Update partner_two with retry logic
-      let updateSuccess = false;
-      let lastError: Error | null = null;
-      
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        console.log(`[JOIN] Update attempt ${attempt}/3`);
-        
-        const { error: updateError } = await supabase
-          .from('couples')
-          .update({ partner_two: user.id })
-          .eq('id', coupleId);
-
-        if (updateError) {
-          console.error(`[JOIN] Update error on attempt ${attempt}:`, updateError);
-          lastError = new Error(updateError.message);
-          await new Promise(r => setTimeout(r, 500 * attempt)); // Exponential backoff
-          continue;
-        }
-
-        // CRITICAL: Verify the update actually persisted
-        console.log('[JOIN] Verifying update persisted...');
-        const { data: verifiedCouple, error: verifyError } = await supabase
-          .from('couples')
-          .select('partner_two')
-          .eq('id', coupleId)
-          .single();
-
-        if (verifyError) {
-          console.error('[JOIN] Verification query failed:', verifyError);
-          lastError = new Error('Could not verify connection');
-          await new Promise(r => setTimeout(r, 500 * attempt));
-          continue;
-        }
-
-        if (verifiedCouple?.partner_two === user.id) {
-          console.log('[JOIN] ✅ Update verified successfully!');
-          updateSuccess = true;
-          break;
-        } else {
-          console.warn('[JOIN] ⚠️ Update not persisted, partner_two is:', verifiedCouple?.partner_two);
-          lastError = new Error('Connection failed - please try again');
-          await new Promise(r => setTimeout(r, 500 * attempt));
-        }
-      }
-
-      if (!updateSuccess) {
-        throw lastError || new Error('Failed to connect after 3 attempts');
-      }
-
-      // Refresh couple data multiple times to ensure sync
-      console.log('[JOIN] Refreshing couple data...');
+      // Refresh couple data
       await refreshCouple();
       
-      // Extra refresh after a short delay to catch any race conditions
+      // Extra refreshes to ensure both partners sync
       setTimeout(() => refreshCouple(), 500);
       setTimeout(() => refreshCouple(), 1500);
       
@@ -143,7 +80,7 @@ export const JoinDrawer = ({ open, onOpenChange }: JoinDrawerProps) => {
         navigate('/input');
       }, 1500);
     } catch (error: any) {
-      console.error('[JOIN] Final error:', error);
+      console.error('[JOIN] Error:', error);
       setNotification({ type: 'error', message: error.message || 'Failed to join couple' });
     } finally {
       setLoading(false);

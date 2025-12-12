@@ -794,6 +794,7 @@ export type Database = {
     Functions: {
       get_partner_name: { Args: { partner_id: string }; Returns: string }
       is_partner: { Args: { profile_id: string }; Returns: boolean }
+      join_couple_with_code: { Args: { input_code: string }; Returns: Json }
       validate_couple_code: {
         Args: { input_code: string }
         Returns: {
