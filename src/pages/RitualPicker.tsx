@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import { Clock, DollarSign, Calendar as CalendarIcon, Star } from 'lucide-react';
+import { Clock, DollarSign, Calendar as CalendarIcon, Star, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgreementGame } from '@/components/AgreementGame';
 import { cn } from '@/lib/utils';
@@ -32,11 +32,12 @@ export default function RitualPicker() {
   const [selectedRanks, setSelectedRanks] = useState<{ [key: number]: Ritual | null }>({ 1: null, 2: null, 3: null });
   const [proposedDate, setProposedDate] = useState<Date | undefined>(undefined);
   const [proposedTime, setProposedTime] = useState('19:00');
-  const [step, setStep] = useState<'rank' | 'schedule' | 'waiting' | 'agreement'>('rank');
+  const [step, setStep] = useState<'rank' | 'schedule' | 'waiting' | 'agreement' | 'generating'>('rank');
   const [partnerPreferences, setPartnerPreferences] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { isPremium, ritualsToShow } = usePremium();
 
   // SEO for ritual picker page
@@ -45,19 +46,61 @@ export default function RitualPicker() {
     description: 'Rank your top 3 ritual preferences and propose a time. Work with your partner to find the perfect shared activity.',
   });
 
+  // Manual refresh handler
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshCycle();
+      // Re-check for rituals
+      const { data } = await supabase
+        .from('weekly_cycles')
+        .select('synthesized_output')
+        .eq('id', currentCycle?.id)
+        .single();
+      
+      if (data?.synthesized_output) {
+        const synthesized = data.synthesized_output as any;
+        if (synthesized?.rituals?.length > 0) {
+          setRituals(synthesized.rituals);
+          setStep('rank');
+        }
+      }
+    } catch (error) {
+      console.error('[RitualPicker] Refresh error:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    if (!user || !couple || !currentCycle) {
+    if (!user || !couple) {
+      navigate('/');
+      return;
+    }
+
+    // If no currentCycle at all, go home
+    if (!currentCycle) {
+      console.log('[RitualPicker] No current cycle, redirecting to home');
       navigate('/');
       return;
     }
 
     const loadData = async () => {
       try {
+        console.log('[RitualPicker] Loading data for cycle:', currentCycle.id);
+        
         // Load rituals from current cycle
         const synthesized = currentCycle.synthesized_output as any;
-        if (synthesized?.rituals) {
-          setRituals(synthesized.rituals);
+        
+        if (!synthesized?.rituals || synthesized.rituals.length === 0) {
+          // No rituals yet - show generating state
+          console.log('[RitualPicker] No rituals found, showing generating state');
+          setStep('generating');
+          setLoading(false);
+          return;
         }
+        
+        setRituals(synthesized.rituals);
 
         // Check if user already submitted preferences and restore their selections
         const { data: myPrefs } = await supabase
@@ -109,7 +152,7 @@ export default function RitualPicker() {
 
         // Listen for partner submissions
         const channel = supabase
-          .channel('ritual-preferences-changes')
+          .channel(`ritual-preferences-${currentCycle.id}`)
           .on('postgres_changes', {
             event: 'INSERT',
             schema: 'public',
@@ -134,7 +177,7 @@ export default function RitualPicker() {
           supabase.removeChannel(channel);
         };
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('[RitualPicker] Error loading data:', error);
         setNotification({ type: 'error', message: 'Failed to load rituals' });
       } finally {
         setLoading(false);
@@ -142,7 +185,52 @@ export default function RitualPicker() {
     };
 
     loadData();
-  }, [user, couple, currentCycle, navigate]);
+  }, [user, couple, currentCycle, navigate, refreshCycle]);
+
+  // Listen for synthesis completion when in generating state
+  useEffect(() => {
+    if (step !== 'generating' || !currentCycle?.id) return;
+
+    console.log('[RitualPicker] Setting up synthesis listener');
+
+    const channel = supabase
+      .channel(`synthesis-picker-${currentCycle.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'weekly_cycles',
+        filter: `id=eq.${currentCycle.id}`
+      }, async (payload: any) => {
+        console.log('[RitualPicker] Synthesis update received:', payload);
+        if (payload.new.synthesized_output?.rituals?.length > 0) {
+          setRituals(payload.new.synthesized_output.rituals);
+          setStep('rank');
+        }
+      })
+      .subscribe();
+
+    // Also poll every 5 seconds
+    const pollInterval = setInterval(async () => {
+      const { data } = await supabase
+        .from('weekly_cycles')
+        .select('synthesized_output')
+        .eq('id', currentCycle.id)
+        .single();
+      
+      if (data?.synthesized_output) {
+        const synthesized = data.synthesized_output as any;
+        if (synthesized?.rituals?.length > 0) {
+          setRituals(synthesized.rituals);
+          setStep('rank');
+        }
+      }
+    }, 5000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+    };
+  }, [step, currentCycle?.id]);
 
   const handleSelectRitual = (ritual: Ritual, rank: number) => {
     // Check if already selected at this exact rank - if so, deselect
@@ -461,6 +549,65 @@ export default function RitualPicker() {
     </div>
   );
 
+  // Render generating state
+  const renderGeneratingStep = () => (
+    <div className="h-full flex flex-col items-center justify-center px-6">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center space-y-6 max-w-sm"
+      >
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          className="w-20 h-20 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center"
+        >
+          <Sparkles className="w-10 h-10 text-white" />
+        </motion.div>
+        
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Generating Your Rituals</h2>
+          <p className="text-muted-foreground">
+            We're crafting personalized experiences based on both your preferences...
+          </p>
+        </div>
+
+        <div className="pt-4 space-y-3">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="w-full"
+          >
+            {isRefreshing ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Checking...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </>
+            )}
+          </Button>
+          
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="w-full"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          This usually takes 10-20 seconds. Rituals will appear automatically.
+        </p>
+      </motion.div>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="h-full bg-gradient-warm flex items-center justify-center">
@@ -472,6 +619,17 @@ export default function RitualPicker() {
   return (
     <div className="h-full bg-gradient-warm flex flex-col">
       <AnimatePresence mode="wait">
+        {step === 'generating' && (
+          <motion.div
+            key="generating"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="h-full"
+          >
+            {renderGeneratingStep()}
+          </motion.div>
+        )}
         {step === 'rank' && (
           <motion.div
             key="rank"

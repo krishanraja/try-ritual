@@ -156,26 +156,30 @@ export default function QuickInput() {
     if (!weeklyCycleId || !couple) return;
 
     setIsSubmitting(true);
+    console.log('[SYNTHESIS] Starting submission flow...');
 
     try {
       const isPartnerOne = couple.partner_one === user?.id;
       const updateField = isPartnerOne ? 'partner_one_input' : 'partner_two_input';
       const submittedField = isPartnerOne ? 'partner_one_submitted_at' : 'partner_two_submitted_at';
 
-      // Transform card selection to input format
       const inputData = {
         cards: selectedCards,
         desire: desire.trim() || null,
-        inputType: 'cards', // Flag for synthesize-rituals to know the format
+        inputType: 'cards',
       };
 
-      await supabase
+      console.log('[SYNTHESIS] Saving input for', isPartnerOne ? 'partner_one' : 'partner_two');
+
+      const { error: saveError } = await supabase
         .from('weekly_cycles')
         .update({
           [updateField]: inputData,
           [submittedField]: new Date().toISOString()
         })
         .eq('id', weeklyCycleId);
+
+      if (saveError) throw saveError;
 
       // Check if both partners completed
       const { data: cycle } = await supabase
@@ -188,6 +192,7 @@ export default function QuickInput() {
 
       if (partnerInput) {
         // Both completed - trigger synthesis
+        console.log('[SYNTHESIS] Both partners submitted, calling synthesize-rituals...');
         setIsSynthesizing(true);
 
         const { data, error } = await supabase.functions.invoke('synthesize-rituals', {
@@ -199,9 +204,16 @@ export default function QuickInput() {
           }
         });
 
-        if (error) throw error;
+        console.log('[SYNTHESIS] Edge function response:', { data, error });
 
-        await supabase
+        if (error) throw error;
+        if (!data?.rituals || !Array.isArray(data.rituals) || data.rituals.length === 0) {
+          throw new Error('Synthesis returned no rituals');
+        }
+
+        console.log('[SYNTHESIS] Got', data.rituals.length, 'rituals, saving to DB...');
+
+        const { error: updateError } = await supabase
           .from('weekly_cycles')
           .update({
             synthesized_output: { rituals: data.rituals },
@@ -209,6 +221,21 @@ export default function QuickInput() {
             sync_completed_at: new Date().toISOString()
           })
           .eq('id', weeklyCycleId);
+
+        if (updateError) throw updateError;
+
+        // CRITICAL: Verify the save worked
+        const { data: verifyData } = await supabase
+          .from('weekly_cycles')
+          .select('synthesized_output')
+          .eq('id', weeklyCycleId)
+          .single();
+
+        console.log('[SYNTHESIS] Verification:', verifyData?.synthesized_output ? 'SAVED' : 'FAILED');
+
+        if (!verifyData?.synthesized_output) {
+          throw new Error('Failed to save synthesized rituals to database');
+        }
 
         await refreshCycle();
         navigate('/picker');
@@ -218,8 +245,8 @@ export default function QuickInput() {
         setTimeout(() => navigate('/'), 2000);
       }
     } catch (error) {
-      console.error('[QuickInput] Error submitting:', error);
-      setNotification({ type: 'error', message: 'Failed to save. Please try again.' });
+      console.error('[SYNTHESIS] Error:', error);
+      setNotification({ type: 'error', message: error instanceof Error ? error.message : 'Failed to save. Please try again.' });
       setIsSubmitting(false);
       setIsSynthesizing(false);
     }
