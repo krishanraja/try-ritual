@@ -1,11 +1,70 @@
-// Service Worker for Push Notifications
-self.addEventListener('push', function(event) {
-  const data = event.data?.json() || {};
+// Service Worker for Ritual PWA
+const CACHE_NAME = 'ritual-critical-v1';
+
+// Critical assets to precache for instant loading
+const CRITICAL_ASSETS = [
+  '/ritual-logo-full.png',
+  '/ritual-poster.jpg',
+  '/ritual-icon.png',
+  '/favicon.png'
+];
+
+// Install: Precache critical assets
+self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.addAll(CRITICAL_ASSETS);
+    })
+  );
+  self.skipWaiting();
+});
+
+// Activate: Clean up old caches
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames
+          .filter(function(name) { return name.startsWith('ritual-') && name !== CACHE_NAME; })
+          .map(function(name) { return caches.delete(name); })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+// Fetch: Cache-first for critical assets
+self.addEventListener('fetch', function(event) {
+  var url = new URL(event.request.url);
   
-  const options = {
+  // Cache-first for critical assets
+  var isCritical = CRITICAL_ASSETS.some(function(asset) { return url.pathname === asset; });
+  if (isCritical) {
+    event.respondWith(
+      caches.match(event.request).then(function(cached) {
+        return cached || fetch(event.request).then(function(response) {
+          if (response.ok) {
+            var responseClone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+});
+
+// Handle push notifications
+self.addEventListener('push', function(event) {
+  var data = event.data ? event.data.json() : {};
+  
+  var options = {
     body: data.body || 'You have a new notification',
-    icon: '/favicon.png',
-    badge: '/favicon.png',
+    icon: '/ritual-icon.png',
+    badge: '/ritual-icon.png',
     vibrate: [100, 50, 100],
     data: {
       url: data.url || '/',
@@ -22,30 +81,21 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
   
-  const url = event.notification.data?.url || '/';
+  var url = event.notification.data?.url || '/';
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then(function(clientList) {
-        // Check if there's already a window open
-        for (const client of clientList) {
+        for (var i = 0; i < clientList.length; i++) {
+          var client = clientList[i];
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             client.navigate(url);
             return client.focus();
           }
         }
-        // Open new window if none found
         if (clients.openWindow) {
           return clients.openWindow(url);
         }
       })
   );
-});
-
-self.addEventListener('install', function(event) {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', function(event) {
-  event.waitUntil(clients.claim());
 });

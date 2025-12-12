@@ -17,11 +17,8 @@
     <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet"></noscript>
     
     <!-- Preload Logo Assets for instant rendering -->
-    <link rel="preload" as="image" href="/src/assets/ritual-logo-full.png" type="image/png" />
-    <link rel="preload" as="image" href="/src/assets/ritual-icon.png" type="image/png" />
-    
-    <!-- Preload Video Background for mobile -->
-    <link rel="preload" as="video" href="/src/assets/ritual-background.mp4" type="video/mp4" />
+    <link rel="preload" as="image" href="/ritual-logo-full.png" type="image/png" fetchpriority="high" />
+    <link rel="preload" as="image" href="/ritual-poster.jpg" type="image/jpeg" fetchpriority="high" />
     
     <!-- Icons & Favicon -->
     <link rel="icon" href="/favicon.png" type="image/png" />
@@ -103,6 +100,11 @@
   </head>
 
   <body>
+    <!-- Native splash screen - renders before React loads (~50ms) -->
+    <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:url('/ritual-poster.jpg') center/cover no-repeat;">
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,69,19,0.65),rgba(0,0,0,0.55))"></div>
+      <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;" fetchpriority="high" />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

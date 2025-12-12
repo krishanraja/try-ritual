@@ -20,7 +20,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { format, isPast, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import ritualBackgroundVideo from '@/assets/ritual-background.mp4';
-import ritualVideoPoster from '@/assets/ritual-video-poster.jpg';
 import { OnboardingModal } from '@/components/OnboardingModal';
 
 export default function Landing() {
@@ -182,7 +181,7 @@ export default function Landing() {
     );
   }
 
-  // Mobile video background component - optimized for fast loading with poster
+  // Mobile video background component - optimized for fast loading with poster from public folder
   const MobileVideoBackground = () => isMobile ? (
     <video
       autoPlay
@@ -190,7 +189,7 @@ export default function Landing() {
       muted
       playsInline
       preload="auto"
-      poster={ritualVideoPoster}
+      poster="/ritual-poster.jpg"
       onCanPlayThrough={() => setVideoLoaded(true)}
       className={`fixed inset-0 z-[1] w-full h-full object-cover pointer-events-none opacity-20`}
     >
