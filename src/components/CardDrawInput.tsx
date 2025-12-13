@@ -29,33 +29,42 @@ export function CardDrawInput({ onComplete, cycleId }: CardDrawInputProps) {
 
   // Fetch initial partner progress
   useEffect(() => {
-    if (!cycleId || !couple) return;
+    if (!cycleId || !couple || !user) return;
 
     const fetchInitialProgress = async () => {
-      const { data } = await supabase
-        .from('weekly_cycles')
-        .select('partner_one_input, partner_two_input')
-        .eq('id', cycleId)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('weekly_cycles')
+          .select('partner_one_input, partner_two_input')
+          .eq('id', cycleId)
+          .single();
 
-      if (data) {
-        const partnerInput = isPartnerOne ? data.partner_two_input : data.partner_one_input;
-        if (partnerInput && typeof partnerInput === 'object' && 'cards' in (partnerInput as object)) {
-          const cards = (partnerInput as { cards: string[] }).cards;
-          setPartnerCount(cards?.length || 0);
+        if (error) {
+          console.error('[CardDrawInput] Error fetching progress:', error);
+          return;
         }
+
+        if (data) {
+          const partnerInput = isPartnerOne ? data.partner_two_input : data.partner_one_input;
+          if (partnerInput && typeof partnerInput === 'object' && 'cards' in (partnerInput as object)) {
+            const cards = (partnerInput as { cards: string[] }).cards;
+            setPartnerCount(cards?.length || 0);
+          }
+        }
+      } catch (error) {
+        console.error('[CardDrawInput] Error in fetchInitialProgress:', error);
       }
     };
 
     fetchInitialProgress();
-  }, [cycleId, couple, isPartnerOne]);
+  }, [cycleId, couple, isPartnerOne, user]);
 
   // Real-time subscription for partner's progress updates
   useEffect(() => {
-    if (!cycleId || !couple) return;
+    if (!cycleId || !couple || !user) return;
 
     const channel = supabase
-      .channel(`cycle-${cycleId}`)
+      .channel(`cycle-progress-${cycleId}`)
       .on(
         'postgres_changes',
         {
@@ -65,23 +74,31 @@ export function CardDrawInput({ onComplete, cycleId }: CardDrawInputProps) {
           filter: `id=eq.${cycleId}`,
         },
         (payload) => {
-          const newData = payload.new as Record<string, unknown>;
-          const partnerInput = isPartnerOne
-            ? newData.partner_two_input
-            : newData.partner_one_input;
+          try {
+            const newData = payload.new as Record<string, unknown>;
+            const partnerInput = isPartnerOne
+              ? newData.partner_two_input
+              : newData.partner_one_input;
 
-          if (partnerInput && typeof partnerInput === 'object' && 'cards' in (partnerInput as object)) {
-            const cards = (partnerInput as { cards: string[] }).cards;
-            setPartnerCount(cards?.length || 0);
+            if (partnerInput && typeof partnerInput === 'object' && 'cards' in (partnerInput as object)) {
+              const cards = (partnerInput as { cards: string[] }).cards;
+              setPartnerCount(cards?.length || 0);
+            }
+          } catch (error) {
+            console.error('[CardDrawInput] Error processing realtime update:', error);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[CardDrawInput] Realtime channel error');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [cycleId, couple, isPartnerOne]);
+  }, [cycleId, couple, isPartnerOne, user]);
 
   const toggleCard = (cardId: string) => {
     setSelectedCards((prev) => {

@@ -108,15 +108,18 @@ const Background = ({ videoLoaded, setVideoLoaded, isMobile }: {
 
 const Footer = () => (
   <footer className="flex-none py-4 px-6 text-center text-xs text-muted-foreground relative z-10">
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex items-center justify-center gap-2 flex-wrap">
+      <a href="/blog" className="hover:text-foreground transition-colors">Blog</a>
+      <span>·</span>
+      <a href="/faq" className="hover:text-foreground transition-colors">FAQ</a>
+      <span>·</span>
       <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
       <span>·</span>
       <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
       <span>·</span>
       <a href="/contact" className="hover:text-foreground transition-colors">Contact</a>
-      <span>·</span>
-      <span>© {new Date().getFullYear()} Mindmaker LLC</span>
     </div>
+    <p className="mt-2">© {new Date().getFullYear()} Mindmaker LLC</p>
   </footer>
 );
 

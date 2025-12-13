@@ -6,6 +6,140 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## v1.6.3 (SEO & Content Marketing)
+**Date**: 2025-12-13
+
+### 🔍 SEO Infrastructure
+
+#### FAQ Page (`/faq`)
+- SEO-optimized FAQ page with 20+ questions targeting high-volume keywords
+- FAQ Schema markup for Google rich snippets
+- Categories: Getting Started, Features, Relationship Tips, Technical, Pricing
+- Search and filter functionality
+- Accessible from Profile settings (non-intrusive)
+
+#### Blog System (`/blog`)
+- Full blog with article listings and individual article pages
+- Article Schema markup for Google Search
+- 6 initial articles targeting valuable keywords:
+  - "50 Weekly Rituals for Couples That Actually Work"
+  - "How to Keep Your Relationship Exciting: 15 Science-Backed Strategies"
+  - "75 Best Date Ideas in London for Every Type of Couple"
+  - "How to Build Relationship Traditions That Last a Lifetime"
+  - "60 Best Date Ideas in Sydney for Couples"
+  - "The Science of Couple Rituals: What Research Tells Us"
+- Social sharing (Twitter, LinkedIn, Facebook)
+- Related articles suggestions
+- Category filtering and search
+
+#### Structured Data (index.html)
+- Organization schema for brand identity
+- WebApplication schema for app stores
+- SoftwareApplication schema for discovery
+- WebSite schema with SearchAction for site links
+
+#### Updated Files
+- `sitemap.xml` - All pages including blog articles
+- `robots.txt` - Enhanced with AI crawler rules, social media bots
+- Profile footer - Added FAQ link, updated version
+
+### 🔧 Technical
+- New data files: `faqData.ts`, `blogData.ts`
+- New pages: `FAQ.tsx`, `Blog.tsx`, `BlogArticle.tsx`
+- Routes added to `App.tsx`
+- Markdown-like content renderer for blog articles
+
+---
+
+## v1.6.2 (Loading Experience Polish)
+**Date**: 2025-12-13
+
+### ✨ UX Improvements
+
+#### Coordinated Loading Experience
+- **New Component**: `SplashScreen.tsx` - React-controlled splash screen that coordinates with data loading
+- Splash screen now stays visible until CoupleContext has finished loading all data
+- Smooth fade transition from splash to content - no jarring cuts
+- Elements appear all at once in a coordinated reveal
+
+#### Layout Stability (No More Layout Shift)
+- **AppShell.tsx**: Removed entry animations from header and navigation
+  - Header/nav now render instantly without sliding in
+  - Prevents elements from moving as page loads
+- **StreakBadge.tsx**: Removed `initial={{ scale: 0 }}` animation
+  - Badge now uses CSS transitions only on hover
+  - Shows skeleton while loading, then reveals stably
+- **App.tsx**: Removed PageTransition wrapper - animations now only on route changes
+- **index.html**: Updated native splash with consistent gradient background
+
+#### Technical Details
+- Splash screen listens to `loading` state from CoupleContext
+- Native HTML splash removed by React component on mount
+- Content rendered but invisible (`opacity: 0`) until splash fades
+- `AnimatePresence` set to `initial={false}` to prevent first-load animations
+- LazyFallback now uses `h-full` with `bg-gradient-warm` for consistency
+
+### 🔧 Files Changed
+- `src/components/SplashScreen.tsx` (new)
+- `src/App.tsx`
+- `src/main.tsx`
+- `src/components/AppShell.tsx`
+- `src/components/StreakBadge.tsx`
+- `index.html`
+
+---
+
+## v1.6.1 (Production Readiness Audit)
+**Date**: 2025-12-13
+
+### 🔒 Security & Stability
+- Full production readiness audit completed
+- All edge functions verified for proper authentication and authorization
+- RLS policies confirmed secure across all tables
+
+### 🐛 Bug Fixes
+
+#### Navigation & UX
+- **NotFound.tsx**: Complete redesign with proper React Router navigation, back button, and consistent branding
+- **Memories.tsx**: Fixed `window.location.href` → React Router `navigate()` for SPA behavior
+- **Memories.tsx**: Added auth redirect for unauthenticated users
+- **Memories.tsx**: Added empty state for users without a couple
+- **Profile.tsx**: Added contact link to footer, updated version to v1.6.0
+
+#### Data Flow & Error Handling
+- **RitualCards.tsx**: Fixed potential null reference error in realtime subscription when `currentCycle` is undefined
+- **CardDrawInput.tsx**: Added null safety checks for `user` and `couple` in useEffect hooks
+- **CardDrawInput.tsx**: Added error logging for realtime subscription failures
+- **EnhancedPostRitualCheckin.tsx**: Simplified notes step UX - removed duplicate buttons with same action
+
+#### Loading States
+- **Memories.tsx**: Improved loading state with proper spinner and message
+- All pages now have consistent loading indicators
+
+### ✅ Verified Security
+- All 12 edge functions audited for:
+  - Proper JWT authentication
+  - Authorization checks (user belongs to couple)
+  - Input validation
+  - Error handling with context
+  - Rate limiting where applicable
+- `send-push`: Requires internal secret header (function-to-function only)
+- `delete-account`: Proper cascade cleanup of all user data
+- `nudge-partner`: Rate limiting (1/hour, weekly limit for free users)
+- `synthesize-rituals`: Structured logging with request IDs
+
+### 📝 Documentation
+- Updated version to v1.6.1
+- Updated COMPLIANCE-CHECKLIST.md with audit results
+- Updated CHANGELOG.md with full audit findings
+
+### 🔧 Technical
+- Updated CoupleContext version to v5 for deployment verification
+- `usePremium.canUploadPhotos` now correctly returns `true` for all users
+- Build passes without TypeScript errors
+
+---
+
 ## v1.6.0 (Ritual Experience Redesign)
 **Date**: 2025-12-11
 
@@ -327,21 +461,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Known Issues
 
-### High Priority
-- [ ] Missing loading skeletons
-- [ ] No error boundaries
-- [ ] Navigation can feel unintuitive in some edge cases
+### Resolved in v1.6.1
+- [x] Missing loading skeletons - Added to Memories and other pages
+- [x] Navigation can feel unintuitive in some edge cases - Fixed routing inconsistencies
+- [x] Photo upload - Implemented in v1.6.0
 
 ### Medium Priority
+- [ ] No error boundaries (graceful React error handling)
 - [ ] synthesized_output structure inconsistent in old cycles
-- [ ] No onboarding tutorial
-- [ ] Partner status not always clear in all states
+- [ ] No onboarding tutorial for new users
 
 ### Low Priority
 - [ ] No dark mode
 - [ ] Limited desktop optimization
-- [ ] Missing push notifications
-- [ ] No photo upload yet
+- [ ] ESLint warnings (mostly @typescript-eslint/no-explicit-any)
 
 ---
 

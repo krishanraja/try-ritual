@@ -2,8 +2,9 @@
  * AppShell Component
  * 
  * Main application layout with header and bottom navigation.
+ * No entry animations to prevent layout shift - splash handles coordinated reveal.
  * 
- * @updated 2025-12-11 - Changed History to Memories, updated icon
+ * @updated 2025-12-13 - Removed competing animations for stable layout
  */
 
 import { ReactNode, useState } from 'react';
@@ -33,12 +34,13 @@ interface NavItem {
 export const AppShell = ({ children }: AppShellProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, couple, currentCycle } = useCouple();
+  const { user, couple, currentCycle, loading } = useCouple();
   const [joinOpen, setJoinOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   
   const isAuthPage = location.pathname === '/auth';
-  const showNav = user && !isAuthPage;
+  // Don't show nav while loading to prevent flash
+  const showNav = user && !isAuthPage && !loading;
 
   // Get step label for "This Week" based on current route
   const getThisWeekStepLabel = (): string | undefined => {
@@ -107,13 +109,9 @@ export const AppShell = ({ children }: AppShellProps) => {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-warm overflow-hidden">
-      {/* Top Bar */}
+      {/* Top Bar - no animation to prevent layout shift */}
       {showNav && (
-        <motion.header 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex-none flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/50 z-50"
-        >
+        <header className="flex-none flex items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-sm border-b border-border/50 z-50">
           <button onClick={() => navigate('/')} className="focus:outline-none">
             <RitualLogo size="sm" variant="icon" />
           </button>
@@ -133,7 +131,7 @@ export const AppShell = ({ children }: AppShellProps) => {
               </Button>
             )}
           </div>
-        </motion.header>
+        </header>
       )}
 
       {/* Main Content */}
@@ -141,27 +139,21 @@ export const AppShell = ({ children }: AppShellProps) => {
         {children}
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - no animation to prevent layout shift */}
       {showNav && (
-        <motion.nav 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex-none flex items-center justify-around px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border/50 z-50 pb-safe"
-        >
+        <nav className="flex-none flex items-center justify-around px-4 py-3 bg-background/95 backdrop-blur-sm border-t border-border/50 z-50 pb-safe">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isDisabled = item.disabled;
             
             return (
-              <motion.button
+              <button
                 key={item.label}
                 onClick={() => {
                   if (isDisabled) return;
                   navigate(item.path);
                 }}
-                whileTap={isDisabled ? {} : { scale: 0.9 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                className={`relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors duration-200 ${
+                className={`relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all duration-200 active:scale-90 ${
                   isDisabled 
                     ? 'opacity-40 cursor-not-allowed text-muted-foreground' 
                     : item.isActive 
@@ -178,29 +170,22 @@ export const AppShell = ({ children }: AppShellProps) => {
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
-                <motion.div
-                  animate={item.isActive && !isDisabled ? { scale: 1.1 } : { scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <Icon className="relative z-10 w-6 h-6" />
-                </motion.div>
+                <div className={`relative z-10 transition-transform duration-200 ${item.isActive && !isDisabled ? 'scale-110' : 'scale-100'}`}>
+                  <Icon className="w-6 h-6" />
+                </div>
                 <span className={`relative z-10 text-xs ${item.isActive && !isDisabled ? 'font-semibold' : 'font-medium'}`}>
                   {item.label}
                 </span>
                 {/* Step indicator for This Week */}
                 {item.stepLabel && item.isActive && !isDisabled && (
-                  <motion.span 
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute -top-1 -right-1 text-[10px] font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full z-20"
-                  >
+                  <span className="absolute -top-1 -right-1 text-[10px] font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full z-20">
                     {item.stepLabel}
-                  </motion.span>
+                  </span>
                 )}
-              </motion.button>
+              </button>
             );
           })}
-        </motion.nav>
+        </nav>
       )}
 
       {/* Drawers */}

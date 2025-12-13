@@ -85,15 +85,11 @@ export const StreakBadge = ({ showInsightsPrompt = false }: StreakBadgeProps) =>
 
   return (
     <>
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        className="space-y-2"
-      >
+      {/* No scale animation on mount to prevent layout shift - splash handles reveal */}
+      <div className="space-y-2">
         {/* Main badge */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          className={`inline-flex items-center gap-2 bg-gradient-to-r ${tier.color} text-white px-4 py-2 rounded-full shadow-lg cursor-default`}
+        <div
+          className={`inline-flex items-center gap-2 bg-gradient-to-r ${tier.color} text-white px-4 py-2 rounded-full shadow-lg cursor-default hover:scale-105 transition-transform duration-200`}
         >
           <Icon className="w-5 h-5" />
           {streak === 0 ? (
@@ -106,7 +102,7 @@ export const StreakBadge = ({ showInsightsPrompt = false }: StreakBadgeProps) =>
               </span>
             </>
           )}
-        </motion.div>
+        </div>
         
         {/* Premium insights or upgrade prompt */}
         {showInsightsPrompt && (
@@ -125,7 +121,7 @@ export const StreakBadge = ({ showInsightsPrompt = false }: StreakBadgeProps) =>
             </button>
           )
         )}
-      </motion.div>
+      </div>
       
       <UpgradeModal 
         open={showUpgradeModal} 

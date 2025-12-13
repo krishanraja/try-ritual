@@ -5,7 +5,7 @@ import { User } from '@supabase/supabase-js';
 import type { Couple, PartnerProfile, WeeklyCycle } from '@/types/database';
 
 // Version tracking for deployment verification
-const CONTEXT_VERSION = '2024-12-13-v4';
+const CONTEXT_VERSION = '2024-12-13-v5';
 
 // Check localStorage for existing Supabase session token (instant, synchronous)
 const checkCachedSession = (): boolean => {

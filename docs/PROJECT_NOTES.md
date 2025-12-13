@@ -9,9 +9,9 @@
 | Field | Value |
 |-------|-------|
 | **Project Name** | Ritual |
-| **Version** | 1.6.0 |
-| **Last Updated** | 2025-12-11 |
-| **Status** | Active Development |
+| **Version** | 1.6.3 |
+| **Last Updated** | 2025-12-13 |
+| **Status** | Production Ready + SEO |
 
 ---
 
@@ -65,6 +65,35 @@
 - **Rationale**: Creates emotional feedback loop without complexity. Partner completes → other sees → reacts → original user sees reaction.
 - **Status**: ✅ Implemented
 
+### AD-009: Coordinated Loading Experience
+- **Decision**: React-controlled splash screen that waits for data before revealing content
+- **Date**: 2025-12-13
+- **Rationale**: Eliminates layout shift and provides Google-esque loading experience. Elements appear all at once instead of popping in haphazardly.
+- **Key Changes**:
+  - New `SplashScreen.tsx` component wraps app and coordinates with `CoupleContext.loading`
+  - Removed entry animations from `AppShell` header/nav to prevent shift
+  - Removed scale animations from `StreakBadge` - uses CSS hover only
+  - Native HTML splash removed by React on mount, then React splash fades out when data ready
+- **Status**: ✅ Implemented
+
+### AD-010: SEO Content Strategy
+- **Decision**: Implement comprehensive SEO with FAQ page and blog system
+- **Date**: 2025-12-13
+- **Rationale**: Drive organic traffic through content marketing. FAQ targets featured snippets, Blog targets long-tail relationship keywords.
+- **Key Components**:
+  - **FAQ Page** (`/faq`): 20+ questions with FAQ Schema for rich snippets
+  - **Blog System** (`/blog`, `/blog/:slug`): Article pages with Article Schema
+  - **Target Keywords**: "weekly rituals for couples", "date ideas [city]", "relationship traditions", "keep relationship exciting"
+  - **Structured Data**: Organization, WebApplication, SoftwareApplication, WebSite schemas
+  - **robots.txt**: Enhanced for AI crawlers, social bots
+  - **sitemap.xml**: All pages including individual blog articles
+- **Content Strategy**:
+  - City-specific date guides (London, Sydney - more to come)
+  - Evergreen relationship advice
+  - Research-backed content for authority
+  - Internal linking to app conversion points
+- **Status**: ✅ Implemented (6 initial articles, 20+ FAQs)
+
 ---
 
 ## Technical Debt
@@ -95,7 +124,7 @@
 - **Description**: Some data-fetching states show nothing during load
 - **Impact**: Poor perceived performance
 - **Action**: Add skeleton components for key loading states
-- **Status**: 🔴 Open
+- **Status**: ✅ Resolved (2025-12-13) - Added to Landing, Memories, and other pages
 
 ### TD-005: No Reduced Motion Support
 - **Priority**: Low
@@ -114,6 +143,17 @@
 ---
 
 ## Key Decisions Log
+
+### 2025-12-13: v1.6.1 Production Readiness Audit
+- Full audit of all pages, components, hooks, and edge functions
+- Fixed navigation inconsistencies (using React Router consistently)
+- Fixed NotFound page with proper branding and navigation
+- Fixed Memories page with auth redirect and empty states
+- Fixed null safety issues in realtime subscriptions
+- Simplified EnhancedPostRitualCheckin button UX
+- Updated all documentation with audit findings
+- Verified all 12 edge functions for security compliance
+- Build passes without TypeScript errors
 
 ### 2025-12-11: v1.6 Ritual Experience Redesign
 - Replaced MagneticCanvas with CardDrawInput (tap-based mood cards)

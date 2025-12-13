@@ -1,24 +1,35 @@
 # Ritual - Robots.txt
-# Allow all crawlers access to public pages
+# https://ritual.lovable.app
 
+# Allow all crawlers access to public pages
 User-agent: *
 Allow: /
 Allow: /auth
-Allow: /home
+Allow: /faq
+Allow: /blog
+Allow: /blog/*
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+
+# App pages - allow for deep linking but lower priority
 Allow: /input
 Allow: /picker
 Allow: /rituals
-Allow: /history
+Allow: /memories
 Allow: /profile
+
+# Block API and internal routes
 Disallow: /api/
+Disallow: /_next/
+Disallow: /supabase/
 
 # Sitemap location
 Sitemap: https://ritual.lovable.app/sitemap.xml
 
-# Crawl-delay for polite crawling
-Crawl-delay: 1
+# ==================== Search Engine Specific Rules ====================
 
-# Specific bot rules
+# Google - fastest crawling, prioritize content
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 0
@@ -26,31 +37,86 @@ Crawl-delay: 0
 User-agent: Googlebot-Image
 Allow: /
 
+User-agent: Googlebot-News
+Allow: /blog/
+Allow: /blog/*
+
+# Bing
 User-agent: Bingbot
 Allow: /
 Crawl-delay: 1
 
+# Yahoo
 User-agent: Slurp
 Allow: /
 
+# DuckDuckGo
 User-agent: DuckDuckBot
 Allow: /
 
+# Baidu (China)
 User-agent: Baiduspider
 Allow: /
 
+# Yandex (Russia)
 User-agent: YandexBot
 Allow: /
 Crawl-delay: 2
 
+# ==================== Social Media Bots ====================
+
+# Twitter
 User-agent: Twitterbot
 Allow: /
 
+# Facebook
 User-agent: facebookexternalhit
 Allow: /
 
+# LinkedIn
 User-agent: LinkedInBot
 Allow: /
 
+# Pinterest
 User-agent: Pinterestbot
 Allow: /
+
+# WhatsApp
+User-agent: WhatsApp
+Allow: /
+
+# Telegram
+User-agent: TelegramBot
+Allow: /
+
+# Slack
+User-agent: Slackbot
+Allow: /
+
+# Discord
+User-agent: Discordbot
+Allow: /
+
+# ==================== AI/LLM Crawlers ====================
+# Allow for now - helps with visibility
+
+User-agent: GPTBot
+Allow: /blog/
+Allow: /faq
+Disallow: /input
+Disallow: /picker
+Disallow: /rituals
+Disallow: /memories
+Disallow: /profile
+
+User-agent: ChatGPT-User
+Allow: /blog/
+Allow: /faq
+
+User-agent: anthropic-ai
+Allow: /blog/
+Allow: /faq
+
+User-agent: Claude-Web
+Allow: /blog/
+Allow: /faq

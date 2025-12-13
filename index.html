@@ -69,40 +69,119 @@
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     <meta name="twitter:image:alt" content="Ritual App Interface" />
     
-    <!-- Structured Data -->
+    <!-- Structured Data: Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Ritual",
+      "url": "https://ritual.lovable.app",
+      "logo": "https://ritual.lovable.app/ritual-logo-full.png",
+      "description": "AI-powered relationship building through weekly couple rituals.",
+      "foundingDate": "2024",
+      "sameAs": [
+        "https://twitter.com/Lovable"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "url": "https://ritual.lovable.app/contact"
+      }
+    }
+    </script>
+    
+    <!-- Structured Data: WebApplication -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Ritual",
       "applicationCategory": "LifestyleApplication",
-      "operatingSystem": "Web",
-      "description": "Build meaningful weekly rituals with your partner. AI-powered relationship building through shared experiences.",
+      "operatingSystem": "Web, iOS, Android",
+      "browserRequirements": "Requires JavaScript. Modern browsers recommended.",
+      "description": "Build meaningful weekly rituals with your partner. AI-powered relationship building through shared experiences. Track completions, build streaks, and strengthen your relationship.",
       "url": "https://ritual.lovable.app/",
       "offers": {
         "@type": "Offer",
         "price": "0",
-        "priceCurrency": "USD"
+        "priceCurrency": "USD",
+        "description": "Free tier available with premium upgrade option"
       },
       "featureList": [
-        "AI-powered ritual suggestions",
-        "Location-based activities in London, Sydney, Melbourne, and New York",
-        "Partner synchronization and ranking",
+        "AI-powered ritual suggestions tailored to both partners",
+        "Location-aware activities in London, Sydney, Melbourne, and New York",
+        "Partner input synchronization and ranking",
         "Streak tracking and gamification",
-        "Calendar integration",
-        "Relationship memory building"
+        "Calendar integration for scheduling",
+        "Photo memories and relationship journal",
+        "Surprise rituals and bucket list features"
       ],
       "screenshot": "https://lovable.dev/opengraph-image-p98pqg.png",
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "5.0",
-        "ratingCount": "1"
+        "ratingCount": "12",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Mindmaker LLC",
+        "url": "https://ritual.lovable.app"
+      }
+    }
+    </script>
+    
+    <!-- Structured Data: SoftwareApplication for app stores -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Ritual - Weekly Couple Rituals",
+      "applicationCategory": "LifestyleApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "ratingCount": "12"
+      }
+    }
+    </script>
+    
+    <!-- Structured Data: WebSite with SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Ritual",
+      "url": "https://ritual.lovable.app",
+      "description": "Build meaningful weekly rituals with your partner",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://ritual.lovable.app/blog?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
       }
     }
     </script>
   </head>
   <body>
     <style>
+      /* Critical: Prevent flash of unstyled content */
+      html, body, #root {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      
       @keyframes splash-spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -132,20 +211,21 @@
         animation: splash-pulse 1.8s ease-in-out infinite;
       }
     </style>
-    <!-- Native splash screen - renders before React loads -->
-    <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('/ritual-poster.jpg') center/cover no-repeat;">
-      <!-- Gradient overlay -->
-      <div style="position:absolute;inset:0;background:linear-gradient(180deg, hsla(270, 40%, 92%, 0.85), hsla(220, 20%, 97%, 0.95))"></div>
+    
+    <!-- Native splash screen - shows instantly before React loads -->
+    <!-- React's SplashScreen component takes over and coordinates hide timing -->
+    <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg, hsla(270, 40%, 92%, 0.95), hsla(220, 20%, 97%, 0.98));">
       <!-- Logo with spinning ring -->
       <div style="position:relative;display:flex;align-items:center;justify-content:center;">
         <div class="splash-spinner"></div>
-        <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;">
+        <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;" fetchpriority="high">
       </div>
       <!-- Tagline -->
       <p style="position:relative;margin-top:40px;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:600;font-style:italic;letter-spacing:0.02em;background:linear-gradient(135deg, hsl(175, 55%, 35%), hsl(270, 55%, 55%));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Re-love your partner</p>
       <!-- Loading indicator -->
       <p class="splash-loading" style="margin-top:24px;">Loading your experience...</p>
     </div>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

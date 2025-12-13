@@ -8,14 +8,24 @@
  * @created 2025-12-11
  */
 
+/**
+ * Memories Page
+ * 
+ * A visual gallery of completed ritual memories.
+ * Shows photos, ratings, traditions, and partner reactions.
+ * 
+ * @updated 2025-12-13 - Production audit fixes
+ */
+
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Camera, Flame, Heart, Star, Sparkles } from 'lucide-react';
+import { Camera, Flame, Heart, Star, Sparkles, Loader2 } from 'lucide-react';
 import { useCouple } from '@/contexts/CoupleContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useSEO } from '@/hooks/useSEO';
 import { MemoryCard } from '@/components/MemoryCard';
-import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface Memory {
   id: string;
@@ -37,7 +47,8 @@ interface Stats {
 }
 
 export default function Memories() {
-  const { couple } = useCouple();
+  const navigate = useNavigate();
+  const { user, couple, loading: coupleLoading } = useCouple();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [stats, setStats] = useState<Stats>({ totalRituals: 0, traditions: 0, photos: 0, currentStreak: 0 });
   const [loading, setLoading] = useState(true);
@@ -47,12 +58,22 @@ export default function Memories() {
     description: 'Browse your shared ritual memories and celebrate your journey together.',
   });
 
+  // Redirect if not authenticated or no couple
+  useEffect(() => {
+    if (!coupleLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, coupleLoading, navigate]);
+
   useEffect(() => {
     if (couple?.id) {
       fetchMemories();
       fetchStats();
+    } else if (!coupleLoading && user && !couple) {
+      // User is logged in but has no couple
+      setLoading(false);
     }
-  }, [couple?.id]);
+  }, [couple?.id, coupleLoading, user]);
 
   const fetchMemories = async () => {
     try {
@@ -111,16 +132,48 @@ export default function Memories() {
     }
   };
 
-  if (loading) {
+  if (loading || coupleLoading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="h-full flex items-center justify-center bg-gradient-warm">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Loading memories...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show prompt if user has no couple yet
+  if (!couple) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-4 bg-gradient-warm">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center space-y-6 max-w-sm"
+        >
+          <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+            <Heart className="w-10 h-10 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold">No Memories Yet</h2>
+            <p className="text-muted-foreground text-sm">
+              Create a ritual space with your partner to start building memories together.
+            </p>
+          </div>
+          <Button
+            onClick={() => navigate('/')}
+            className="w-full bg-gradient-ritual text-white h-12 rounded-xl"
+          >
+            Get Started
+          </Button>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto bg-gradient-warm">
       <div className="p-4 pb-24 max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-1">
@@ -156,15 +209,13 @@ export default function Memories() {
                 Complete your first ritual together to start building your story. Each memory becomes a page in your shared journey.
               </p>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => window.location.href = '/input'}
+            <Button
+              onClick={() => navigate('/input')}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-primary to-pink-500 text-white font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
             >
               <Heart className="w-4 h-4" />
               Start Your First Ritual
-            </motion.button>
+            </Button>
           </motion.div>
         ) : (
           /* Memory grid */

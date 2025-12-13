@@ -355,12 +355,16 @@ export default function Profile() {
           </motion.div>
 
           <div className="text-center text-xs text-muted-foreground pt-4 space-y-1">
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              <button onClick={() => navigate('/faq')} className="hover:text-foreground transition-colors">Help & FAQ</button>
+              <span>·</span>
               <button onClick={() => navigate('/terms')} className="hover:text-foreground transition-colors">Terms</button>
               <span>·</span>
               <button onClick={() => navigate('/privacy')} className="hover:text-foreground transition-colors">Privacy</button>
+              <span>·</span>
+              <button onClick={() => navigate('/contact')} className="hover:text-foreground transition-colors">Contact</button>
             </div>
-            <p>© {new Date().getFullYear()} Mindmaker LLC · v1.5</p>
+            <p>© {new Date().getFullYear()} Mindmaker LLC · v1.6.2</p>
           </div>
         </div>
         <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
