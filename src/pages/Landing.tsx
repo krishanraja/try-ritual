@@ -227,13 +227,14 @@ export default function Landing() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-snug text-foreground"
             >
-              <span className="bg-gradient-ritual bg-clip-text text-transparent">
-                Create Meaningful Weekly Rituals
-              </span>
+              Create Meaningful
+              <br className="sm:hidden" />
+              <span className="hidden sm:inline"> </span>
+              Weekly Rituals
               <br />
-              <span className="text-foreground">with Your Partner</span>
+              <span className="text-primary">with Your Partner</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0 }}
