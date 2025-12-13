@@ -353,21 +353,12 @@ export function EnhancedPostRitualCheckin({
               )}
             </div>
 
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleNotesSubmit}
-                className="flex-1"
-              >
-                {didComplete === 'yes' ? 'Next' : 'Skip'}
-              </Button>
-              <Button
-                onClick={handleNotesSubmit}
-                className="flex-1 bg-gradient-ritual"
-              >
-                Continue
-              </Button>
-            </div>
+            <Button
+              onClick={handleNotesSubmit}
+              className="w-full bg-gradient-ritual"
+            >
+              {didComplete === 'yes' ? 'Continue' : (notes.trim() ? 'Submit Feedback' : 'Skip')}
+            </Button>
           </motion.div>
         );
 

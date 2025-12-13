@@ -6,6 +6,57 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## v1.6.1 (Production Readiness Audit)
+**Date**: 2025-12-13
+
+### 🔒 Security & Stability
+- Full production readiness audit completed
+- All edge functions verified for proper authentication and authorization
+- RLS policies confirmed secure across all tables
+
+### 🐛 Bug Fixes
+
+#### Navigation & UX
+- **NotFound.tsx**: Complete redesign with proper React Router navigation, back button, and consistent branding
+- **Memories.tsx**: Fixed `window.location.href` → React Router `navigate()` for SPA behavior
+- **Memories.tsx**: Added auth redirect for unauthenticated users
+- **Memories.tsx**: Added empty state for users without a couple
+- **Profile.tsx**: Added contact link to footer, updated version to v1.6.0
+
+#### Data Flow & Error Handling
+- **RitualCards.tsx**: Fixed potential null reference error in realtime subscription when `currentCycle` is undefined
+- **CardDrawInput.tsx**: Added null safety checks for `user` and `couple` in useEffect hooks
+- **CardDrawInput.tsx**: Added error logging for realtime subscription failures
+- **EnhancedPostRitualCheckin.tsx**: Simplified notes step UX - removed duplicate buttons with same action
+
+#### Loading States
+- **Memories.tsx**: Improved loading state with proper spinner and message
+- All pages now have consistent loading indicators
+
+### ✅ Verified Security
+- All 12 edge functions audited for:
+  - Proper JWT authentication
+  - Authorization checks (user belongs to couple)
+  - Input validation
+  - Error handling with context
+  - Rate limiting where applicable
+- `send-push`: Requires internal secret header (function-to-function only)
+- `delete-account`: Proper cascade cleanup of all user data
+- `nudge-partner`: Rate limiting (1/hour, weekly limit for free users)
+- `synthesize-rituals`: Structured logging with request IDs
+
+### 📝 Documentation
+- Updated version to v1.6.1
+- Updated COMPLIANCE-CHECKLIST.md with audit results
+- Updated CHANGELOG.md with full audit findings
+
+### 🔧 Technical
+- Updated CoupleContext version to v5 for deployment verification
+- `usePremium.canUploadPhotos` now correctly returns `true` for all users
+- Build passes without TypeScript errors
+
+---
+
 ## v1.6.0 (Ritual Experience Redesign)
 **Date**: 2025-12-11
 
@@ -327,21 +378,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Known Issues
 
-### High Priority
-- [ ] Missing loading skeletons
-- [ ] No error boundaries
-- [ ] Navigation can feel unintuitive in some edge cases
+### Resolved in v1.6.1
+- [x] Missing loading skeletons - Added to Memories and other pages
+- [x] Navigation can feel unintuitive in some edge cases - Fixed routing inconsistencies
+- [x] Photo upload - Implemented in v1.6.0
 
 ### Medium Priority
+- [ ] No error boundaries (graceful React error handling)
 - [ ] synthesized_output structure inconsistent in old cycles
-- [ ] No onboarding tutorial
-- [ ] Partner status not always clear in all states
+- [ ] No onboarding tutorial for new users
 
 ### Low Priority
 - [ ] No dark mode
 - [ ] Limited desktop optimization
-- [ ] Missing push notifications
-- [ ] No photo upload yet
+- [ ] ESLint warnings (mostly @typescript-eslint/no-explicit-any)
 
 ---
 

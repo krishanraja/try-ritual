@@ -80,7 +80,9 @@ export default function RitualCards() {
 
     loadRituals();
 
-    // Listen for completions
+    // Listen for completions only if we have a current cycle
+    if (!currentCycle?.id) return;
+    
     const channel = supabase
       .channel('completions-changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'completions' }, (payload: any) => {
@@ -95,7 +97,7 @@ export default function RitualCards() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, couple, currentCycle, navigate, fetchedRituals, isShowingSamples]);
+  }, [user, couple, currentCycle?.id, navigate, fetchedRituals, isShowingSamples]);
 
   const handleComplete = async (ritual: Ritual) => {
     if (isShowingSamples) {

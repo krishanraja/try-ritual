@@ -359,8 +359,10 @@ export default function Profile() {
               <button onClick={() => navigate('/terms')} className="hover:text-foreground transition-colors">Terms</button>
               <span>·</span>
               <button onClick={() => navigate('/privacy')} className="hover:text-foreground transition-colors">Privacy</button>
+              <span>·</span>
+              <button onClick={() => navigate('/contact')} className="hover:text-foreground transition-colors">Contact</button>
             </div>
-            <p>© {new Date().getFullYear()} Mindmaker LLC · v1.5</p>
+            <p>© {new Date().getFullYear()} Mindmaker LLC · v1.6.0</p>
           </div>
         </div>
         <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />

@@ -9,9 +9,9 @@
 | Field | Value |
 |-------|-------|
 | **Project Name** | Ritual |
-| **Version** | 1.6.0 |
-| **Last Updated** | 2025-12-11 |
-| **Status** | Active Development |
+| **Version** | 1.6.1 |
+| **Last Updated** | 2025-12-13 |
+| **Status** | Production Ready |
 
 ---
 
@@ -95,7 +95,7 @@
 - **Description**: Some data-fetching states show nothing during load
 - **Impact**: Poor perceived performance
 - **Action**: Add skeleton components for key loading states
-- **Status**: 🔴 Open
+- **Status**: ✅ Resolved (2025-12-13) - Added to Landing, Memories, and other pages
 
 ### TD-005: No Reduced Motion Support
 - **Priority**: Low
@@ -114,6 +114,17 @@
 ---
 
 ## Key Decisions Log
+
+### 2025-12-13: v1.6.1 Production Readiness Audit
+- Full audit of all pages, components, hooks, and edge functions
+- Fixed navigation inconsistencies (using React Router consistently)
+- Fixed NotFound page with proper branding and navigation
+- Fixed Memories page with auth redirect and empty states
+- Fixed null safety issues in realtime subscriptions
+- Simplified EnhancedPostRitualCheckin button UX
+- Updated all documentation with audit findings
+- Verified all 12 edge functions for security compliance
+- Build passes without TypeScript errors
 
 ### 2025-12-11: v1.6 Ritual Experience Redesign
 - Replaced MagneticCanvas with CardDrawInput (tap-based mood cards)

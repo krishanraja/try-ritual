@@ -110,7 +110,7 @@ export function usePremium(): PremiumStatus {
     swapsRemaining: Math.max(0, limits.swaps - swapsUsed),
     canNudge: isPremium || nudgesUsedThisWeek < limits.nudgesPerWeek,
     nudgesUsedThisWeek,
-    canUploadPhotos: isPremium,
+    canUploadPhotos: true, // All users can upload photos - premium just gets higher quality
     maxNotesLength: limits.maxNotesLength,
     ritualsToShow: limits.ritualsToShow,
     refresh,
