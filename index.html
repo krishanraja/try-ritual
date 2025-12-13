@@ -102,13 +102,49 @@
     </script>
   </head>
   <body>
-    <!-- Native splash screen - renders before React loads (~50ms) -->
-    <!-- Colors aligned to design system: purple/teal palette from index.css -->
+    <style>
+      @keyframes splash-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes splash-pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+      .splash-spinner {
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        border-top-color: hsl(175, 65%, 42%);
+        border-right-color: hsl(270, 55%, 55%);
+        animation: splash-spin 1.2s linear infinite;
+      }
+      .splash-loading {
+        position: relative;
+        margin-top: 16px;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        color: hsl(220, 15%, 50%);
+        animation: splash-pulse 1.8s ease-in-out infinite;
+      }
+    </style>
+    <!-- Native splash screen - renders before React loads -->
     <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:url('/ritual-poster.jpg') center/cover no-repeat;">
-      <!-- Gradient uses design system colors: --purple (270 55% 55%) and --background (220 20% 97%) -->
+      <!-- Gradient overlay -->
       <div style="position:absolute;inset:0;background:linear-gradient(180deg, hsla(270, 40%, 92%, 0.85), hsla(220, 20%, 97%, 0.95))"></div>
-      <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;">
+      <!-- Logo with spinning ring -->
+      <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+        <div class="splash-spinner"></div>
+        <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;">
+      </div>
+      <!-- Tagline -->
       <p style="position:relative;margin-top:20px;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:600;font-style:italic;letter-spacing:0.02em;background:linear-gradient(135deg, hsl(175, 55%, 35%), hsl(270, 55%, 55%));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Re-love your partner</p>
+      <!-- Loading indicator -->
+      <p class="splash-loading">Loading your experience...</p>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
