@@ -16,7 +16,7 @@ const DEFAULT_SEO = {
   title: 'Ritual – Re-love Your Partner',
   description: 'Build meaningful weekly rituals with your partner. Both contribute ideas, AI synthesizes your perfect week. Track completions, build streaks, and strengthen your relationship.',
   keywords: 'relationship rituals, couple activities, weekly rituals, relationship building, shared moments, couple goals, date ideas, relationship app',
-  image: 'https://lovable.dev/opengraph-image-p98pqg.png',
+  image: 'https://ritual.lovable.app/ritual-icon.png',
   url: typeof window !== 'undefined' ? window.location.href : '',
   type: 'website' as const,
 };
