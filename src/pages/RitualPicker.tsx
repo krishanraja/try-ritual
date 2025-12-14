@@ -207,6 +207,10 @@ export default function RitualPicker() {
 
     console.log('[RitualPicker] Setting up synthesis listener for cycle:', currentCycle.id);
 
+    // FIX #1: Add timeout - max 40 attempts (2 minutes at 3s intervals)
+    let pollAttempts = 0;
+    const MAX_POLL_ATTEMPTS = 40; // 2 minutes total
+
     // Trigger synthesis on mount (idempotent, safe to call)
     supabase.functions.invoke('trigger-synthesis', {
       body: { cycleId: currentCycle.id }
@@ -238,8 +242,18 @@ export default function RitualPicker() {
         console.log('[RitualPicker] Channel status:', status);
       });
 
-    // Poll every 3 seconds for faster detection
+    // Poll every 3 seconds for faster detection with timeout
     const pollInterval = setInterval(async () => {
+      pollAttempts++;
+      
+      // FIX #1: Timeout after max attempts
+      if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+        console.warn('[RitualPicker] Synthesis timeout after', MAX_POLL_ATTEMPTS, 'attempts');
+        clearInterval(pollInterval);
+        setGeneratingError('Synthesis is taking longer than expected. Please try again.');
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('weekly_cycles')
@@ -258,6 +272,7 @@ export default function RitualPicker() {
             console.log('[RitualPicker] Rituals found via polling');
             setRituals(synthesized.rituals);
             setStep('rank');
+            clearInterval(pollInterval);
           }
         }
       } catch (err) {
@@ -702,6 +717,21 @@ export default function RitualPicker() {
                 </>
               )}
             </Button>
+            
+            {/* FIX #4: AI Failure Fallback - Show option to use sample rituals */}
+            {hasError && retryCount >= 2 && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Navigate to rituals page with sample rituals as fallback
+                  navigate('/rituals');
+                }}
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Browse Sample Rituals Instead
+              </Button>
+            )}
             
             <Button
               variant="ghost"

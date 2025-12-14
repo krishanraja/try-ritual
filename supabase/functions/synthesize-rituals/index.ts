@@ -290,6 +290,39 @@ serve(async (req) => {
 
     const { action, currentRitual, coupleId, partnerOneInput, partnerTwoInput, userCity } = await req.json();
 
+    // FIX #6: Sanitize user input to prevent prompt injection
+    const sanitizeInput = (input: any): any => {
+      if (!input) return input;
+      
+      if (typeof input === 'string') {
+        // Remove potential prompt injection patterns
+        // Remove common injection patterns like "Ignore previous instructions", "System:", etc.
+        return input
+          .replace(/ignore\s+previous\s+instructions/gi, '')
+          .replace(/system\s*:/gi, '')
+          .replace(/assistant\s*:/gi, '')
+          .replace(/user\s*:/gi, '')
+          .replace(/\[INST\]/gi, '')
+          .replace(/\[\/INST\]/gi, '')
+          .replace(/<\|im_start\|>/gi, '')
+          .replace(/<\|im_end\|>/gi, '')
+          .trim();
+      }
+      
+      if (typeof input === 'object' && input !== null) {
+        const sanitized: any = Array.isArray(input) ? [] : {};
+        for (const key in input) {
+          sanitized[key] = sanitizeInput(input[key]);
+        }
+        return sanitized;
+      }
+      
+      return input;
+    };
+
+    const sanitizedPartnerOneInput = sanitizeInput(partnerOneInput);
+    const sanitizedPartnerTwoInput = sanitizeInput(partnerTwoInput);
+
     // Get location context - use userCity parameter that's actually sent from the client
     const preferredCity = (userCity || 'New York') as City;
     const locationContext = getLocationContext(preferredCity);
@@ -388,8 +421,8 @@ LOCATION CONTEXT:
 ${historicalContext}
 
 THEIR CURRENT INPUTS:
-Partner 1: Energy ${partnerOneInput?.energy}, Time ${partnerOneInput?.availability}, Budget ${partnerOneInput?.budget}
-Partner 2: Energy ${partnerTwoInput?.energy}, Time ${partnerTwoInput?.availability}, Budget ${partnerTwoInput?.budget}
+Partner 1: Energy ${sanitizedPartnerOneInput?.energy}, Time ${sanitizedPartnerOneInput?.availability}, Budget ${sanitizedPartnerOneInput?.budget}
+Partner 2: Energy ${sanitizedPartnerTwoInput?.energy}, Time ${sanitizedPartnerTwoInput?.availability}, Budget ${sanitizedPartnerTwoInput?.budget}
 
 ## GENERATION INSTRUCTIONS
 
@@ -498,8 +531,8 @@ ${getRelationshipContextModifiers()}
 ${historicalContext}
 
 THEIR THIS WEEK'S INPUTS:
-Partner 1: ${formatInput(partnerOneInput)}
-Partner 2: ${formatInput(partnerTwoInput)}
+Partner 1: ${formatInput(sanitizedPartnerOneInput)}
+Partner 2: ${formatInput(sanitizedPartnerTwoInput)}
 
 LOCATION CONTEXT (CRITICAL - All rituals must fit this):
 - City: ${locationContext.city}, ${locationContext.country}

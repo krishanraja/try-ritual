@@ -127,3 +127,41 @@ export const getLocationContext = (city: City) => {
     localTime: formatCityTime(city, 'long'),
   };
 };
+
+/**
+ * FIX #3: Get week start date (Monday) in a specific city's timezone
+ * This ensures both partners use the same week boundary regardless of their local timezone
+ */
+export const getWeekStartDate = (city: City): string => {
+  const timezone = CITY_DATA[city].timezone;
+  
+  // Get current date in the city's timezone
+  const now = new Date();
+  const cityDateStr = now.toLocaleString('en-US', { 
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'long'
+  });
+  
+  // Parse the date components
+  const cityDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+  const dayOfWeek = cityDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  // Calculate days to subtract to get to Monday (start of week)
+  // If Sunday (0), subtract 6 days; if Monday (1), subtract 0 days, etc.
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  
+  // Create date for Monday of current week in city's timezone
+  const mondayDate = new Date(cityDate);
+  mondayDate.setDate(cityDate.getDate() - daysToSubtract);
+  mondayDate.setHours(0, 0, 0, 0);
+  
+  // Return as YYYY-MM-DD string
+  const year = mondayDate.getFullYear();
+  const month = String(mondayDate.getMonth() + 1).padStart(2, '0');
+  const day = String(mondayDate.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};

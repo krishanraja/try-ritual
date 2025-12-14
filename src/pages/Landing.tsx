@@ -271,7 +271,21 @@ export default function Landing() {
 
     console.log('[LANDING] Starting synthesis poll for cycle:', currentCycle.id);
 
+    // FIX #1: Add timeout - max 40 attempts (2 minutes at 3s intervals)
+    let pollAttempts = 0;
+    const MAX_POLL_ATTEMPTS = 40; // 2 minutes total
+
     const pollInterval = setInterval(async () => {
+      pollAttempts++;
+      
+      // FIX #1: Timeout after max attempts
+      if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+        console.warn('[LANDING] Synthesis timeout after', MAX_POLL_ATTEMPTS, 'attempts');
+        clearInterval(pollInterval);
+        setSynthesisError('Synthesis is taking longer than expected. Please try again or check back later.');
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('weekly_cycles')
@@ -287,6 +301,7 @@ export default function Landing() {
         if (data?.synthesized_output) {
           console.log('[LANDING] Synthesis complete, refreshing...');
           await refreshCycle();
+          clearInterval(pollInterval);
           // Navigation will happen automatically via view change
         }
       } catch (err) {
@@ -306,6 +321,7 @@ export default function Landing() {
         if (payload.new?.synthesized_output) {
           console.log('[LANDING] Synthesis complete via realtime');
           await refreshCycle();
+          clearInterval(pollInterval);
         }
       })
       .subscribe();

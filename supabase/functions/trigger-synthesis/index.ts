@@ -155,10 +155,31 @@ serve(async (req) => {
     try {
       const userCity = (cycle.couples as any)?.preferred_city || 'New York';
       
+      // FIX #6: Sanitize inputs before sending to AI
+      const sanitizeInput = (input: any): any => {
+        if (!input) return input;
+        if (typeof input === 'string') {
+          return input
+            .replace(/ignore\s+previous\s+instructions/gi, '')
+            .replace(/system\s*:/gi, '')
+            .replace(/assistant\s*:/gi, '')
+            .replace(/user\s*:/gi, '')
+            .trim();
+        }
+        if (typeof input === 'object' && input !== null) {
+          const sanitized: any = Array.isArray(input) ? [] : {};
+          for (const key in input) {
+            sanitized[key] = sanitizeInput(input[key]);
+          }
+          return sanitized;
+        }
+        return input;
+      };
+
       const synthesisResponse = await supabaseClient.functions.invoke('synthesize-rituals', {
         body: {
-          partnerOneInput: cycle.partner_one_input,
-          partnerTwoInput: cycle.partner_two_input,
+          partnerOneInput: sanitizeInput(cycle.partner_one_input),
+          partnerTwoInput: sanitizeInput(cycle.partner_two_input),
           coupleId: cycle.couple_id,
           userCity
         }

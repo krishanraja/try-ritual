@@ -93,10 +93,16 @@ export default function QuickInput() {
         return;
       }
 
-      const today = new Date();
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay());
-      const weekStartStr = weekStart.toISOString().split('T')[0];
+      // FIX #3: Use couple's preferred_city for timezone-aware week calculation
+      const { data: coupleData } = await supabase
+        .from('couples')
+        .select('preferred_city')
+        .eq('id', couple.id)
+        .single();
+      
+      const preferredCity = (coupleData?.preferred_city || 'New York') as 'London' | 'Sydney' | 'Melbourne' | 'New York';
+      const { getWeekStartDate } = await import('@/utils/timezoneUtils');
+      const weekStartStr = getWeekStartDate(preferredCity);
 
       const { data: existingCycle } = await supabase
         .from('weekly_cycles')
@@ -213,6 +219,20 @@ export default function QuickInput() {
 
       if (saveError) {
         throw new Error(`Failed to save your input: ${saveError.message}`);
+      }
+
+      // FIX #8: Session Recovery - Save critical state to localStorage
+      if (user?.id) {
+        try {
+          const stateToSave = {
+            cycleId: weeklyCycleId,
+            submittedAt: new Date().toISOString(),
+            timestamp: Date.now(),
+          };
+          localStorage.setItem(`ritual-state-${user.id}`, JSON.stringify(stateToSave));
+        } catch (e) {
+          console.warn('[INPUT] Failed to save state to localStorage:', e);
+        }
       }
 
       console.log('[INPUT] Input saved successfully');

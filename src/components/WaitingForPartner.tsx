@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { motion } from 'framer-motion';
-import { Clock, Heart, RotateCcw, Lightbulb, Lock } from 'lucide-react';
+import { Clock, Heart, RotateCcw, Lightbulb, Lock, AlertCircle } from 'lucide-react';
 import ritualIcon from '@/assets/ritual-icon.png';
 import { RitualCarousel } from './RitualCarousel';
 import { useSampleRituals } from '@/hooks/useSampleRituals';
@@ -49,6 +49,9 @@ export const WaitingForPartner = ({
   const { rituals } = useSampleRituals();
   const { isPremium, canNudge, nudgesUsedThisWeek } = usePremium();
 
+  // FIX #2: Abandoned Input Detection
+  const [abandonedWarning, setAbandonedWarning] = useState<string | null>(null);
+
   // Listen for partner completion in realtime
   useEffect(() => {
     const channel = supabase
@@ -90,8 +93,46 @@ export const WaitingForPartner = ({
         console.log('[WaitingForPartner] Channel status:', status);
       });
 
+    // FIX #2: Check for abandoned input (24+ hours)
+    const checkAbandoned = async () => {
+      try {
+        const { data: cycle } = await supabase
+          .from('weekly_cycles')
+          .select('partner_one_submitted_at, partner_two_submitted_at, created_at')
+          .eq('id', currentCycleId)
+          .single();
+
+        if (!cycle) return;
+
+        const isPartnerOne = couple?.partner_one === user?.id;
+        const userSubmittedAt = isPartnerOne 
+          ? cycle.partner_one_submitted_at 
+          : cycle.partner_two_submitted_at;
+        
+        if (!userSubmittedAt) return;
+
+        const submittedDate = new Date(userSubmittedAt);
+        const hoursSinceSubmission = (Date.now() - submittedDate.getTime()) / (1000 * 60 * 60);
+
+        // Show warning after 24 hours
+        if (hoursSinceSubmission >= 24) {
+          setAbandonedWarning(
+            `It's been over ${Math.round(hoursSinceSubmission)} hours since you submitted. ` +
+            `Your partner may have forgotten. Consider sending a nudge or starting fresh.`
+          );
+        }
+      } catch (err) {
+        console.warn('[WaitingForPartner] Error checking abandoned input:', err);
+      }
+    };
+
+    // Check immediately and then every hour
+    checkAbandoned();
+    const abandonedCheckInterval = setInterval(checkAbandoned, 60 * 60 * 1000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(abandonedCheckInterval);
     };
   }, [currentCycleId, couple, user, refreshCycle, navigate]);
 
@@ -227,6 +268,29 @@ export const WaitingForPartner = ({
             notification={notification}
             onDismiss={() => setNotification(null)}
           />
+        </div>
+      )}
+
+      {/* FIX #2: Abandoned Input Warning */}
+      {abandonedWarning && (
+        <div className="w-full max-w-sm">
+          <Card className="p-4 bg-amber-50 border-amber-200">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-amber-900 font-medium mb-1">Long Wait</p>
+                <p className="text-xs text-amber-800">{abandonedWarning}</p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setAbandonedWarning(null)}
+                className="text-xs h-auto py-1 px-2 text-amber-600"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
 

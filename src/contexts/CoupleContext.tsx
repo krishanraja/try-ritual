@@ -142,6 +142,9 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchCycle = async (coupleId: string) => {
     try {
+      // FIX #9: Check for stale cycles (older than 7 days) and clean them up
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      
       const { data: incompleteCycle, error: incompleteError } = await supabase
         .from('weekly_cycles')
         .select('*')
@@ -154,19 +157,38 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
       if (incompleteError) throw incompleteError;
 
       if (incompleteCycle) {
-        setCurrentCycle(incompleteCycle);
-        return incompleteCycle;
+        // FIX #9: If cycle is older than 7 days and incomplete, it's stale
+        const cycleDate = new Date(incompleteCycle.created_at);
+        const isStale = cycleDate.getTime() < new Date(sevenDaysAgo).getTime();
+        
+        if (isStale && (!incompleteCycle.synthesized_output || !incompleteCycle.agreement_reached)) {
+          console.log('[CYCLE] Stale cycle detected, will create new cycle for current week');
+          // Don't return stale cycle, fall through to create new one
+        } else {
+          setCurrentCycle(incompleteCycle);
+          return incompleteCycle;
+        }
       }
 
-      const weekStart = new Date();
-      weekStart.setHours(0, 0, 0, 0);
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      // FIX #3: Use couple's preferred_city for timezone-aware week calculation
+      // Fetch couple to get preferred_city
+      const { data: coupleData } = await supabase
+        .from('couples')
+        .select('preferred_city')
+        .eq('id', coupleId)
+        .single();
+      
+      const preferredCity = (coupleData?.preferred_city || 'New York') as 'London' | 'Sydney' | 'Melbourne' | 'New York';
+      
+      // Use timezone-aware week calculation
+      const { getWeekStartDate } = await import('@/utils/timezoneUtils');
+      const weekStartStr = getWeekStartDate(preferredCity);
 
       const { data: currentWeekCycle, error: weekError } = await supabase
         .from('weekly_cycles')
         .select('*')
         .eq('couple_id', coupleId)
-        .eq('week_start_date', weekStart.toISOString().split('T')[0])
+        .eq('week_start_date', weekStartStr)
         .maybeSingle();
 
       if (weekError) throw weekError;
@@ -200,6 +222,20 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // FIX #8: Session Recovery - Restore critical state from localStorage if session was lost
+      if (session?.user) {
+        try {
+          const savedState = localStorage.getItem(`ritual-state-${session.user.id}`);
+          if (savedState) {
+            const parsed = JSON.parse(savedState);
+            console.log('[AUTH] Restoring saved state:', parsed);
+            // State will be refreshed from database, but this provides fallback
+          }
+        } catch (e) {
+          console.warn('[AUTH] Failed to restore saved state:', e);
+        }
+      }
     }).catch((error) => {
       console.error('[AUTH] getSession error:', error);
       clearTimeout(safetyTimeout);

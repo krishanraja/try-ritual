@@ -40,8 +40,13 @@ export function useSampleRituals() {
   }, [couple]);
 
   useEffect(() => {
-    // CRITICAL: if we have synthesized_output, always show real rituals
-    if (currentCycle?.synthesized_output) {
+    // FIX #7: CRITICAL - Always check if we have a real cycle with real rituals first
+    // Only show samples if we truly don't have real rituals
+    
+    // First, check if we have a valid currentCycle with synthesized_output
+    const hasRealCycle = currentCycle?.id && currentCycle?.synthesized_output;
+    
+    if (hasRealCycle) {
       const output = currentCycle.synthesized_output as any;
       
       // Defensive parsing: handle both { rituals: [...] } and direct [...] formats
@@ -64,7 +69,7 @@ export function useSampleRituals() {
         );
       }
       
-      // Only update if we actually have rituals
+      // FIX #7: Only show real rituals if we have them, never show samples if real cycle exists
       if (realRituals.length > 0) {
         setRituals(realRituals);
         setIsShowingSamples(false);
@@ -72,8 +77,16 @@ export function useSampleRituals() {
       }
     }
 
+    // FIX #7: Only show samples if we don't have a real cycle at all
     // Check if both partners have submitted inputs (awaiting synthesis)
     const bothSubmitted = currentCycle?.partner_one_input && currentCycle?.partner_two_input;
+    
+    // If we have a cycle but no rituals yet (synthesis in progress), show empty
+    if (currentCycle?.id && bothSubmitted && !hasRealCycle) {
+      setRituals([]);
+      setIsShowingSamples(false);
+      return;
+    }
     
     // If couple exists and both haven't submitted yet, or no partner yet, show samples
     if (couple && !bothSubmitted) {
@@ -87,7 +100,7 @@ export function useSampleRituals() {
       setRituals(filteredRituals);
       setIsShowingSamples(true);
     }
-    // If both submitted but no rituals yet, show empty (synthesis in progress)
+    // Fallback: show empty
     else {
       setRituals([]);
       setIsShowingSamples(false);

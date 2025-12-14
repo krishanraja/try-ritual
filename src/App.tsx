@@ -17,6 +17,7 @@ import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { AppShell } from "@/components/AppShell";
 import { SplashScreen } from "@/components/SplashScreen";
 import { ContextualFeedback } from "@/components/ContextualFeedback";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Critical: Landing page loads immediately for fast LCP
 import Landing from "./pages/Landing";
@@ -79,23 +80,25 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <BrowserRouter>
-        <CoupleProvider>
-          <AnalyticsProvider>
-            <SplashScreen>
-              <AppShell>
-                <AnimatedRoutes />
-                <ContextualFeedback />
-              </AppShell>
-            </SplashScreen>
-          </AnalyticsProvider>
-        </CoupleProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <CoupleProvider>
+            <AnalyticsProvider>
+              <SplashScreen>
+                <AppShell>
+                  <AnimatedRoutes />
+                  <ContextualFeedback />
+                </AppShell>
+              </SplashScreen>
+            </AnalyticsProvider>
+          </CoupleProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
