@@ -795,6 +795,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_partner_avatar: { Args: { partner_id: string }; Returns: string | null }
       get_partner_name: { Args: { partner_id: string }; Returns: string }
       is_partner: { Args: { profile_id: string }; Returns: boolean }
       join_couple_with_code: { Args: { input_code: string }; Returns: Json }

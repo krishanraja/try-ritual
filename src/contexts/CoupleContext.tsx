@@ -102,12 +102,19 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
       console.log('[COUPLE] Partner ID:', partnerId);
       
       if (partnerId) {
-        const { data: partnerName } = await supabase
-          .rpc('get_partner_name', { partner_id: partnerId });
+        // Fetch partner name and avatar in parallel
+        const [nameResult, avatarResult] = await Promise.all([
+          supabase.rpc('get_partner_name', { partner_id: partnerId }),
+          supabase.rpc('get_partner_avatar', { partner_id: partnerId })
+        ]);
         
-        console.log('[COUPLE] Partner name:', partnerName);
-        if (partnerName) {
-          setPartnerProfile({ id: partnerId, name: partnerName });
+        console.log('[COUPLE] Partner name:', nameResult.data, 'avatar:', avatarResult.data);
+        if (nameResult.data) {
+          setPartnerProfile({ 
+            id: partnerId, 
+            name: nameResult.data,
+            avatar_id: avatarResult.data || null
+          });
         } else {
           setPartnerProfile(null);
         }

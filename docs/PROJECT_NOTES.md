@@ -9,9 +9,9 @@
 | Field | Value |
 |-------|-------|
 | **Project Name** | Ritual |
-| **Version** | 1.6.4 |
+| **Version** | 1.6.5 |
 | **Last Updated** | 2025-12-14 |
-| **Status** | Production Ready + SEO + Branded UX |
+| **Status** | Production Ready + SEO + Branded UX + Flow Polish |
 
 ---
 
@@ -156,6 +156,15 @@
 ---
 
 ## Key Decisions Log
+
+### 2025-12-14: v1.6.5 User Flow Audit & Experience Polish
+- Audited key user flows: avatar visibility, location change, post-synthesis payoff
+- Added `get_partner_avatar` DB function for secure partner avatar fetching
+- Partners can now see each other's avatar selections
+- Added location change confirmation dialog for couples
+- Redesigned AgreementGame "done" state with world-class celebration UI
+- Improved calendar integration with one-click grid layout
+- Replaced all remaining Sparkles icons with branded Ritual icon
 
 ### 2025-12-14: v1.6.4 Branded Loading & Viewport Fixes
 - Created `RitualSpinner` component with branded icon and animations

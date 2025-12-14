@@ -5,7 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import { Clock, DollarSign, Calendar as CalendarIcon, Star, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { Clock, DollarSign, Calendar as CalendarIcon, Star, RefreshCw } from 'lucide-react';
+import { RitualSpinner } from '@/components/RitualSpinner';
+import ritualIcon from '@/assets/ritual-icon.png';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AgreementGame } from '@/components/AgreementGame';
 import { cn } from '@/lib/utils';
@@ -558,11 +560,22 @@ export default function RitualPicker() {
         className="text-center space-y-6 max-w-sm"
       >
         <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          className="w-20 h-20 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          className="relative w-20 h-20 mx-auto"
         >
-          <Sparkles className="w-10 h-10 text-white" />
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: 'conic-gradient(from 0deg, hsl(175 65% 42%), hsl(270 55% 55%), hsl(175 65% 42%))',
+              opacity: 0.3,
+            }}
+          />
+          <div className="absolute inset-1 rounded-full bg-gradient-to-br from-primary/10 to-purple-200/20 flex items-center justify-center">
+            <img src={ritualIcon} alt="" className="w-12 h-12 object-contain" />
+          </div>
         </motion.div>
         
         <div>
@@ -611,7 +624,7 @@ export default function RitualPicker() {
   if (loading) {
     return (
       <div className="h-full bg-gradient-warm flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <RitualSpinner size="lg" showText text="Loading rituals..." />
       </div>
     );
   }

@@ -1,7 +1,17 @@
 import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { LogOut, UserPlus, UserMinus, MapPin, Copy, Check, Calendar, Heart, Trash2, Smile } from 'lucide-react';
+import { LogOut, UserPlus, UserMinus, MapPin, Copy, Check, Calendar, Heart, Trash2, Smile, AlertCircle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -32,6 +42,8 @@ export default function Profile() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [pendingCity, setPendingCity] = useState<City | null>(null);
+  const [showCityConfirm, setShowCityConfirm] = useState(false);
   const { refresh: refreshPremium } = usePremium();
 
   // Handle checkout return
@@ -123,10 +135,26 @@ export default function Profile() {
     }
   };
 
-  const handleCityChange = async (city: City) => {
+  const handleCityChange = (city: City) => {
+    if (!couple) return;
+    
+    // If partner is connected, show confirmation dialog
+    if (couple.partner_two && partnerProfile) {
+      setPendingCity(city);
+      setShowCityConfirm(true);
+    } else {
+      // No partner yet, just update directly
+      confirmCityChange(city);
+    }
+  };
+
+  const confirmCityChange = async (city: City) => {
     if (!couple) return;
     
     setSelectedCity(city);
+    setShowCityConfirm(false);
+    setPendingCity(null);
+    
     try {
       const { error } = await supabase
         .from('couples')
@@ -135,7 +163,10 @@ export default function Profile() {
 
       if (error) throw error;
       
-      setNotification({ type: 'success', message: `Rituals will now be tailored for ${city}` });
+      const message = partnerProfile 
+        ? `Location updated to ${city} for both of you!` 
+        : `Rituals will now be tailored for ${city}`;
+      setNotification({ type: 'success', message });
       setTimeout(() => setNotification(null), 3000);
     } catch (error) {
       console.error('Error updating city:', error);
@@ -181,13 +212,25 @@ export default function Profile() {
             </div>
             <div>
               <h1 className="text-xl font-bold">{user?.email}</h1>
-              <p className="text-sm text-muted-foreground">
-                {couple ? (
-                  couple.partner_two 
-                    ? `Connected with ${partnerProfile?.name || 'Partner'}` 
-                    : 'Waiting for partner...'
-                ) : 'Solo Mode'}
-              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                {couple && couple.partner_two && partnerProfile ? (
+                  <>
+                    <span>Connected with</span>
+                    {partnerProfile.avatar_id && getAvatarSrc(partnerProfile.avatar_id) ? (
+                      <img 
+                        src={getAvatarSrc(partnerProfile.avatar_id)!} 
+                        alt={partnerProfile.name} 
+                        className="w-5 h-5 rounded-full object-cover"
+                      />
+                    ) : null}
+                    <span className="font-semibold text-foreground">{partnerProfile.name}</span>
+                  </>
+                ) : couple ? (
+                  <span>Waiting for partner...</span>
+                ) : (
+                  <span>Solo Mode</span>
+                )}
+              </div>
             </div>
           </motion.div>
 
@@ -364,7 +407,7 @@ export default function Profile() {
               <span>·</span>
               <button onClick={() => navigate('/contact')} className="hover:text-foreground transition-colors">Contact</button>
             </div>
-            <p>© {new Date().getFullYear()} Mindmaker LLC · v1.6.4</p>
+            <p>© {new Date().getFullYear()} Mindmaker LLC · v1.6.5</p>
           </div>
         </div>
         <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />
@@ -379,6 +422,35 @@ export default function Profile() {
           onOpenChange={setDeleteDialogOpen}
           userEmail={user?.email}
         />
+        
+        {/* Location Change Confirmation Dialog */}
+        <AlertDialog open={showCityConfirm} onOpenChange={setShowCityConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                Change Location?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-2">
+                <p>
+                  This will update the location for <span className="font-semibold">both you and {partnerProfile?.name}</span>.
+                </p>
+                <p>
+                  Future ritual suggestions will be tailored for <span className="font-semibold">{pendingCity}</span>.
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPendingCity(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => pendingCity && confirmCityChange(pendingCity)}
+                className="bg-gradient-ritual"
+              >
+                Update for Both
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

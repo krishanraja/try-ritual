@@ -6,6 +6,63 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## v1.6.5 (User Flow Audit & Experience Polish)
+**Date**: 2025-12-14
+
+### 🎯 User Flow Improvements
+
+#### Avatar Visibility
+- **New DB Function**: `get_partner_avatar` - Securely fetches partner's avatar
+- **Updated**: `CoupleContext` now fetches partner's name AND avatar in parallel
+- **Updated**: `Profile.tsx` shows partner's avatar next to their name when connected
+- Partners can now see each other's avatar selections
+
+#### Location Change Confirmation
+- **Added**: Confirmation dialog when changing location if partner is connected
+- Dialog clearly explains that location change affects both partners
+- Prevents accidental location changes that would affect partner's ritual suggestions
+
+#### World-Class Payoff Experience (AgreementGame)
+- **Enhanced**: "Done" stage completely redesigned for emotional impact
+  - Larger celebration animation with branded Ritual icon
+  - Party popper badge for extra delight
+  - More celebratory copy: "You're All Set!" → "Let's Do This!"
+  - Reminder about post-ritual memory capture
+  
+#### One-Click Calendar Integration
+- **Redesigned**: Calendar buttons now in a 2-column grid for quick access
+  - Google Calendar (one-click)
+  - Apple Calendar (one-click)
+  - .ics download for Outlook/Other (secondary option)
+- Removed multi-step expand/collapse - calendars now always visible
+- Added helpful labels and styling
+
+#### Branded Icons Throughout
+- **Updated**: `RitualPicker.tsx` - Uses branded spinner for loading state
+- **Updated**: `RitualPicker.tsx` - Uses branded icon for generating state
+- **Updated**: `AgreementGame.tsx` - Uses branded icon for perfect match & overlap states
+- All `Sparkles` icons replaced with branded Ritual icon
+
+### 🔒 Security
+- **New Migration**: `20251214120000_add_get_partner_avatar_function.sql`
+  - SECURITY DEFINER function with `is_partner()` check
+  - Only returns avatar for verified partner relationships
+
+### 🔧 Technical Changes
+- `PartnerProfile` type extended to include `avatar_id`
+- Added `get_partner_avatar` to Supabase types
+
+### 📁 Files Changed
+- `supabase/migrations/20251214120000_add_get_partner_avatar_function.sql` (new)
+- `src/types/database.ts`
+- `src/integrations/supabase/types.ts`
+- `src/contexts/CoupleContext.tsx`
+- `src/pages/Profile.tsx`
+- `src/pages/RitualPicker.tsx`
+- `src/components/AgreementGame.tsx`
+
+---
+
 ## v1.6.4 (Branded Loading & Viewport Fixes)
 **Date**: 2025-12-14
 

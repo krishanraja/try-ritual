@@ -6,7 +6,9 @@ export type Profile = Tables<'profiles'>;
 export type WeeklyCycle = Tables<'weekly_cycles'>;
 
 // Partial profile type for security - only exposes safe fields to partners
-export type PartnerProfile = Pick<Profile, 'id' | 'name'>;
+export type PartnerProfile = Pick<Profile, 'id' | 'name'> & {
+  avatar_id?: string | null;
+};
 export type RitualPreference = Tables<'ritual_preferences'>;
 export type Completion = Tables<'completions'>;
 export type RitualStreak = Tables<'ritual_streaks'>;

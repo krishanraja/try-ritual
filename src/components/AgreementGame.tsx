@@ -4,7 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Calendar, Clock, Download, Share2, Check, Heart, Coins } from 'lucide-react';
+import { Calendar, Clock, Download, Share2, Check, Heart, Coins, CalendarPlus, PartyPopper } from 'lucide-react';
+import ritualIcon from '@/assets/ritual-icon.png';
 import { downloadICS, generateGoogleCalendarUrl, generateAppleCalendarUrl } from '@/utils/calendarUtils';
 import { shareToWhatsApp } from '@/utils/shareUtils';
 import { NotificationContainer } from './InlineNotification';
@@ -188,14 +189,14 @@ export const AgreementGame = ({
     );
   }
 
-  // Done stage - show confirmation with calendar options
+  // Done stage - show confirmation with calendar options (world-class payoff experience)
   if (stage === 'done' && finalRitual) {
     return (
       <div className="h-full overflow-y-auto p-4">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="space-y-4 max-w-sm mx-auto"
+          className="space-y-5 max-w-sm mx-auto"
         >
           {notification && (
             <NotificationContainer
@@ -204,108 +205,153 @@ export const AgreementGame = ({
             />
           )}
           
-          <div className="text-center">
+          {/* Celebration Header */}
+          <div className="text-center space-y-3">
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring' }}
-              className="w-20 h-20 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center mb-4"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="relative w-24 h-24 mx-auto"
             >
-              <Heart className="w-10 h-10 text-white" fill="currentColor" />
+              {/* Animated celebration particles */}
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.3, 1],
+                  opacity: [0.3, 0, 0.3]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 rounded-full bg-gradient-ritual"
+              />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-purple-200/30 flex items-center justify-center">
+                <img src={ritualIcon} alt="" className="w-14 h-14 object-contain" />
+              </div>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, type: 'spring' }}
+                className="absolute -top-1 -right-1 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center shadow-lg"
+              >
+                <PartyPopper className="w-4 h-4 text-white" />
+              </motion.div>
             </motion.div>
-            <h2 className="text-2xl font-bold mb-1">It's Locked In! 🎉</h2>
-            <p className="text-sm text-muted-foreground">Your ritual is confirmed</p>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <h2 className="text-2xl font-bold mb-1">You're All Set! 🎉</h2>
+              <p className="text-muted-foreground">
+                Your ritual date is locked in — now make it unforgettable!
+              </p>
+            </motion.div>
           </div>
           
-          {/* Ritual Card */}
-          <Card className="bg-gradient-ritual text-white border-0 overflow-hidden">
-            <CardContent className="p-5 space-y-3">
-              <h3 className="font-bold text-xl">{finalRitual.title}</h3>
-              <p className="text-sm opacity-90 line-clamp-2">{finalRitual.description}</p>
-              <div className="flex items-center gap-4 text-sm pt-2 border-t border-white/20">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{finalDate ? format(new Date(finalDate), 'EEE, MMM d') : 'TBD'}</span>
+          {/* Ritual Card - The Main Event */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card className="bg-gradient-ritual text-white border-0 overflow-hidden shadow-xl shadow-primary/25">
+              <CardContent className="p-5 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Heart className="w-6 h-6 flex-shrink-0 mt-0.5" fill="currentColor" />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-xl leading-tight">{finalRitual.title}</h3>
+                    <p className="text-sm opacity-90 mt-1 line-clamp-2">{finalRitual.description}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{finalTime || '7:00 PM'}</span>
+                
+                <div className="flex items-center gap-4 text-sm pt-3 border-t border-white/20">
+                  <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1">
+                    <Calendar className="w-4 h-4" />
+                    <span className="font-medium">{finalDate ? format(new Date(finalDate), 'EEE, MMM d') : 'TBD'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1">
+                    <Clock className="w-4 h-4" />
+                    <span className="font-medium">{finalTime || '7:00 PM'}</span>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          {/* Calendar Options */}
-          <div className="space-y-2">
-            <AnimatePresence>
-              {showCalendarOptions ? (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="space-y-2 overflow-hidden"
-                >
-                  <Button
-                    onClick={() => handleAddToCalendar('google')}
-                    variant="outline"
-                    className="w-full h-11 flex items-center gap-2"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    Add to Google Calendar
-                  </Button>
-                  <Button
-                    onClick={() => handleAddToCalendar('apple')}
-                    variant="outline"
-                    className="w-full h-11 flex items-center gap-2"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    Add to Apple Calendar
-                  </Button>
-                  <Button
-                    onClick={() => handleAddToCalendar('download')}
-                    variant="outline"
-                    className="w-full h-11 flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download .ics File
-                  </Button>
-                  <Button
-                    onClick={() => setShowCalendarOptions(false)}
-                    variant="ghost"
-                    className="w-full text-sm"
-                  >
-                    Cancel
-                  </Button>
-                </motion.div>
-              ) : (
-                <Button
-                  onClick={() => setShowCalendarOptions(true)}
-                  variant="outline"
-                  className="w-full h-12 flex items-center gap-2"
-                >
-                  <Calendar className="w-4 h-4" />
-                  Add to Calendar
-                </Button>
-              )}
-            </AnimatePresence>
+          {/* One-Click Calendar Integration */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="space-y-2"
+          >
+            <p className="text-xs text-muted-foreground text-center font-medium uppercase tracking-wide">
+              Add to your calendar
+            </p>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={() => handleAddToCalendar('google')}
+                variant="outline"
+                className="h-12 flex flex-col items-center justify-center gap-0.5 hover:bg-primary/5 hover:border-primary transition-all"
+              >
+                <CalendarPlus className="w-5 h-5 text-primary" />
+                <span className="text-xs">Google</span>
+              </Button>
+              <Button
+                onClick={() => handleAddToCalendar('apple')}
+                variant="outline"
+                className="h-12 flex flex-col items-center justify-center gap-0.5 hover:bg-primary/5 hover:border-primary transition-all"
+              >
+                <CalendarPlus className="w-5 h-5 text-primary" />
+                <span className="text-xs">Apple</span>
+              </Button>
+            </div>
+            
+            <Button
+              onClick={() => handleAddToCalendar('download')}
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              Download .ics for Outlook/Other
+            </Button>
+          </motion.div>
 
+          {/* Share & Continue */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="space-y-2 pt-2"
+          >
             <Button
               onClick={handleShare}
               variant="outline"
-              className="w-full h-12 flex items-center gap-2"
+              className="w-full h-11 flex items-center gap-2"
             >
               <Share2 className="w-4 h-4" />
-              Share via WhatsApp
+              Share the Excitement 💕
             </Button>
 
             <Button
               onClick={handleContinue}
-              className="w-full h-12 bg-gradient-ritual text-white"
+              className="w-full h-12 bg-gradient-ritual text-white shadow-lg shadow-primary/25"
             >
               <Check className="w-4 h-4 mr-2" />
-              Done - View Rituals
+              Let's Do This!
             </Button>
-          </div>
+          </motion.div>
+          
+          {/* Encouragement */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="text-xs text-center text-muted-foreground pt-2"
+          >
+            We'll remind you after your ritual to capture the memory ✨
+          </motion.p>
         </motion.div>
       </div>
     );
@@ -331,9 +377,9 @@ export const AgreementGame = ({
           <motion.div 
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 1.5, repeat: 2 }}
-            className="w-20 h-20 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center"
+            className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-purple-200/30 flex items-center justify-center"
           >
-            <Sparkles className="w-10 h-10 text-white" />
+            <img src={ritualIcon} alt="" className="w-12 h-12 object-contain" />
           </motion.div>
           <h2 className="text-2xl font-bold">Perfect Match! 🎉</h2>
           <p className="text-muted-foreground">
@@ -379,9 +425,9 @@ export const AgreementGame = ({
             <motion.div 
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 0.5, repeat: 2 }}
-              className="w-16 h-16 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center mb-3"
+              className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-purple-200/30 flex items-center justify-center mb-3"
             >
-              <Sparkles className="w-8 h-8 text-white" />
+              <img src={ritualIcon} alt="" className="w-10 h-10 object-contain" />
             </motion.div>
             <h2 className="text-xl font-bold">Great Minds! ✨</h2>
             <p className="text-sm text-muted-foreground">
