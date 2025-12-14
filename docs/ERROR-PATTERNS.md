@@ -366,6 +366,134 @@ const rituals = Array.isArray(cycle.synthesized_output)
 
 ---
 
+## Pattern 10: Stale Closure in Realtime Subscriptions
+
+**Failure:** Realtime subscription callbacks capture stale values from their closure.
+
+**Symptom:**
+- Realtime events are received (visible in logs)
+- But the callback uses old/stale values
+- State updates don't trigger expected behavior
+- Navigation or actions fail silently
+
+**Root Cause:**
+```typescript
+// Setup effect
+useEffect(() => {
+  const channel = supabase
+    .channel('my-channel')
+    .on('postgres_changes', ..., (payload) => {
+      // ❌ BUG: `couple` is captured from when effect ran
+      if (couple) {
+        fetchCycle(couple.id);
+      }
+    })
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+}, [user, couple?.id]); // Even with deps, callback has stale `couple`
+```
+
+**Resolution:**
+1. **Use payload data instead of closure values:**
+```typescript
+.on('postgres_changes', ..., (payload) => {
+  // ✅ Use data from the payload itself
+  if (payload.new?.couple_id) {
+    fetchCycle(payload.new.couple_id);
+  }
+})
+```
+
+2. **Use refs for values that need to be current:**
+```typescript
+const coupleRef = useRef(couple);
+useEffect(() => { coupleRef.current = couple; }, [couple]);
+
+// In callback:
+if (coupleRef.current) {
+  fetchCycle(coupleRef.current.id);
+}
+```
+
+3. **For navigation/completion guards, use refs checked immediately:**
+```typescript
+const hasNavigatedRef = useRef(false);
+
+const handleComplete = useCallback(async () => {
+  if (hasNavigatedRef.current) return; // Immediate check
+  hasNavigatedRef.current = true;
+  // ... proceed
+}, []);
+```
+
+**Prevention:**
+- Never trust closure values in realtime callbacks
+- Use payload data when available
+- Use refs for values that must be current
+- Add console logs showing both captured and expected values
+
+---
+
+## Pattern 11: Context-Dependent Component Initialization
+
+**Failure:** Component depends on context data that loads asynchronously.
+
+**Symptom:**
+- Component mounts but critical ID/data is undefined
+- Effects don't run because dependencies are null
+- Component appears stuck in loading/initial state
+- Works when context is pre-populated, fails when it needs to load
+
+**Root Cause:**
+```typescript
+// SynthesisAnimation component
+const { currentCycle } = useCouple();
+
+useEffect(() => {
+  if (!currentCycle?.id) return; // ❌ Never runs if context is still loading
+  
+  // Setup polling/realtime
+}, [currentCycle?.id]);
+```
+
+**Resolution:**
+Fetch data independently when context isn't ready:
+```typescript
+const [cycleId, setCycleId] = useState<string | null>(null);
+
+useEffect(() => {
+  const fetchCycleId = async () => {
+    // Try context first
+    if (currentCycle?.id) {
+      setCycleId(currentCycle.id);
+      return;
+    }
+
+    // Fall back to direct fetch
+    if (couple?.id) {
+      const { data } = await supabase
+        .from('weekly_cycles')
+        .select('id')
+        .eq('couple_id', couple.id)
+        .maybeSingle();
+      
+      if (data) setCycleId(data.id);
+    }
+  };
+
+  fetchCycleId();
+}, [currentCycle?.id, couple?.id]);
+```
+
+**Prevention:**
+- Don't assume context data is immediately available
+- Provide fallback fetch mechanisms for critical data
+- Handle the case where dependencies load later
+- Consider showing explicit "loading" or "waiting for data" states
+
+---
+
 ## Critical Debugging Checklist
 
 When a bug is reported:

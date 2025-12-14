@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Clock, AlertCircle, RefreshCw } from 'lucide-react';
@@ -15,11 +15,10 @@ const PHASES = [
   { message: "Matching your energy...", duration: 5000 },
   { message: "Crafting perfect rituals...", duration: 6000 },
   { message: "Almost there! ✨", duration: 15000 },
-  { message: "Taking a bit longer, hang tight!", duration: 30000 },
 ];
 
-const MAX_WAIT_TIME = 90000; // 90 seconds max
-const SHOW_REFRESH_AFTER = 30000; // Show refresh button after 30s
+const MAX_WAIT_TIME = 60000; // 60 seconds max (reduced from 90)
+const SHOW_REFRESH_AFTER = 20000; // Show refresh button after 20s (reduced from 30)
 
 export const SynthesisAnimation = () => {
   const navigate = useNavigate();
@@ -32,11 +31,66 @@ export const SynthesisAnimation = () => {
   const [showRefreshButton, setShowRefreshButton] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startTime] = useState(Date.now());
+  const [cycleId, setCycleId] = useState<string | null>(null);
+  const hasNavigatedRef = useRef(false);
+  const isCompleteRef = useRef(false);
 
   // Get city-relevant rituals or mix
   const city = couple?.preferred_city || 'New York';
   const relevantRituals = SAMPLE_RITUALS.filter(r => r.city === city);
   const displayRituals = relevantRituals.length >= 4 ? relevantRituals : SAMPLE_RITUALS;
+
+  // Determine the cycle ID - either from context or by fetching directly
+  useEffect(() => {
+    const fetchCycleId = async () => {
+      // If we have it from context, use it
+      if (currentCycle?.id) {
+        console.log('[SYNTHESIS] Using cycle ID from context:', currentCycle.id);
+        setCycleId(currentCycle.id);
+        
+        // Check if it already has synthesized output
+        if (currentCycle.synthesized_output && !isCompleteRef.current) {
+          console.log('[SYNTHESIS] Context cycle already has output, completing immediately');
+          handleComplete();
+        }
+        return;
+      }
+
+      // Otherwise, try to fetch it directly
+      if (!couple?.id) {
+        console.log('[SYNTHESIS] No couple ID, cannot fetch cycle');
+        return;
+      }
+
+      console.log('[SYNTHESIS] Fetching cycle ID for couple:', couple.id);
+      
+      // Find the most recent incomplete cycle
+      const { data } = await supabase
+        .from('weekly_cycles')
+        .select('id, synthesized_output')
+        .eq('couple_id', couple.id)
+        .or('synthesized_output.is.null,agreement_reached.eq.false')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        console.log('[SYNTHESIS] Found cycle:', data.id, 'has output:', !!data.synthesized_output);
+        setCycleId(data.id);
+        
+        // If it already has synthesized output, complete immediately
+        if (data.synthesized_output && !isCompleteRef.current) {
+          console.log('[SYNTHESIS] Already has output, completing immediately');
+          handleComplete();
+        }
+      }
+    };
+
+    fetchCycleId();
+    // Note: handleComplete is intentionally excluded from deps to prevent infinite loops
+    // The refs (isCompleteRef, hasNavigatedRef) ensure we only complete once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCycle?.id, currentCycle?.synthesized_output, couple?.id]);
 
   // Phase progression
   useEffect(() => {
@@ -87,21 +141,39 @@ export const SynthesisAnimation = () => {
   }, [displayRituals.length]);
 
   const handleComplete = useCallback(async () => {
-    if (isComplete) return;
+    // Use refs for immediate check to prevent race conditions
+    if (isCompleteRef.current || hasNavigatedRef.current) {
+      console.log('[SYNTHESIS] Already completing/navigated, skipping');
+      return;
+    }
+    
+    isCompleteRef.current = true;
+    hasNavigatedRef.current = true;
     
     console.log('[SYNTHESIS] Rituals detected, completing...');
     setIsComplete(true);
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
+    
+    try {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    } catch (e) {
+      console.warn('[SYNTHESIS] Confetti failed:', e);
+    }
+    
+    // Refresh cycle but don't block navigation on it
+    refreshCycle().catch(e => {
+      console.warn('[SYNTHESIS] Refresh cycle failed:', e);
     });
     
-    await refreshCycle();
+    // Navigate with a short delay for visual feedback
     setTimeout(() => {
+      console.log('[SYNTHESIS] Navigating to /picker');
       navigate('/picker');
-    }, 1200);
-  }, [isComplete, navigate, refreshCycle]);
+    }, 800);
+  }, [navigate, refreshCycle]);
 
   // Manual refresh handler
   const handleManualRefresh = async () => {
@@ -109,13 +181,52 @@ export const SynthesisAnimation = () => {
     console.log('[SYNTHESIS] Manual refresh triggered');
     
     try {
-      const { data } = await supabase
+      // Try to get cycle ID if we don't have it
+      let targetCycleId = cycleId;
+      
+      if (!targetCycleId && couple?.id) {
+        const { data: cycleData } = await supabase
+          .from('weekly_cycles')
+          .select('id, synthesized_output')
+          .eq('couple_id', couple.id)
+          .or('synthesized_output.is.null,agreement_reached.eq.false')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (cycleData) {
+          targetCycleId = cycleData.id;
+          setCycleId(cycleData.id);
+          
+          if (cycleData.synthesized_output) {
+            console.log('[SYNTHESIS] Found output during refresh');
+            await handleComplete();
+            return;
+          }
+        }
+      }
+      
+      if (!targetCycleId) {
+        setErrorMessage('Could not find your ritual cycle. Please go back and try again.');
+        setHasError(true);
+        return;
+      }
+
+      const { data, error } = await supabase
         .from('weekly_cycles')
         .select('synthesized_output')
-        .eq('id', currentCycle?.id)
+        .eq('id', targetCycleId)
         .single();
 
+      if (error) {
+        console.error('[SYNTHESIS] Refresh query error:', error);
+        setErrorMessage('Failed to check status. Please try again.');
+        setHasError(true);
+        return;
+      }
+
       if (data?.synthesized_output) {
+        console.log('[SYNTHESIS] Output found on refresh');
         await handleComplete();
       } else {
         setErrorMessage('Rituals not ready yet. Please wait or go back and try again.');
@@ -132,20 +243,21 @@ export const SynthesisAnimation = () => {
 
   // Realtime subscription for synthesis completion
   useEffect(() => {
-    if (!currentCycle?.id) return;
+    if (!cycleId) return;
 
-    console.log('[SYNTHESIS] Setting up realtime listener for cycle:', currentCycle.id);
+    console.log('[SYNTHESIS] Setting up realtime listener for cycle:', cycleId);
 
     const channel = supabase
-      .channel(`synthesis-${currentCycle.id}-${Date.now()}`)
+      .channel(`synthesis-${cycleId}-${Date.now()}`)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'weekly_cycles',
-        filter: `id=eq.${currentCycle.id}`
+        filter: `id=eq.${cycleId}`
       }, async (payload: any) => {
-        console.log('[SYNTHESIS] Realtime update:', payload);
-        if (payload.new.synthesized_output) {
+        console.log('[SYNTHESIS] Realtime update received:', payload.new?.id);
+        if (payload.new?.synthesized_output && !isCompleteRef.current) {
+          console.log('[SYNTHESIS] Synthesized output detected via realtime');
           await handleComplete();
         }
       })
@@ -156,29 +268,44 @@ export const SynthesisAnimation = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentCycle?.id, handleComplete]);
+  }, [cycleId, handleComplete]);
 
-  // Poll as backup (every 3 seconds)
+  // Poll as backup (every 2 seconds for faster detection)
   useEffect(() => {
-    if (!currentCycle?.id || isComplete || hasError) return;
+    if (!cycleId || isComplete || hasError) return;
 
     const pollInterval = setInterval(async () => {
+      if (isCompleteRef.current || hasNavigatedRef.current) {
+        clearInterval(pollInterval);
+        return;
+      }
+
       const elapsed = Date.now() - startTime;
       console.log('[SYNTHESIS] Polling... elapsed:', Math.round(elapsed / 1000), 's');
       
-      const { data } = await supabase
-        .from('weekly_cycles')
-        .select('synthesized_output')
-        .eq('id', currentCycle.id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('weekly_cycles')
+          .select('synthesized_output')
+          .eq('id', cycleId)
+          .single();
 
-      if (data?.synthesized_output) {
-        await handleComplete();
+        if (error) {
+          console.warn('[SYNTHESIS] Poll error:', error.message);
+          return;
+        }
+
+        if (data?.synthesized_output) {
+          console.log('[SYNTHESIS] Synthesized output detected via polling');
+          await handleComplete();
+        }
+      } catch (e) {
+        console.warn('[SYNTHESIS] Poll exception:', e);
       }
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(pollInterval);
-  }, [currentCycle?.id, isComplete, hasError, startTime, handleComplete]);
+  }, [cycleId, isComplete, hasError, startTime, handleComplete]);
 
   const currentRitual = displayRituals[currentRitualIndex];
   const nextRitual = displayRituals[(currentRitualIndex + 1) % displayRituals.length];
@@ -351,25 +478,16 @@ export const SynthesisAnimation = () => {
         </div>
       </div>
 
-      {/* Progress dots and refresh button */}
+      {/* Footer with status and refresh button */}
       <div className="flex-none pb-8 px-6">
-        <div className="flex justify-center gap-2">
-          {PHASES.slice(0, 4).map((_, idx) => (
-            <motion.div
-              key={idx}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                idx <= phase ? 'bg-primary' : 'bg-muted'
-              }`}
-              animate={{ width: idx === phase ? 24 : 8 }}
-            />
-          ))}
-        </div>
+        <p className="text-center text-xs text-muted-foreground mb-4">
+          Creating personalized rituals from your combined preferences
+        </p>
         
         {showRefreshButton && !isComplete && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-4"
           >
             <Button
               variant="outline"
@@ -392,10 +510,6 @@ export const SynthesisAnimation = () => {
             </Button>
           </motion.div>
         )}
-        
-        <p className="text-center text-xs text-muted-foreground mt-3">
-          Creating personalized rituals from your combined preferences
-        </p>
       </div>
     </div>
   );

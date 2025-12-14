@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## v1.6.5 (Ritual Generation Loading Fix)
+**Date**: 2025-12-14
+
+### 🐛 Critical Bug Fixes
+
+#### Infinite Loading on Synthesis Animation
+- **Fixed**: Ritual generation screen stuck in infinite loading state
+  - **Root Cause**: Component relied on `currentCycle?.id` from context which could be stale or undefined when accessed from Landing page
+  - **Root Cause**: Stale closure bug in CoupleContext realtime subscription prevented navigation to `/picker` when synthesis completed
+  - **Solution**: Added independent cycle ID fetching directly from database
+  - **Solution**: Added refs (`hasNavigatedRef`, `isCompleteRef`) to prevent race conditions and duplicate navigation
+  - **Solution**: Polling now runs every 2 seconds (reduced from 3) for faster detection
+  - **Solution**: `handleComplete` no longer blocks on `refreshCycle()` - navigation happens regardless
+  - **Solution**: Fixed stale closure in CoupleContext by using `payload.new.couple_id` instead of captured `couple` variable
+
+#### UX Improvements
+- **Removed**: Redundant progress dots from SynthesisAnimation footer
+  - These dots didn't represent actual progress and confused users
+  - They appeared as a "green navigation bar element" that did nothing
+- **Improved**: Refresh button now appears after 20 seconds (reduced from 30)
+- **Improved**: Max wait time reduced to 60 seconds (from 90) before showing error
+
+### 🔧 Technical Changes
+
+#### SynthesisAnimation.tsx
+- Added `cycleId` state to independently track cycle ID
+- Added `useRef` for `hasNavigatedRef` and `isCompleteRef` to prevent race conditions
+- Added direct database fetch for cycle ID when context doesn't provide it
+- Immediate completion if cycle already has synthesized output on mount
+- More defensive error handling in polling and realtime callbacks
+- Removed timed phase progression dots UI
+
+#### CoupleContext.tsx
+- Fixed stale closure bug in `cyclesChannel` subscription
+- Now uses `newData.couple_id` from payload instead of captured `couple` variable
+- Added small delay before navigation to let state settle
+
+### 📝 Files Changed
+- `src/components/SynthesisAnimation.tsx`
+- `src/contexts/CoupleContext.tsx`
+- `docs/CHANGELOG.md`
+
+---
+
 ## v1.6.4 (Branded Loading & Viewport Fixes)
 **Date**: 2025-12-14
 

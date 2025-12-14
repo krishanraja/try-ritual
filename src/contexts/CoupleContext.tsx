@@ -296,8 +296,8 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
 
       const cyclesChannel = supabase
         .channel(`cycles-${user.id}-${Date.now()}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_cycles' }, (payload: any) => {
-          console.log('[REALTIME] Cycles change:', payload.eventType);
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_cycles' }, async (payload: any) => {
+          console.log('[REALTIME] Cycles change:', payload.eventType, 'cycle id:', payload.new?.id);
           const oldData = payload.old;
           const newData = payload.new;
           
@@ -306,11 +306,19 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
           const synthesisReady = newData?.synthesized_output && !oldData?.synthesized_output;
           
           if (partnerOneInputChanged || partnerTwoInputChanged) {
-            if (couple) fetchCycle(couple.id);
+            // Fetch the cycle using the couple_id from the payload to avoid stale closure
+            if (newData?.couple_id) {
+              console.log('[REALTIME] Partner input changed, refreshing cycle for couple:', newData.couple_id);
+              await fetchCycle(newData.couple_id);
+            }
           }
           
           if (synthesisReady) {
-            navigate('/picker');
+            console.log('[REALTIME] Synthesis ready! Navigating to /picker');
+            // Small delay to let state settle
+            setTimeout(() => {
+              navigate('/picker');
+            }, 100);
           }
         })
         .subscribe();
