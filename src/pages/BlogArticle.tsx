@@ -90,7 +90,7 @@ function ContentRenderer({ content }: { content: string }) {
     else if (line.trim()) {
       flushList();
       // Handle **bold** and links
-      let processed = line
+      const processed = line
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary underline hover:no-underline">$1</a>');
       
