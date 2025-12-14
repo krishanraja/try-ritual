@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Heart, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+import { Heart, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+import ritualIcon from '@/assets/ritual-icon.png';
 import confetti from 'canvas-confetti';
 import { useCouple } from '@/contexts/CoupleContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -253,18 +254,18 @@ export const SynthesisAnimation = () => {
           <motion.div
             animate={{ 
               rotate: isComplete ? 0 : 360,
-              scale: isComplete ? [1, 1.3, 1] : [1, 1.1, 1]
+              scale: isComplete ? [1, 1.3, 1] : [1, 1.05, 1]
             }}
             transition={{ 
               rotate: { duration: 2, repeat: isComplete ? 0 : Infinity, ease: 'linear' },
               scale: { duration: 1.5, repeat: Infinity }
             }}
-            className="w-16 h-16 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center"
+            className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-purple-200/30 flex items-center justify-center"
           >
             {isComplete ? (
-              <Heart className="w-8 h-8 text-white" fill="currentColor" />
+              <Heart className="w-8 h-8 text-primary" fill="currentColor" />
             ) : (
-              <Sparkles className="w-8 h-8 text-white" />
+              <img src={ritualIcon} alt="" className="w-12 h-12 object-contain" />
             )}
           </motion.div>
           

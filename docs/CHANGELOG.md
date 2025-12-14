@@ -6,6 +6,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## v1.6.4 (Branded Loading & Viewport Fixes)
+**Date**: 2025-12-14
+
+### ✨ UX Improvements
+
+#### Branded Loading Experience
+- **New Component**: `RitualSpinner.tsx` - Branded loading spinner using the Ritual icon
+  - Replaces generic Loader2/Sparkles icons throughout the app
+  - Animated with subtle pulse, scale, and rotating gradient ring
+  - Available in multiple sizes: xs, sm, md, lg, xl
+  - Optional loading text display
+
+#### Favicon & PWA Improvements
+- **Fixed**: Favicon now consistently displays across all browsers
+  - Added `manifest.json` for PWA support with proper icon sizes
+  - Multiple favicon formats: PNG (512x512, 192x192), ICO fallback
+  - Apple touch icon for iOS home screen
+- **Updated**: `index.html` with comprehensive icon link tags
+
+#### Component Updates
+- **SplashScreen.tsx**: Now features the branded Ritual icon with animated pulse and rotating gradient ring
+- **Memories.tsx**: Uses branded RitualSpinner for loading state, branded icon for empty state
+- **Landing.tsx**: Replaced generic spinning border with RitualSpinner
+- **SynthesisAnimation.tsx**: Uses branded Ritual icon instead of generic Sparkles
+- **WaitingForPartner.tsx**: Animated branded icon replaces Clock icon
+
+### 🔧 Mobile Viewport Fixes
+
+#### Memories Page
+- **Fixed**: Empty state now fits within mobile viewport without scrolling
+  - Reduced padding and spacing for compact layout
+  - Flex layout ensures content centers within available space
+  - Container dynamically switches between scrollable (with content) and fixed (empty state)
+- Empty state uses branded Ritual icon instead of generic Sparkles
+
+### 🔧 Files Changed
+- `public/manifest.json` (new)
+- `src/components/RitualSpinner.tsx` (new)
+- `index.html`
+- `src/components/SplashScreen.tsx`
+- `src/components/SynthesisAnimation.tsx`
+- `src/components/WaitingForPartner.tsx`
+- `src/pages/Memories.tsx`
+- `src/pages/Landing.tsx`
+
+---
+
 ## v1.6.3 (SEO & Content Marketing)
 **Date**: 2025-12-13
 

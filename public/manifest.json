@@ -1,0 +1,30 @@
+{
+  "name": "Ritual - Re-love Your Partner",
+  "short_name": "Ritual",
+  "description": "Build meaningful weekly rituals with your partner. AI-powered relationship building through shared experiences.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E8E4F0",
+  "theme_color": "#2B9D9D",
+  "orientation": "portrait",
+  "categories": ["lifestyle", "social"],
+  "icons": [
+    {
+      "src": "/ritual-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ritual-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

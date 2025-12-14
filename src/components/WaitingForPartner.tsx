@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { motion } from 'framer-motion';
-import { Clock, Heart, Sparkles, RotateCcw, Lightbulb, Lock } from 'lucide-react';
+import { Clock, Heart, RotateCcw, Lightbulb, Lock } from 'lucide-react';
+import ritualIcon from '@/assets/ritual-icon.png';
 import { RitualCarousel } from './RitualCarousel';
 import { useSampleRituals } from '@/hooks/useSampleRituals';
 import { supabase } from '@/integrations/supabase/client';
@@ -199,33 +200,38 @@ export const WaitingForPartner = ({
         </div>
       )}
 
-      {/* Animated Icon */}
+      {/* Animated Branded Icon */}
       <motion.div
         animate={{ 
-          scale: [1, 1.1, 1],
-          rotate: [0, 5, -5, 0]
+          scale: [1, 1.05, 1]
         }}
         transition={{ 
-          duration: 3,
+          duration: 2,
           repeat: Infinity,
           ease: "easeInOut"
         }}
         className="relative"
       >
-        <div className="w-24 h-24 rounded-full bg-gradient-ritual flex items-center justify-center">
-          <Clock className="w-12 h-12 text-white" />
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/15 to-purple-200/25 flex items-center justify-center">
+          <motion.img 
+            src={ritualIcon} 
+            alt="" 
+            className="w-14 h-14 object-contain"
+            animate={{ rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          />
         </div>
         <motion.div
           animate={{ 
-            scale: [1, 1.5, 1],
-            opacity: [0.5, 0, 0.5]
+            scale: [1, 1.3, 1],
+            opacity: [0.3, 0, 0.3]
           }}
           transition={{ 
             duration: 2,
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="absolute inset-0 rounded-full bg-primary/30"
+          className="absolute inset-0 rounded-full bg-primary/20"
         />
       </motion.div>
 
@@ -292,7 +298,7 @@ export const WaitingForPartner = ({
           variant="outline"
           className="w-full h-12 rounded-xl flex items-center gap-2"
         >
-          <Sparkles className="w-4 h-4" />
+          <img src={ritualIcon} alt="" className="w-5 h-5 object-contain" />
           Browse Sample Rituals
         </Button>
 

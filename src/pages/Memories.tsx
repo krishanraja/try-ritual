@@ -20,7 +20,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Camera, Flame, Heart, Star, Sparkles, Loader2 } from 'lucide-react';
+import { Camera, Flame, Heart, Star } from 'lucide-react';
+import { RitualSpinner } from '@/components/RitualSpinner';
+import ritualIcon from '@/assets/ritual-icon.png';
 import { useCouple } from '@/contexts/CoupleContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useSEO } from '@/hooks/useSEO';
@@ -135,10 +137,7 @@ export default function Memories() {
   if (loading || coupleLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-gradient-warm">
-        <div className="text-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-sm text-muted-foreground">Loading memories...</p>
-        </div>
+        <RitualSpinner size="lg" showText text="Loading memories..." />
       </div>
     );
   }
@@ -172,11 +171,15 @@ export default function Memories() {
     );
   }
 
+  // When there are no memories, use a fixed viewport layout
+  // When there are memories, allow scrolling
+  const hasMemories = memories.length > 0;
+
   return (
-    <div className="h-full overflow-y-auto bg-gradient-warm">
-      <div className="p-4 pb-24 max-w-2xl mx-auto space-y-6">
+    <div className={`h-full bg-gradient-warm flex flex-col ${hasMemories ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+      <div className={`p-4 max-w-2xl mx-auto w-full flex flex-col ${hasMemories ? 'pb-24 space-y-6' : 'flex-1 space-y-4'}`}>
         {/* Header */}
-        <div className="text-center space-y-1">
+        <div className="text-center space-y-1 flex-none">
           <h1 className="text-2xl font-bold">Our Memories</h1>
           <p className="text-muted-foreground text-sm">Your shared journey together</p>
         </div>
@@ -185,7 +188,7 @@ export default function Memories() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-4 gap-2"
+          className="grid grid-cols-4 gap-2 flex-none"
         >
           <StatCard icon={Heart} value={stats.totalRituals} label="Rituals" color="text-red-500" />
           <StatCard icon={Flame} value={stats.currentStreak} label="Streak" color="text-orange-500" />
@@ -193,17 +196,17 @@ export default function Memories() {
           <StatCard icon={Camera} value={stats.photos} label="Photos" color="text-blue-500" />
         </motion.div>
 
-        {/* Empty state */}
+        {/* Empty state - fits within viewport without scrolling */}
         {memories.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-16 space-y-6"
+            className="flex flex-col items-center justify-center text-center flex-1 -mt-6"
           >
-            <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-pink-200/30 flex items-center justify-center">
-              <Sparkles className="w-12 h-12 text-primary" />
+            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary/15 to-purple-200/25 flex items-center justify-center mb-4">
+              <img src={ritualIcon} alt="" className="w-12 h-12 object-contain" />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2 mb-4">
               <h2 className="text-xl font-semibold">Your memory book awaits</h2>
               <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
                 Complete your first ritual together to start building your story. Each memory becomes a page in your shared journey.

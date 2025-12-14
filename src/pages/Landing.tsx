@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { MapPin, Heart, Sparkles, TrendingUp, Share2, X, Calendar, Clock, MessageSquare, Copy } from 'lucide-react';
 import { RitualLogo } from '@/components/RitualLogo';
+import { RitualSpinner } from '@/components/RitualSpinner';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSEO, addStructuredData } from '@/hooks/useSEO';
 import { AnimatedGradientBackground } from '@/components/AnimatedGradientBackground';
@@ -313,14 +314,14 @@ export default function Landing() {
       );
     }
 
-    // Unknown session - minimal loader
+    // Unknown session - minimal loader with branded spinner
     return (
       <div className="h-full flex flex-col relative">
         <Background videoLoaded={videoLoaded} setVideoLoaded={setVideoLoaded} isMobile={isMobile} />
         <div className="flex-1 flex items-center justify-center relative z-10">
           <div className="text-center space-y-4">
             <RitualLogo size="2xl" variant="full" className="max-w-[560px] sm:max-w-[800px]" />
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <RitualSpinner size="md" />
           </div>
         </div>
       </div>

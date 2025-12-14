@@ -9,9 +9,9 @@
 | Field | Value |
 |-------|-------|
 | **Project Name** | Ritual |
-| **Version** | 1.6.3 |
-| **Last Updated** | 2025-12-13 |
-| **Status** | Production Ready + SEO |
+| **Version** | 1.6.4 |
+| **Last Updated** | 2025-12-14 |
+| **Status** | Production Ready + SEO + Branded UX |
 
 ---
 
@@ -74,6 +74,19 @@
   - Removed entry animations from `AppShell` header/nav to prevent shift
   - Removed scale animations from `StreakBadge` - uses CSS hover only
   - Native HTML splash removed by React on mount, then React splash fades out when data ready
+- **Status**: ✅ Implemented
+
+### AD-011: Branded Loading Experience
+- **Decision**: Use branded Ritual icon for all loading states instead of generic icons
+- **Date**: 2025-12-14
+- **Rationale**: Reinforces brand identity, creates cohesive UX, eliminates generic AI-wheel/sparkle icons
+- **Key Components**:
+  - **RitualSpinner**: Animated branded spinner with pulse, scale, and rotating gradient effects
+  - **Favicon**: Multi-format icon set with manifest.json for PWA support
+- **Usage Rules**:
+  - Use `<RitualSpinner />` for all loading states
+  - Never use Loader2, generic Sparkles, or CSS border spinners
+  - Empty states should use static ritual icon, not generic icons
 - **Status**: ✅ Implemented
 
 ### AD-010: SEO Content Strategy
@@ -143,6 +156,14 @@
 ---
 
 ## Key Decisions Log
+
+### 2025-12-14: v1.6.4 Branded Loading & Viewport Fixes
+- Created `RitualSpinner` component with branded icon and animations
+- Fixed favicon inconsistency across browsers with multi-format icon set
+- Added `manifest.json` for PWA support
+- Replaced all generic Loader2/Sparkles icons with branded spinner
+- Fixed Memories page viewport issue - empty state now fits without scrolling
+- Updated SplashScreen, SynthesisAnimation, WaitingForPartner with branded icons
 
 ### 2025-12-13: v1.6.1 Production Readiness Audit
 - Full audit of all pages, components, hooks, and edge functions

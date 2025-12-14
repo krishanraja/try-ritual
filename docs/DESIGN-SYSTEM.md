@@ -441,13 +441,33 @@ Respect `prefers-reduced-motion` media query (TODO: implement).
 ## Brand Assets
 
 ### Logo
-- File: `/public/favicon.png`
-- Usage: Header, Loading states
+- File: `/public/ritual-logo-full.png`
+- Usage: Header, Splash screen, Landing page
 - Component: `<RitualLogo />`
 
+### Icon
+- File: `/public/ritual-icon.png` (pink hexagon with blue arrows)
+- Usage: Favicon, Loading states, Empty states
+- Component: `<RitualSpinner />` for animated loading
+
 ### Favicon
-- File: `/public/favicon.png`
-- Formats: PNG (primary), ICO (fallback)
+- File: `/public/ritual-icon.png` (primary)
+- Formats: PNG (512x512, 192x192), ICO (fallback)
+- Manifest: `/public/manifest.json` for PWA
+
+### Loading States
+- **Always use** `<RitualSpinner />` for loading indicators
+- **Never use** generic Loader2, Sparkles, or CSS spinners
+- Available sizes: xs, sm, md, lg, xl
+- Optional text display with `showText` and `text` props
+
+```tsx
+// Standard loading
+<RitualSpinner size="lg" showText text="Loading memories..." />
+
+// Inline loading (buttons, badges)
+<RitualSpinnerInline />
+```
 
 ## Design Tokens in Code
 

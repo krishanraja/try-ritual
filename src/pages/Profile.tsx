@@ -364,7 +364,7 @@ export default function Profile() {
               <span>·</span>
               <button onClick={() => navigate('/contact')} className="hover:text-foreground transition-colors">Contact</button>
             </div>
-            <p>© {new Date().getFullYear()} Mindmaker LLC · v1.6.2</p>
+            <p>© {new Date().getFullYear()} Mindmaker LLC · v1.6.4</p>
           </div>
         </div>
         <JoinDrawer open={joinOpen} onOpenChange={setJoinOpen} />

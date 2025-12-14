@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCouple } from '@/contexts/CoupleContext';
+import ritualIcon from '@/assets/ritual-icon.png';
 
 interface SplashScreenProps {
   children: React.ReactNode;
@@ -59,24 +60,47 @@ export function SplashScreen({ children }: SplashScreenProps) {
               background: 'linear-gradient(180deg, hsla(270, 40%, 92%, 0.95), hsla(220, 20%, 97%, 0.98))'
             }}
           >
-            {/* Logo with spinner */}
-            <div className="relative flex items-center justify-center">
-              {/* Spinning ring */}
-              <div 
-                className="absolute w-[140px] h-[140px] rounded-full border-[3px] border-transparent animate-spin"
+            {/* Branded icon with pulsing animation */}
+            <div className="relative flex items-center justify-center mb-4">
+              {/* Outer glow ring */}
+              <motion.div
+                className="absolute w-28 h-28 rounded-full"
                 style={{
-                  borderTopColor: 'hsl(175, 65%, 42%)',
-                  borderRightColor: 'hsl(270, 55%, 55%)',
-                  animationDuration: '1.2s',
+                  background: 'conic-gradient(from 0deg, hsl(175 65% 42%), hsl(270 55% 55%), hsl(175 65% 42%))',
+                  opacity: 0.25,
                 }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
               />
-              {/* Logo */}
-              <img 
-                src="/ritual-logo-full.png" 
-                alt="Ritual" 
-                className="relative max-h-20 w-auto"
-              />
+              
+              {/* Icon container with pulse */}
+              <motion.div
+                className="relative w-24 h-24 rounded-full bg-gradient-to-br from-primary/10 to-purple-200/20 flex items-center justify-center"
+                animate={{
+                  boxShadow: [
+                    '0 0 0 0 hsl(175 65% 42% / 0)',
+                    '0 0 20px 8px hsl(175 65% 42% / 0.2)',
+                    '0 0 0 0 hsl(175 65% 42% / 0)',
+                  ],
+                }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <motion.img
+                  src={ritualIcon}
+                  alt="Ritual"
+                  className="w-16 h-16 object-contain"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              </motion.div>
             </div>
+            
+            {/* Logo text */}
+            <img 
+              src="/ritual-logo-full.png" 
+              alt="Ritual" 
+              className="relative max-h-16 w-auto"
+            />
             
             {/* Tagline */}
             <p 
