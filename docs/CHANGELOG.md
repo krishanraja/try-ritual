@@ -6,6 +6,63 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## v1.6.6 (Critical Bug Fixes - Leave Couple, Memories Crash, Demo Rituals)
+**Date**: 2025-12-14
+
+### 🐛 Critical Bug Fixes
+
+#### Leave Couple Functionality
+- **Fixed**: "Leave Couple" action failing for partner_one (couple creator)
+  - **Root Cause**: Missing DELETE policy on `couples` table in RLS
+  - **Solution**: Added `CREATE POLICY "Partner one can delete their couple"` migration
+  - Partner_one can now properly delete the couple record
+  - Partner_two leaving (via UPDATE) was already working
+
+#### Memories Tab Crash
+- **Fixed**: App crash when navigating to Memories tab
+  - **Root Cause**: Race condition with non-null assertion (`couple!.id`) when `couple` could be null during async operations
+  - **Solution**: Refactored `fetchMemories()` and `fetchStats()` to accept `coupleId` as parameter
+  - **Solution**: Captured `couple.id` at useEffect call time before async operations begin
+  - Prevents crash if component unmounts or `couple` becomes null mid-fetch
+
+#### Demo Rituals Forever Loading
+- **Fixed**: Real rituals not showing after synthesis, stuck on demo rituals
+  - **Root Cause**: `useSampleRituals` hook not defensively parsing `synthesized_output` structure
+  - **Solution**: Added defensive parsing to handle both `{ rituals: [...] }` and direct `[...]` formats
+  - **Solution**: Added console logging for debugging unknown formats
+  - Now correctly displays real rituals regardless of data structure variations
+
+### 🔧 Technical Changes
+
+#### Database (RLS Migration)
+- **New Migration**: `20251214_add_couples_delete_policy.sql`
+  - Adds DELETE policy for `couples` table: `USING (auth.uid() = partner_one)`
+
+#### Memories.tsx
+- `fetchMemories(coupleId: string)` - now takes coupleId as parameter
+- `fetchStats(coupleId: string)` - now takes coupleId as parameter  
+- useEffect captures `couple?.id` before calling async functions
+
+#### useSampleRituals.ts
+- Added `Array.isArray(output)` check for direct array format
+- Added `output?.rituals` check for standard wrapper format
+- Added console logging for debugging (`[useSampleRituals]` prefix)
+- Unknown formats now log warning with structure details
+
+### 📝 Files Changed
+- `supabase/migrations/20251214_add_couples_delete_policy.sql` (new)
+- `src/pages/Memories.tsx`
+- `src/hooks/useSampleRituals.ts`
+- `docs/CHANGELOG.md`
+- `docs/DIAGNOSIS.md` (new)
+- `docs/ROOT_CAUSE.md` (new)
+
+### 🔍 Diagnostic Documentation
+- Created `DIAGNOSIS.md` - Full user flow audit with architecture maps
+- Created `ROOT_CAUSE.md` - Confirmed root causes for all three issues
+
+---
+
 ## v1.6.5 (Ritual Generation Loading Fix)
 **Date**: 2025-12-14
 

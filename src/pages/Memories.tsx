@@ -68,21 +68,24 @@ export default function Memories() {
   }, [user, coupleLoading, navigate]);
 
   useEffect(() => {
-    if (couple?.id) {
-      fetchMemories();
-      fetchStats();
+    // Capture couple.id at effect time to avoid stale closure issues
+    const coupleId = couple?.id;
+    
+    if (coupleId) {
+      fetchMemories(coupleId);
+      fetchStats(coupleId);
     } else if (!coupleLoading && user && !couple) {
       // User is logged in but has no couple
       setLoading(false);
     }
   }, [couple?.id, coupleLoading, user]);
 
-  const fetchMemories = async () => {
+  const fetchMemories = async (coupleId: string) => {
     try {
       const { data, error } = await supabase
         .from('ritual_memories')
         .select('*')
-        .eq('couple_id', couple!.id)
+        .eq('couple_id', coupleId)
         .order('completion_date', { ascending: false });
 
       if (error) throw error;
@@ -94,33 +97,33 @@ export default function Memories() {
     }
   };
 
-  const fetchStats = async () => {
+  const fetchStats = async (coupleId: string) => {
     try {
       // Get total rituals (from memories)
       const { count: totalRituals } = await supabase
         .from('ritual_memories')
         .select('*', { count: 'exact', head: true })
-        .eq('couple_id', couple!.id);
+        .eq('couple_id', coupleId);
 
       // Get traditions count
       const { count: traditions } = await supabase
         .from('ritual_memories')
         .select('*', { count: 'exact', head: true })
-        .eq('couple_id', couple!.id)
+        .eq('couple_id', coupleId)
         .eq('is_tradition', true);
 
       // Get photos count
       const { count: photos } = await supabase
         .from('ritual_memories')
         .select('*', { count: 'exact', head: true })
-        .eq('couple_id', couple!.id)
+        .eq('couple_id', coupleId)
         .not('photo_url', 'is', null);
 
       // Get current streak
       const { data: streakData } = await supabase
         .from('ritual_streaks')
         .select('current_streak')
-        .eq('couple_id', couple!.id)
+        .eq('couple_id', coupleId)
         .maybeSingle();
 
       setStats({

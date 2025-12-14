@@ -43,7 +43,26 @@ export function useSampleRituals() {
     // CRITICAL: if we have synthesized_output, always show real rituals
     if (currentCycle?.synthesized_output) {
       const output = currentCycle.synthesized_output as any;
-      const realRituals = output.rituals || [];
+      
+      // Defensive parsing: handle both { rituals: [...] } and direct [...] formats
+      // Also handle edge cases like { error: "..." } or null
+      let realRituals: Ritual[] = [];
+      
+      if (Array.isArray(output)) {
+        // Direct array format (legacy or edge case)
+        realRituals = output;
+        console.log('[useSampleRituals] Found direct array format, rituals:', realRituals.length);
+      } else if (output && Array.isArray(output.rituals)) {
+        // Standard { rituals: [...] } format
+        realRituals = output.rituals;
+        console.log('[useSampleRituals] Found standard format, rituals:', realRituals.length);
+      } else {
+        // Unknown format - log for debugging
+        console.warn('[useSampleRituals] Unknown synthesized_output format:', 
+          typeof output, 
+          output ? Object.keys(output) : 'null'
+        );
+      }
       
       // Only update if we actually have rituals
       if (realRituals.length > 0) {
