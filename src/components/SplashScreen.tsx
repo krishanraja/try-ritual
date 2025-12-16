@@ -30,6 +30,20 @@ export function SplashScreen({ children }: SplashScreenProps) {
     }
   }, []);
 
+  // Fallback timeout to prevent infinite splash screen
+  useEffect(() => {
+    const fallbackTimeout = setTimeout(() => {
+      if (showSplash) {
+        console.warn('[SplashScreen] ⚠️ Fallback timeout (8s) - forcing splash to hide');
+        console.warn('[SplashScreen] This indicates the app is stuck loading. Check browser console for errors.');
+        setContentReady(true);
+        setShowSplash(false);
+      }
+    }, 8000);
+
+    return () => clearTimeout(fallbackTimeout);
+  }, [showSplash]);
+
   // Wait for loading to complete, then delay for smooth transition
   useEffect(() => {
     if (!loading) {

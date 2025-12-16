@@ -230,47 +230,111 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log('[AUTH] Initializing auth state, context version:', CONTEXT_VERSION);
     
-    const safetyTimeout = setTimeout(() => {
-      console.log('[AUTH] ⚠️ Safety timeout triggered - forcing loading=false');
-      setLoading(false);
-    }, 5000);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('[AUTH] onAuthStateChange event:', _event, 'has session:', !!session);
-      clearTimeout(safetyTimeout);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[AUTH] getSession result - has session:', !!session);
-      clearTimeout(safetyTimeout);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      
-      // FIX #8: Session Recovery - Restore critical state from localStorage if session was lost
-      if (session?.user) {
-        try {
-          const savedState = localStorage.getItem(`ritual-state-${session.user.id}`);
-          if (savedState) {
-            const parsed = JSON.parse(savedState);
-            console.log('[AUTH] Restoring saved state:', parsed);
-            // State will be refreshed from database, but this provides fallback
+    // Run connection test in development to help diagnose issues
+    if (import.meta.env.DEV) {
+      import('@/utils/supabase-connection-test').then(({ testSupabaseConnection, logConnectionTestResults }) => {
+        testSupabaseConnection().then((result) => {
+          logConnectionTestResults(result);
+          if (!result.success) {
+            console.error('[AUTH] ⚠️ Supabase connection test failed. The app may not work correctly.');
           }
-        } catch (e) {
-          console.warn('[AUTH] Failed to restore saved state:', e);
-        }
+        });
+      }).catch((error) => {
+        console.warn('[AUTH] Could not run connection test:', error);
+      });
+    }
+    
+    let isMounted = true;
+    let subscription: { unsubscribe: () => void } | null = null;
+    
+    // Reduced safety timeout to 3 seconds for faster recovery
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.log('[AUTH] ⚠️ Safety timeout triggered (3s) - forcing loading=false');
+        console.log('[AUTH] This may indicate a Supabase connection issue. Check your .env configuration.');
+        console.log('[AUTH] Common issues after Supabase migration:');
+        console.log('[AUTH]   1. Wrong VITE_SUPABASE_URL (old project URL)');
+        console.log('[AUTH]   2. Wrong VITE_SUPABASE_PUBLISHABLE_KEY (old project key)');
+        console.log('[AUTH]   3. Wrong VITE_SUPABASE_PROJECT_ID (old project ID)');
+        setLoading(false);
       }
-    }).catch((error) => {
-      console.error('[AUTH] getSession error:', error);
+    }, 3000);
+
+    try {
+      // Set up auth state change listener
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!isMounted) return;
+        console.log('[AUTH] onAuthStateChange event:', _event, 'has session:', !!session);
+        clearTimeout(safetyTimeout);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+      subscription = authSubscription;
+
+      // Check existing session with timeout wrapper
+      const sessionPromise = Promise.race([
+        supabase.auth.getSession(),
+        new Promise<{ data: { session: null }; error: Error }>((_, reject) =>
+          setTimeout(() => reject(new Error('getSession timeout after 5 seconds')), 5000)
+        ),
+      ]);
+
+      sessionPromise
+        .then((result: any) => {
+          if (!isMounted) return;
+          const { data: { session }, error } = result;
+          
+          if (error) {
+            console.error('[AUTH] getSession error:', error);
+            clearTimeout(safetyTimeout);
+            setLoading(false);
+            return;
+          }
+          
+          console.log('[AUTH] getSession result - has session:', !!session);
+          clearTimeout(safetyTimeout);
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+          
+          // FIX #8: Session Recovery - Restore critical state from localStorage if session was lost
+          if (session?.user) {
+            try {
+              const savedState = localStorage.getItem(`ritual-state-${session.user.id}`);
+              if (savedState) {
+                const parsed = JSON.parse(savedState);
+                console.log('[AUTH] Restoring saved state:', parsed);
+                // State will be refreshed from database, but this provides fallback
+              }
+            } catch (e) {
+              console.warn('[AUTH] Failed to restore saved state:', e);
+            }
+          }
+        })
+        .catch((error) => {
+          if (!isMounted) return;
+          console.error('[AUTH] getSession error or timeout:', error);
+          console.error('[AUTH] This may indicate:', {
+            'Wrong Supabase URL': 'Check VITE_SUPABASE_URL in .env',
+            'Wrong Supabase Key': 'Check VITE_SUPABASE_PUBLISHABLE_KEY in .env',
+            'Network Issue': 'Check browser console for CORS/network errors',
+            'Project Migration': 'Ensure all env vars match your new Supabase project',
+          });
+          clearTimeout(safetyTimeout);
+          setLoading(false);
+        });
+    } catch (error) {
+      console.error('[AUTH] Failed to initialize auth listeners:', error);
       clearTimeout(safetyTimeout);
       setLoading(false);
-    });
+    }
 
     return () => {
-      subscription.unsubscribe();
+      isMounted = false;
+      if (subscription) {
+        subscription.unsubscribe();
+      }
       clearTimeout(safetyTimeout);
     };
   }, []);
