@@ -171,3 +171,6 @@ export function logConnectionTestResults(result: ConnectionTestResult): void {
 
   console.groupEnd();
 }
+
+
+

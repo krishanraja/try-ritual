@@ -192,3 +192,6 @@ If issues persist, check the browser console for specific error messages and ref
 - All timeouts are configurable if needed
 - Error messages are designed to be user-friendly and actionable
 - The app will gracefully degrade if Supabase is unavailable (shows content after timeout)
+
+
+

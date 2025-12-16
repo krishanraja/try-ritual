@@ -15,4 +15,8 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Force rollup to use WASM/JS fallback on Windows ARM64
+  build: {
+    rollupOptions: {},
+  },
 }));

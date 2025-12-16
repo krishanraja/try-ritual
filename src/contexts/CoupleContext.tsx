@@ -338,6 +338,7 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     console.log('[AUTH] Initializing auth state, context version:', CONTEXT_VERSION);
+    const authInitStartTime = performance.now();
     
     // Run connection test in development to help diagnose issues
     if (import.meta.env.DEV) {
@@ -355,12 +356,20 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
     
     let isMounted = true;
     let subscription: { unsubscribe: () => void } | null = null;
+    let authListenerSetup = false;
+    let getSessionCompleted = false;
     
-    // Reduced safety timeout to 3 seconds for faster recovery
-    console.log('[DIAG] Creating safety timeout (3s)');
+    // Primary safety timeout - ensures loading is set to false
+    console.log('[DIAG] Creating primary safety timeout (3s)');
     const safetyTimeout = setTimeout(() => {
       if (isMounted) {
-        console.log('[AUTH] ⚠️ Safety timeout triggered (3s) - forcing loading=false');
+        const elapsed = performance.now() - authInitStartTime;
+        console.log(`[AUTH] ⚠️ Primary safety timeout triggered (3s, elapsed: ${elapsed.toFixed(2)}ms) - forcing loading=false`);
+        console.log('[AUTH] Status check:', {
+          authListenerSetup,
+          getSessionCompleted,
+          elapsed: `${elapsed.toFixed(2)}ms`,
+        });
         console.log('[AUTH] This may indicate a Supabase connection issue. Check your .env configuration.');
         console.log('[AUTH] Common issues after Supabase migration:');
         console.log('[AUTH]   1. Wrong VITE_SUPABASE_URL (old project URL)');
@@ -373,61 +382,48 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
     }, 3000);
 
     try {
-      // Set up auth state change listener
-      console.log('[DIAG] Setting up onAuthStateChange listener');
-      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (!isMounted) {
-          console.log('[DIAG] onAuthStateChange fired but component is unmounted');
-          return;
+      // Verify Supabase client is available
+      console.log('[DIAG] Verifying Supabase client availability...');
+      let supabaseAvailable = false;
+      try {
+        // Try to access supabase.auth to verify it's available
+        if (supabase && supabase.auth) {
+          supabaseAvailable = true;
+          console.log('[DIAG] ✅ Supabase client is available');
+        } else {
+          throw new Error('Supabase client or auth is null/undefined');
         }
-        console.log('[AUTH] onAuthStateChange event:', _event, 'has session:', !!session);
-        console.log('[DIAG] Clearing safety timeout from onAuthStateChange');
+      } catch (supabaseError) {
+        console.error('[AUTH] ❌ Supabase client is not available:', supabaseError);
+        console.error('[AUTH] This usually means:');
+        console.error('[AUTH]   1. Environment variables are missing or invalid');
+        console.error('[AUTH]   2. Supabase configuration failed to initialize');
+        console.error('[AUTH]   3. Check browser console for Supabase Client initialization errors');
+        
+        // Set loading to false immediately so app can show error UI
         clearTimeout(safetyTimeout);
-        setSession(session);
-        setUser(session?.user ?? null);
+        setSession(null);
+        setUser(null);
         setLoading(false);
-      });
-      subscription = authSubscription;
-      console.log('[DIAG] onAuthStateChange listener set up successfully');
-
-      // Check existing session with timeout wrapper
-      console.log('[DIAG] Creating getSession promise with 5s timeout');
-      const sessionPromise = Promise.race([
-        supabase.auth.getSession().then((result) => {
-          console.log('[DIAG] getSession promise resolved');
-          return result;
-        }).catch((error) => {
-          console.log('[DIAG] getSession promise rejected:', error);
-          throw error;
-        }),
-        new Promise<{ data: { session: null }; error: Error }>((_, reject) => {
-          console.log('[DIAG] Creating timeout promise for getSession (5s)');
-          setTimeout(() => {
-            console.log('[DIAG] getSession timeout promise firing');
-            reject(new Error('getSession timeout after 5 seconds'));
-          }, 5000);
-        }),
-      ]);
-
-      sessionPromise
-        .then((result: any) => {
-          console.log('[DIAG] getSession promise.then() handler executing');
+        return; // Exit early - don't try to set up auth listeners
+      }
+      
+      // Set up auth state change listener FIRST (this fires immediately with INITIAL_SESSION)
+      console.log('[DIAG] Setting up onAuthStateChange listener');
+      let listenerFired = false;
+      
+      try {
+        const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          listenerFired = true;
+          const eventTime = performance.now() - authInitStartTime;
+          console.log(`[AUTH] onAuthStateChange event (${eventTime.toFixed(2)}ms):`, _event, 'has session:', !!session);
+          
           if (!isMounted) {
-            console.log('[DIAG] getSession resolved but component is unmounted');
-            return;
-          }
-          const { data: { session }, error } = result;
-          
-          if (error) {
-            console.error('[AUTH] getSession error:', error);
-            console.log('[DIAG] Clearing safety timeout from getSession error handler');
-            clearTimeout(safetyTimeout);
-            setLoading(false);
+            console.log('[DIAG] onAuthStateChange fired but component is unmounted');
             return;
           }
           
-          console.log('[AUTH] getSession result - has session:', !!session);
-          console.log('[DIAG] Clearing safety timeout from getSession success handler');
+          console.log('[DIAG] Clearing safety timeout from onAuthStateChange');
           clearTimeout(safetyTimeout);
           setSession(session);
           setUser(session?.user ?? null);
@@ -446,13 +442,87 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
               console.warn('[AUTH] Failed to restore saved state:', e);
             }
           }
+        });
+        subscription = authSubscription;
+        authListenerSetup = true;
+        console.log('[DIAG] ✅ onAuthStateChange listener set up successfully');
+        
+        // Give listener a moment to fire INITIAL_SESSION event
+        setTimeout(() => {
+          if (!listenerFired) {
+            console.warn('[AUTH] ⚠️ onAuthStateChange listener did not fire INITIAL_SESSION event within 500ms');
+          }
+        }, 500);
+      } catch (listenerError) {
+        console.error('[AUTH] ❌ Failed to set up onAuthStateChange listener:', listenerError);
+        // Continue - getSession will still work
+      }
+
+      // Check existing session with timeout wrapper - ensure it ALWAYS completes
+      console.log('[DIAG] Creating getSession promise with 5s timeout');
+      const getSessionStartTime = performance.now();
+      
+      const sessionPromise = Promise.race([
+        supabase.auth.getSession().then((result) => {
+          const duration = performance.now() - getSessionStartTime;
+          console.log(`[DIAG] getSession promise resolved (${duration.toFixed(2)}ms)`);
+          return result;
+        }).catch((error) => {
+          const duration = performance.now() - getSessionStartTime;
+          console.log(`[DIAG] getSession promise rejected (${duration.toFixed(2)}ms):`, error);
+          throw error;
+        }),
+        new Promise<{ data: { session: null }; error: Error }>((_, reject) => {
+          console.log('[DIAG] Creating timeout promise for getSession (5s)');
+          setTimeout(() => {
+            const duration = performance.now() - getSessionStartTime;
+            console.log(`[DIAG] getSession timeout promise firing (${duration.toFixed(2)}ms)`);
+            reject(new Error('getSession timeout after 5 seconds'));
+          }, 5000);
+        }),
+      ]);
+
+      // Ensure getSession ALWAYS completes and sets loading to false
+      sessionPromise
+        .then((result: any) => {
+          getSessionCompleted = true;
+          const duration = performance.now() - getSessionStartTime;
+          console.log(`[DIAG] getSession promise.then() handler executing (${duration.toFixed(2)}ms)`);
+          
+          if (!isMounted) {
+            console.log('[DIAG] getSession resolved but component is unmounted');
+            return;
+          }
+          
+          const { data: { session }, error } = result;
+          
+          if (error) {
+            console.error('[AUTH] getSession error:', error);
+            console.log('[DIAG] Clearing safety timeout from getSession error handler');
+            clearTimeout(safetyTimeout);
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+          
+          console.log('[AUTH] getSession result - has session:', !!session);
+          console.log('[DIAG] Clearing safety timeout from getSession success handler');
+          clearTimeout(safetyTimeout);
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
         })
         .catch((error) => {
-          console.log('[DIAG] getSession promise.catch() handler executing');
+          getSessionCompleted = true;
+          const duration = performance.now() - getSessionStartTime;
+          console.log(`[DIAG] getSession promise.catch() handler executing (${duration.toFixed(2)}ms)`);
+          
           if (!isMounted) {
             console.log('[DIAG] getSession rejected but component is unmounted');
             return;
           }
+          
           console.error('[AUTH] getSession error or timeout:', error);
           console.error('[AUTH] This may indicate:', {
             'Wrong Supabase URL': 'Check VITE_SUPABASE_URL in .env',
@@ -462,19 +532,35 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
           });
           console.log('[DIAG] Clearing safety timeout from getSession catch handler');
           clearTimeout(safetyTimeout);
+          setSession(null);
+          setUser(null);
           setLoading(false);
+        })
+        .finally(() => {
+          const totalDuration = performance.now() - authInitStartTime;
+          console.log(`[DIAG] getSession finally block (total auth init: ${totalDuration.toFixed(2)}ms)`);
+          getSessionCompleted = true;
         });
     } catch (error) {
-      console.error('[AUTH] Failed to initialize auth listeners:', error);
+      const errorDuration = performance.now() - authInitStartTime;
+      console.error(`[AUTH] ❌ Failed to initialize auth listeners (${errorDuration.toFixed(2)}ms):`, error);
       console.log('[DIAG] Clearing safety timeout from catch block');
       clearTimeout(safetyTimeout);
+      setSession(null);
+      setUser(null);
       setLoading(false);
     }
 
     // Additional safety check: if loading is still true after 5s, force it false
     const additionalSafetyTimeout = setTimeout(() => {
       if (isMounted && loadingRef.current) {
-        console.warn('[AUTH] ⚠️ Additional safety check (5s) - loading is still true, forcing to false');
+        const totalDuration = performance.now() - authInitStartTime;
+        console.warn(`[AUTH] ⚠️ Additional safety check (5s, elapsed: ${totalDuration.toFixed(2)}ms) - loading is still true, forcing to false`);
+        console.warn('[AUTH] Status at safety check:', {
+          authListenerSetup,
+          getSessionCompleted,
+          loading: loadingRef.current,
+        });
         console.warn('[AUTH] This indicates a critical issue - loading state did not resolve properly');
         setLoading(false);
       }
@@ -496,62 +582,78 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (user) {
       console.log('[DIAG] User detected, starting couple data fetch');
+      const dataFetchStartTime = performance.now();
       setCoupleLoading(true);
       console.log('[CONTEXT] Starting couple fetch for user:', user.id);
       
-      const fetchStartTime = Date.now();
+      // Track completion state
+      let dataFetchCompleted = false;
       
-      // Fetch user profile and couple data in parallel
-      Promise.all([
-        fetchUserProfile(user.id).then((result) => {
-          console.log('[DIAG] fetchUserProfile resolved');
-          return result;
-        }).catch((error) => {
-          console.log('[DIAG] fetchUserProfile rejected:', error);
-          throw error;
-        }),
-        fetchCouple(user.id).then((result) => {
-          console.log('[DIAG] fetchCouple resolved');
-          return result;
-        }).catch((error) => {
-          console.log('[DIAG] fetchCouple rejected:', error);
-          throw error;
-        })
-      ]).then(([_, coupleData]) => {
-        const fetchDuration = Date.now() - fetchStartTime;
-        console.log(`[DIAG] Promise.all resolved after ${fetchDuration}ms`);
-        console.log('[CONTEXT] Couple fetch complete, hasCouple:', !!coupleData);
-        if (coupleData) {
-          console.log('[DIAG] Fetching cycle for couple:', coupleData.id);
-          return fetchCycle(coupleData.id).then((result) => {
-            console.log('[DIAG] fetchCycle resolved');
-            return result;
-          }).catch((error) => {
-            console.log('[DIAG] fetchCycle rejected:', error);
-            throw error;
-          });
+      // Fetch user profile and couple data in parallel with comprehensive error handling
+      const dataFetchPromise = Promise.allSettled([
+        fetchUserProfile(user.id),
+        fetchCouple(user.id)
+      ]).then((results) => {
+        const fetchDuration = performance.now() - dataFetchStartTime;
+        console.log(`[DIAG] Promise.allSettled resolved after ${fetchDuration.toFixed(2)}ms`);
+        
+        const [profileResult, coupleResult] = results;
+        
+        // Log results
+        if (profileResult.status === 'fulfilled') {
+          console.log('[DIAG] fetchUserProfile completed successfully');
+        } else {
+          console.error('[DIAG] fetchUserProfile failed:', profileResult.reason);
         }
+        
+        if (coupleResult.status === 'fulfilled') {
+          const coupleData = coupleResult.value;
+          console.log('[CONTEXT] Couple fetch complete, hasCouple:', !!coupleData);
+          
+          if (coupleData) {
+            console.log('[DIAG] Fetching cycle for couple:', coupleData.id);
+            // Fetch cycle - don't block on this, but track it
+            fetchCycle(coupleData.id)
+              .then((cycleResult) => {
+                console.log('[DIAG] fetchCycle completed');
+                return cycleResult;
+              })
+              .catch((cycleError) => {
+                console.error('[DIAG] fetchCycle failed:', cycleError);
+                // Don't throw - cycle fetch failure shouldn't block app
+              });
+          }
+        } else {
+          console.error('[DIAG] fetchCouple failed:', coupleResult.reason);
+        }
+        
+        dataFetchCompleted = true;
       }).catch((error) => {
-        console.log('[DIAG] Promise.all rejected:', error);
+        const fetchDuration = performance.now() - dataFetchStartTime;
+        console.error(`[DIAG] Promise.allSettled rejected after ${fetchDuration.toFixed(2)}ms:`, error);
+        dataFetchCompleted = true;
       }).finally(() => {
-        const totalDuration = Date.now() - fetchStartTime;
-        console.log(`[DIAG] Couple data fetch finally block executing after ${totalDuration}ms`);
+        const totalDuration = performance.now() - dataFetchStartTime;
+        console.log(`[DIAG] Couple data fetch finally block executing after ${totalDuration.toFixed(2)}ms`);
+        console.log('[DIAG] Data fetch completed:', dataFetchCompleted);
         setCoupleLoading(false);
       });
       
       // Additional safety: ensure coupleLoading is set to false after 12s maximum
       const coupleLoadingSafetyTimeout = setTimeout(() => {
         if (coupleLoadingRef.current) {
-          console.warn('[CONTEXT] ⚠️ Couple loading safety timeout (12s) - forcing coupleLoading=false');
+          const elapsed = performance.now() - dataFetchStartTime;
+          console.warn(`[CONTEXT] ⚠️ Couple loading safety timeout (12s, elapsed: ${elapsed.toFixed(2)}ms) - forcing coupleLoading=false`);
+          console.warn('[CONTEXT] Data fetch status:', {
+            dataFetchCompleted,
+            elapsed: `${elapsed.toFixed(2)}ms`,
+          });
           setCoupleLoading(false);
         }
       }, 12000);
-      
-      return () => {
-        clearTimeout(coupleLoadingSafetyTimeout);
-      };
 
       // Realtime subscriptions with improved sync and detailed logging
+      // Note: These are set up after data fetch starts, but don't block loading state
       const channelName = `couples-${user.id}-${Date.now()}`;
       console.log('[REALTIME] Setting up channel:', channelName);
       
@@ -678,7 +780,10 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
         })
         .subscribe();
 
+      // Return cleanup function that handles both timeout and realtime subscriptions
       return () => {
+        console.log('[DIAG] Cleaning up user data fetch effect');
+        clearTimeout(coupleLoadingSafetyTimeout);
         console.log('[REALTIME] Cleaning up channels');
         supabase.removeChannel(couplesChannel);
         supabase.removeChannel(cyclesChannel);
