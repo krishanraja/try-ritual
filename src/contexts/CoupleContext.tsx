@@ -612,7 +612,8 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
           
           if (coupleData) {
             console.log('[DIAG] Fetching cycle for couple:', coupleData.id);
-            // Fetch cycle - don't block on this, but track it
+            // Fetch cycle immediately in parallel - don't block loading state
+            // This starts the fetch as soon as we have the couple ID
             fetchCycle(coupleData.id)
               .then((cycleResult) => {
                 console.log('[DIAG] fetchCycle completed');

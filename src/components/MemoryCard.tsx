@@ -7,7 +7,7 @@
  * @created 2025-12-11
  */
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Star, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
@@ -38,7 +38,7 @@ const PLACEHOLDER_GRADIENTS = [
   'from-red-400 to-rose-500',
 ];
 
-export function MemoryCard({ memory, index }: MemoryCardProps) {
+export const MemoryCard = memo(function MemoryCard({ memory, index }: MemoryCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const gradientClass = PLACEHOLDER_GRADIENTS[index % PLACEHOLDER_GRADIENTS.length];
@@ -58,6 +58,8 @@ export function MemoryCard({ memory, index }: MemoryCardProps) {
             src={memory.photo_url!}
             alt={memory.ritual_title}
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
@@ -155,4 +157,4 @@ export function MemoryCard({ memory, index }: MemoryCardProps) {
       </div>
     </motion.div>
   );
-}
+});

@@ -6,7 +6,7 @@
  * @updated 2025-12-13 - Added SEO pages (FAQ, Blog)
  */
 
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, memo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,7 +39,29 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogArticle = lazy(() => import("./pages/BlogArticle"));
 
-const queryClient = new QueryClient();
+// Optimized React Query configuration for performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache data for 5 minutes (stale time)
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      // Keep unused data in cache for 10 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      // Refetch on window focus only if data is stale
+      refetchOnWindowFocus: false,
+      // Don't refetch on reconnect if data is fresh
+      refetchOnReconnect: 'always',
+      // Retry failed requests once
+      retry: 1,
+      // Retry delay increases exponentially
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+    mutations: {
+      // Retry mutations once
+      retry: 1,
+    },
+  },
+});
 
 // Minimal loading fallback for lazy routes - matches app background
 const LazyFallback = () => (
@@ -48,7 +70,7 @@ const LazyFallback = () => (
   </div>
 );
 
-const AnimatedRoutes = () => {
+const AnimatedRoutes = memo(() => {
   const location = useLocation();
   
   return (
@@ -77,7 +99,7 @@ const AnimatedRoutes = () => {
       </Routes>
     </AnimatePresence>
   );
-};
+});
 
 const App = () => (
   <ErrorBoundary>

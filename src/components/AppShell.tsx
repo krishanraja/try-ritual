@@ -7,7 +7,7 @@
  * @updated 2025-12-13 - Removed competing animations for stable layout
  */
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useMemo, memo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Calendar, Images, User, UserPlus, LucideIcon } from 'lucide-react';
 import { Button } from './ui/button';
@@ -42,17 +42,17 @@ export const AppShell = ({ children }: AppShellProps) => {
   // Don't show nav while loading to prevent flash
   const showNav = user && !isAuthPage && !loading;
 
-  // Get step label for "This Week" based on current route
-  const getThisWeekStepLabel = (): string | undefined => {
+  // Memoize computed values to prevent unnecessary recalculations
+  const thisWeekStepLabel = useMemo((): string | undefined => {
     switch (location.pathname) {
       case '/input': return 'Input';
       case '/picker': return 'Pick';
       case '/rituals': return 'Scheduled';
       default: return undefined;
     }
-  };
+  }, [location.pathname]);
 
-  const getThisWeekRoute = () => {
+  const thisWeekRoute = useMemo(() => {
     if (!couple || !couple.partner_two) return '/';
     
     if (!currentCycle) return '/input';
@@ -82,30 +82,29 @@ export const AppShell = ({ children }: AppShellProps) => {
     
     // Neither submitted yet
     return '/input';
-  };
-
-  // "This Week" matches any of these routes
-  const thisWeekRoutes = ['/input', '/picker', '/rituals'];
-  const thisWeekRoute = getThisWeekRoute();
+  }, [couple, currentCycle, user?.id]);
   
-  const isThisWeekActive = thisWeekRoutes.includes(location.pathname);
+  const isThisWeekActive = useMemo(() => {
+    const thisWeekRoutes = ['/input', '/picker', '/rituals'];
+    return thisWeekRoutes.includes(location.pathname);
+  }, [location.pathname]);
   
   // Check if ritual space is accessible (couple exists with partner)
-  const hasRitualSpace = couple && couple.partner_two;
+  const hasRitualSpace = useMemo(() => couple && couple.partner_two, [couple]);
   
   // Dynamic home label based on state
-  const getHomeLabel = (): string => {
+  const homeLabel = useMemo((): string => {
     if (!couple) return 'Home';
     if (!couple.partner_two) return 'Waiting';
     return 'Dashboard';
-  };
+  }, [couple]);
   
-  const navItems: NavItem[] = [
-    { path: '/', icon: Home, label: getHomeLabel(), isActive: location.pathname === '/' },
-    { path: thisWeekRoute, icon: Calendar, label: 'This Week', isActive: isThisWeekActive, stepLabel: getThisWeekStepLabel(), disabled: !hasRitualSpace },
+  const navItems: NavItem[] = useMemo(() => [
+    { path: '/', icon: Home, label: homeLabel, isActive: location.pathname === '/' },
+    { path: thisWeekRoute, icon: Calendar, label: 'This Week', isActive: isThisWeekActive, stepLabel: thisWeekStepLabel, disabled: !hasRitualSpace },
     { path: '/memories', icon: Images, label: 'Memories', isActive: location.pathname === '/memories', disabled: !hasRitualSpace },
     { path: '/profile', icon: User, label: 'Profile', isActive: location.pathname === '/profile' }
-  ];
+  ], [homeLabel, thisWeekRoute, isThisWeekActive, thisWeekStepLabel, hasRitualSpace, location.pathname]);
 
   return (
     <div className="flex flex-col h-screen bg-gradient-warm overflow-hidden">
