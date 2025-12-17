@@ -174,3 +174,4 @@ export function logError(error: unknown, context?: string) {
     // Sentry.captureException(error, { tags: { context } });
   }
 }
+

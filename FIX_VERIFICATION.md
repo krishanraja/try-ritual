@@ -88,3 +88,4 @@ With the correct JWT anon key, Supabase should initialize properly and routing s
 
 
 
+

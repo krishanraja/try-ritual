@@ -154,3 +154,4 @@ These are not needed yet but will be required when push notifications are implem
 2. Tables are added to realtime publication
 3. Browser console shows subscription status
 4. Network tab shows WebSocket connection
+

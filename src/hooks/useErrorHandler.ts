@@ -71,3 +71,4 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
     handleAsyncError,
   };
 }
+
