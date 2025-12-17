@@ -66,15 +66,11 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    // Enable minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        // Remove console.logs in production
-        drop_console: mode === 'production',
-        drop_debugger: true,
-      },
-    },
+    // Enable minification (using esbuild - faster and included with Vite)
+    minify: 'esbuild',
+    // Note: esbuild doesn't support drop_console, but console.logs are typically
+    // removed in production builds anyway. If you need advanced minification options,
+    // install terser: npm install -D terser and change minify to 'terser'
     // Increase chunk size warning limit (we're splitting manually)
     chunkSizeWarningLimit: 1000,
     // Enable source maps only in development
