@@ -19,33 +19,36 @@ export default defineConfig(({ mode }) => ({
     // Optimize chunk splitting for better caching
     rollupOptions: {
       output: {
-        // Separate vendor chunks for better caching
+        // Manual chunk splitting strategy
+        // IMPORTANT: React and all React-dependent libraries MUST be in the same chunk
+        // to prevent "Cannot read properties of undefined (reading 'forwardRef')" errors
+        // caused by chunk loading order issues
         manualChunks: (id) => {
-          // React and React DOM
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+          // React ecosystem: React, React-DOM, and ALL libraries that depend on React
+          // must be bundled together to ensure React is initialized before consumers
+          if (
+            id.includes('node_modules/react') ||
+            id.includes('node_modules/react-dom') ||
+            id.includes('node_modules/react-router') ||
+            id.includes('node_modules/@radix-ui') ||
+            id.includes('node_modules/framer-motion') ||
+            id.includes('node_modules/@tanstack') ||
+            id.includes('node_modules/cmdk') ||
+            id.includes('node_modules/vaul') ||
+            id.includes('node_modules/react-day-picker') ||
+            id.includes('node_modules/react-hook-form') ||
+            id.includes('node_modules/react-resizable-panels') ||
+            id.includes('node_modules/embla-carousel-react') ||
+            id.includes('node_modules/recharts') ||
+            id.includes('node_modules/input-otp')
+          ) {
             return 'react-vendor';
           }
-          // React Router
-          if (id.includes('node_modules/react-router')) {
-            return 'router-vendor';
-          }
-          // Supabase
+          // Supabase (doesn't depend on React at runtime)
           if (id.includes('node_modules/@supabase')) {
             return 'supabase-vendor';
           }
-          // Radix UI components (large library)
-          if (id.includes('node_modules/@radix-ui')) {
-            return 'radix-vendor';
-          }
-          // Framer Motion (animation library)
-          if (id.includes('node_modules/framer-motion')) {
-            return 'framer-vendor';
-          }
-          // React Query
-          if (id.includes('node_modules/@tanstack')) {
-            return 'query-vendor';
-          }
-          // Other node_modules
+          // Other node_modules (utilities that don't depend on React)
           if (id.includes('node_modules')) {
             return 'vendor';
           }

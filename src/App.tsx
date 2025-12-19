@@ -7,8 +7,22 @@
  */
 
 import { Suspense, lazy, memo } from "react";
+
+// #region agent log - React core imported
+fetch('http://127.0.0.1:7243/ingest/265854d9-dd9a-485b-b5e4-fb8ae00c17c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:10',message:'React core imports successful',data:{SuspenseExists:typeof Suspense!=='undefined',lazyExists:typeof lazy==='function',memoExists:typeof memo==='function'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
+
 import { Toaster } from "@/components/ui/toaster";
+
+// #region agent log - Radix Toaster loaded
+fetch('http://127.0.0.1:7243/ingest/265854d9-dd9a-485b-b5e4-fb8ae00c17c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:17',message:'Radix Toaster imported successfully',data:{ToasterExists:typeof Toaster==='function'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
+
 import { TooltipProvider } from "@/components/ui/tooltip";
+
+// #region agent log - Radix Tooltip loaded
+fetch('http://127.0.0.1:7243/ingest/265854d9-dd9a-485b-b5e4-fb8ae00c17c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:23',message:'Radix TooltipProvider imported successfully',data:{TooltipProviderExists:typeof TooltipProvider!=='undefined'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";

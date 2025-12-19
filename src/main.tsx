@@ -1,5 +1,19 @@
+// #region agent log - module load verification
+fetch('http://127.0.0.1:7243/ingest/265854d9-dd9a-485b-b5e4-fb8ae00c17c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.tsx:1',message:'Module loading started - before React import',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
+
 import { createRoot } from "react-dom/client";
+
+// #region agent log - React import verification
+fetch('http://127.0.0.1:7243/ingest/265854d9-dd9a-485b-b5e4-fb8ae00c17c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.tsx:8',message:'React imported successfully',data:{createRootExists:typeof createRoot==='function'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
+
 import App from "./App.tsx";
+
+// #region agent log - App import verification
+fetch('http://127.0.0.1:7243/ingest/265854d9-dd9a-485b-b5e4-fb8ae00c17c3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'main.tsx:15',message:'App component imported - all Radix/React deps loaded',data:{AppExists:typeof App==='function'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
+
 import "./index.css";
 
 // Comprehensive initialization diagnostics
