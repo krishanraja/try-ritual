@@ -379,6 +379,9 @@ export default function QuickInput() {
       const alreadyHasOutput = !!cycle?.synthesized_output;
 
       // Step 3: If both partners have submitted and no output yet, trigger synthesis
+      // NOTE: A database trigger (auto_trigger_synthesis_on_both_complete) is the PRIMARY method
+      // for triggering synthesis automatically when both partners submit. This client-side call
+      // serves as a FALLBACK in case the database trigger fails or isn't configured.
       if (partnerInput && !alreadyHasOutput) {
         logger.log('[INPUT] Both partners submitted, triggering synthesis in background...');
         
@@ -388,6 +391,7 @@ export default function QuickInput() {
         
         // Trigger synthesis but DON'T wait for it - let it run in background
         // Use the idempotent trigger-synthesis endpoint
+        // FALLBACK: Database trigger should handle this automatically
         supabase.functions.invoke('trigger-synthesis', {
           body: { cycleId: weeklyCycleId }
         }).then(result => {
