@@ -8,7 +8,7 @@
  * @created 2025-12-11
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useCouple } from '@/contexts/CoupleContext';
@@ -34,11 +34,37 @@ export function MemoryReactions({ memoryId, className }: MemoryReactionsProps) {
   const [reactions, setReactions] = useState<MemoryReaction[]>([]);
   const [showPicker, setShowPicker] = useState(false);
   const [userReaction, setUserReaction] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
+  
+  // Track mounted state for async callbacks
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  // Memoized fetch function with proper dependencies
+  const fetchReactions = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('memory_reactions')
+      .select('*')
+      .eq('memory_id', memoryId);
+
+    if (!isMountedRef.current) return; // Guard against unmounted state updates
+    
+    if (error) {
+      console.error('[MemoryReactions] Error fetching:', error);
+      return;
+    }
+
+    setReactions(data || []);
+    const myReaction = data?.find((r) => r.user_id === user?.id);
+    setUserReaction(myReaction?.reaction || null);
+  }, [memoryId, user?.id]);
 
   // Fetch initial reactions
   useEffect(() => {
     fetchReactions();
-  }, [memoryId]);
+  }, [fetchReactions]);
 
   // Real-time subscription
   useEffect(() => {
@@ -61,23 +87,7 @@ export function MemoryReactions({ memoryId, className }: MemoryReactionsProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [memoryId]);
-
-  const fetchReactions = async () => {
-    const { data, error } = await supabase
-      .from('memory_reactions')
-      .select('*')
-      .eq('memory_id', memoryId);
-
-    if (error) {
-      console.error('[MemoryReactions] Error fetching:', error);
-      return;
-    }
-
-    setReactions(data || []);
-    const myReaction = data?.find((r) => r.user_id === user?.id);
-    setUserReaction(myReaction?.reaction || null);
-  };
+  }, [memoryId, fetchReactions]);
 
   const handleReaction = async (reaction: Reaction) => {
     if (!user) return;

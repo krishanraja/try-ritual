@@ -57,6 +57,13 @@ export default function RitualPicker() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { isPremium, ritualsToShow } = usePremium();
   const synthesisCheckRef = useRef(false);
+  const isMountedRef = useRef(true);
+  
+  // Track mounted state for async callbacks
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   // SEO for ritual picker page
   useSEO({
@@ -227,6 +234,7 @@ export default function RitualPicker() {
     supabase.functions.invoke('trigger-synthesis', {
       body: { cycleId: currentCycle.id }
     }).then(result => {
+      if (!isMountedRef.current) return; // Guard against unmounted state updates
       console.log('[RitualPicker] Initial trigger result:', result.data?.status);
       if (result.data?.status === 'ready' && result.data?.rituals?.length > 0) {
         setRituals(result.data.rituals);
@@ -238,6 +246,7 @@ export default function RitualPicker() {
 
     // Set a timeout for generating state
     const timeoutId = setTimeout(() => {
+      if (!isMountedRef.current) return; // Guard against unmounted state updates
       console.warn('[RitualPicker] Synthesis timeout after 2 minutes');
       setGeneratingError('Synthesis is taking longer than expected. Please try again.');
     }, 120000); // 2 minutes

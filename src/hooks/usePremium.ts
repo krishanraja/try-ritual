@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useCouple } from '@/contexts/CoupleContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -41,10 +41,17 @@ export function usePremium(): PremiumStatus {
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [nudgesUsedThisWeek, setNudgesUsedThisWeek] = useState(0);
   const [swapsUsed, setSwapsUsed] = useState(0);
+  const isMountedRef = useRef(true);
+  
+  // Track mounted state for async callbacks
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const refresh = useCallback(async () => {
     if (!couple?.id) {
-      setIsLoading(false);
+      if (isMountedRef.current) setIsLoading(false);
       return;
     }
 
@@ -57,6 +64,7 @@ export function usePremium(): PremiumStatus {
         .single();
 
       if (error) throw error;
+      if (!isMountedRef.current) return; // Guard against unmounted state updates
 
       const now = new Date();
       const expires = coupleData?.premium_expires_at 
@@ -77,6 +85,7 @@ export function usePremium(): PremiumStatus {
           .eq('id', currentCycle.id)
           .single();
 
+        if (!isMountedRef.current) return; // Guard against unmounted state updates
         if (cycleData) {
           setSwapsUsed(cycleData.swaps_used || 0);
           setNudgesUsedThisWeek(cycleData.nudge_count || 0);
@@ -85,7 +94,7 @@ export function usePremium(): PremiumStatus {
     } catch (error) {
       console.error('Error fetching premium status:', error);
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) setIsLoading(false);
     }
   }, [couple?.id, currentCycle?.id]);
 
