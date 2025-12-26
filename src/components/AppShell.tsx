@@ -39,8 +39,10 @@ export const AppShell = ({ children }: AppShellProps) => {
   const [createOpen, setCreateOpen] = useState(false);
   
   const isAuthPage = location.pathname === '/auth';
+  const isFlowPage = location.pathname === '/flow';
   // Don't show nav while loading to prevent flash
-  const showNav = user && !isAuthPage && !loading;
+  // Also hide on /flow since it has its own specialized header
+  const showNav = user && !isAuthPage && !isFlowPage && !loading;
 
   // Memoize computed values to prevent unnecessary recalculations
   const thisWeekStepLabel = useMemo((): string | undefined => {

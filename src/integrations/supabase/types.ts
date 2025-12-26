@@ -718,6 +718,8 @@ export type Database = {
           agreed_date: string | null
           agreed_ritual: Json | null
           agreed_time: string | null
+          agreed_time_start: string | null
+          agreed_time_end: string | null
           agreement_reached: boolean | null
           canvas_state_one: Json | null
           canvas_state_two: Json | null
@@ -731,15 +733,20 @@ export type Database = {
           partner_one_submitted_at: string | null
           partner_two_input: Json | null
           partner_two_submitted_at: string | null
+          proposer_user_id: string | null
+          status: Database["public"]["Enums"]["cycle_status"] | null
           swaps_used: number | null
           sync_completed_at: string | null
           synthesized_output: Json | null
+          updated_at: string | null
           week_start_date: string
         }
         Insert: {
           agreed_date?: string | null
           agreed_ritual?: Json | null
           agreed_time?: string | null
+          agreed_time_start?: string | null
+          agreed_time_end?: string | null
           agreement_reached?: boolean | null
           canvas_state_one?: Json | null
           canvas_state_two?: Json | null
@@ -753,15 +760,20 @@ export type Database = {
           partner_one_submitted_at?: string | null
           partner_two_input?: Json | null
           partner_two_submitted_at?: string | null
+          proposer_user_id?: string | null
+          status?: Database["public"]["Enums"]["cycle_status"] | null
           swaps_used?: number | null
           sync_completed_at?: string | null
           synthesized_output?: Json | null
+          updated_at?: string | null
           week_start_date: string
         }
         Update: {
           agreed_date?: string | null
           agreed_ritual?: Json | null
           agreed_time?: string | null
+          agreed_time_start?: string | null
+          agreed_time_end?: string | null
           agreement_reached?: boolean | null
           canvas_state_one?: Json | null
           canvas_state_two?: Json | null
@@ -775,9 +787,12 @@ export type Database = {
           partner_one_submitted_at?: string | null
           partner_two_input?: Json | null
           partner_two_submitted_at?: string | null
+          proposer_user_id?: string | null
+          status?: Database["public"]["Enums"]["cycle_status"] | null
           swaps_used?: number | null
           sync_completed_at?: string | null
           synthesized_output?: Json | null
+          updated_at?: string | null
           week_start_date?: string
         }
         Relationships: [
@@ -786,6 +801,41 @@ export type Database = {
             columns: ["couple_id"]
             isOneToOne: false
             referencedRelation: "couples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      availability_slots: {
+        Row: {
+          id: string
+          weekly_cycle_id: string
+          user_id: string
+          day_offset: number
+          time_slot: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          weekly_cycle_id: string
+          user_id: string
+          day_offset: number
+          time_slot: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          weekly_cycle_id?: string
+          user_id?: string
+          day_offset?: number
+          time_slot?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_slots_weekly_cycle_id_fkey"
+            columns: ["weekly_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_cycles"
             referencedColumns: ["id"]
           },
         ]
@@ -807,7 +857,18 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      cycle_status:
+        | "awaiting_both_input"
+        | "awaiting_partner_one"
+        | "awaiting_partner_two"
+        | "generating"
+        | "generation_failed"
+        | "awaiting_both_picks"
+        | "awaiting_partner_one_pick"
+        | "awaiting_partner_two_pick"
+        | "awaiting_agreement"
+        | "agreed"
+        | "completed"
     }
     CompositeTypes: {
       [_ in never]: never

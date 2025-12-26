@@ -184,10 +184,16 @@ export function useRitualFlow(): UseRitualFlowReturn {
   }, [user?.id, partnerId]);
   
   const loadCycleData = useCallback(async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRitualFlow.ts:loadCycleData:entry',message:'loadCycleData called',data:{coupleId:couple?.id,preferredCity:couple?.preferred_city,userId:user?.id,hasCouple:!!couple,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
-    if (!couple?.id || !user?.id) return;
+    console.log('[useRitualFlow] loadCycleData called', {
+      coupleId: couple?.id,
+      userId: user?.id,
+      preferredCity: couple?.preferred_city,
+    });
+    
+    if (!couple?.id || !user?.id) {
+      console.log('[useRitualFlow] loadCycleData skipped - missing couple or user');
+      return;
+    }
     
     try {
       setLoading(true);
@@ -241,9 +247,11 @@ export function useRitualFlow(): UseRitualFlowReturn {
         }
       }
       
-      // #region agent log
-      fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRitualFlow.ts:loadCycleData:afterFetch',message:'Cycle fetch/create result',data:{cycleId:existingCycle?.id,cycleStatus:existingCycle?.status,hasCycle:!!existingCycle},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
+      console.log('[useRitualFlow] Cycle loaded/created:', {
+        cycleId: existingCycle?.id,
+        status: (existingCycle as any)?.status,
+        hasOutput: !!existingCycle?.synthesized_output,
+      });
       setCycle(existingCycle);
       
       // Restore input state if user has draft
@@ -266,9 +274,6 @@ export function useRitualFlow(): UseRitualFlowReturn {
       }
       
     } catch (err) {
-      // #region agent log
-      fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRitualFlow.ts:loadCycleData:error',message:'loadCycleData failed',data:{error:err instanceof Error ? err.message : String(err),coupleId:couple?.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
       console.error('[useRitualFlow] Error loading cycle:', err);
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -353,20 +358,27 @@ export function useRitualFlow(): UseRitualFlowReturn {
   }, []);
   
   const submitInput = useCallback(async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRitualFlow.ts:submitInput:entry',message:'submitInput called',data:{cycleId:cycle?.id,userId:user?.id,selectedCardsLength:selectedCards.length,hasCycle:!!cycle,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H2'})}).catch(()=>{});
-    // #endregion
+    console.log('[useRitualFlow] submitInput called', {
+      cycleId: cycle?.id,
+      userId: user?.id,
+      selectedCardsCount: selectedCards.length,
+      hasCycle: !!cycle,
+      hasUser: !!user,
+    });
     
     // Separate validation checks with specific error messages
     if (!cycle?.id) {
+      console.error('[useRitualFlow] Submit failed: No cycle ID');
       setError('Failed to initialize. Please refresh the page.');
       return;
     }
     if (!user?.id) {
+      console.error('[useRitualFlow] Submit failed: No user ID');
       setError('Session expired. Please sign in again.');
       return;
     }
     if (selectedCards.length < 3) {
+      console.error('[useRitualFlow] Submit failed: Not enough cards selected');
       setError('Please select at least 3 mood cards');
       return;
     }

@@ -95,8 +95,8 @@ export const ContextualFeedback = () => {
     }
   };
 
-  // Don't show on landing or auth pages
-  if (location.pathname === '/' || location.pathname === '/auth') {
+  // Don't show on landing, auth, or flow pages (flow has its own footer)
+  if (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/flow') {
     return null;
   }
 
