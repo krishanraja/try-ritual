@@ -11,7 +11,7 @@
  * @updated 2025-12-24 - Simplified, removed diagnostic logs
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCouple } from '@/contexts/CoupleContext';
 import ritualIcon from '@/assets/ritual-icon.png';
@@ -24,6 +24,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
   const { loading } = useCouple();
   const [showSplash, setShowSplash] = useState(true);
   const [contentReady, setContentReady] = useState(false);
+  const showSplashRef = useRef(true);
 
   // Remove native HTML splash immediately
   useEffect(() => {
@@ -34,18 +35,19 @@ export function SplashScreen({ children }: SplashScreenProps) {
     }
   }, []);
 
-  // Fallback timeout - max 4s to prevent infinite splash
+  // Fallback timeout - max 4s to prevent infinite splash (runs once on mount)
   useEffect(() => {
     const fallbackTimeout = setTimeout(() => {
-      if (showSplash) {
+      if (showSplashRef.current) {
         console.warn('[SplashScreen] Fallback timeout (4s) - forcing reveal');
+        showSplashRef.current = false;
         setContentReady(true);
         setShowSplash(false);
       }
     }, 4000);
 
     return () => clearTimeout(fallbackTimeout);
-  }, [showSplash]);
+  }, []);
 
   // When loading completes, reveal content
   useEffect(() => {
@@ -55,6 +57,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
       
       // Brief delay for React to render, then fade out splash
       const timer = setTimeout(() => {
+        showSplashRef.current = false;
         setShowSplash(false);
       }, 100);
       

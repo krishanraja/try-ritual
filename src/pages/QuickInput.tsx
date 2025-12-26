@@ -131,23 +131,21 @@ export default function QuickInput() {
     }
   }, [weeklyCycleId, user?.id, draftLoaded]);
 
-  // Save draft when cards or desire change
-  const persistDraft = useCallback(() => {
-    if (user?.id && weeklyCycleId && (selectedCards.length > 0 || desire.trim())) {
+  // Debounced draft save on changes (inline to avoid callback instability)
+  useEffect(() => {
+    if (!draftLoaded) return;
+    if (!user?.id || !weeklyCycleId) return;
+    if (selectedCards.length === 0 && !desire.trim()) return;
+    
+    const timer = setTimeout(() => {
       saveDraft(user.id, weeklyCycleId, {
         selectedCards,
         desire,
         step,
       });
-    }
-  }, [user?.id, weeklyCycleId, selectedCards, desire, step]);
-
-  // Debounced draft save on changes
-  useEffect(() => {
-    if (!draftLoaded) return;
-    const timer = setTimeout(persistDraft, 500);
+    }, 500);
     return () => clearTimeout(timer);
-  }, [selectedCards, desire, step, persistDraft, draftLoaded]);
+  }, [selectedCards, desire, step, draftLoaded, user?.id, weeklyCycleId]);
 
   // Restore draft handler
   const handleRestoreDraft = () => {

@@ -195,14 +195,15 @@ export default function Landing() {
     }
   }, [currentCycle?.id, refreshCycle, navigate, currentCycle]);
 
-  // Mark initial load complete after first non-loading view
+  // Mark initial load complete after first non-loading view (initialLoadComplete not in deps - guard prevents re-run)
   useEffect(() => {
     if (currentView !== 'loading' && !initialLoadComplete) {
       // Small delay to let content render before fading in
       const timer = setTimeout(() => setInitialLoadComplete(true), 50);
       return () => clearTimeout(timer);
     }
-  }, [currentView, initialLoadComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentView]);
 
   // Force refresh cycle data when page mounts
   useEffect(() => {

@@ -50,6 +50,7 @@ export const SynthesisAnimation = () => {
   const [cycleId, setCycleId] = useState<string | null>(null);
   const hasNavigatedRef = useRef(false);
   const isCompleteRef = useRef(false);
+  const hasErrorRef = useRef(false);
   const synthesisTriggerRef = useRef(false);
 
   // Get city-relevant rituals or mix
@@ -188,29 +189,30 @@ export const SynthesisAnimation = () => {
     return () => timers.forEach(t => clearTimeout(t));
   }, []);
 
-  // Show refresh button after 30 seconds
+  // Show refresh button after timeout (runs once on mount)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!isComplete && !hasError) {
+      if (!isCompleteRef.current && !hasErrorRef.current) {
         setShowRefreshButton(true);
       }
     }, SHOW_REFRESH_AFTER);
 
     return () => clearTimeout(timer);
-  }, [isComplete, hasError]);
+  }, []);
 
-  // Timeout after max wait time
+  // Timeout after max wait time (runs once on mount)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!isComplete && !hasError) {
+      if (!isCompleteRef.current && !hasErrorRef.current) {
         console.log('[SYNTHESIS] Max wait time exceeded');
+        hasErrorRef.current = true;
         setHasError(true);
         setErrorMessage('Taking longer than expected. Your rituals may still be generating in the background.');
       }
     }, MAX_WAIT_TIME);
 
     return () => clearTimeout(timer);
-  }, [isComplete, hasError]);
+  }, []);
 
   // Rotate through sample rituals
   useEffect(() => {

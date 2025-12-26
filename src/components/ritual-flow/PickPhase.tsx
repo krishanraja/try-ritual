@@ -1,4 +1,4 @@
-/**
+ /**
  * PickPhase Component
  * 
  * Combined ritual ranking + availability selection with progressive disclosure.
@@ -8,7 +8,7 @@
  * @updated 2025-12-26 - Added progressive disclosure, reduced header height
  */
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, DollarSign, Star, Check, AlertCircle, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
@@ -47,6 +47,7 @@ export function PickPhase({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedRitual, setExpandedRitual] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<ActiveSection>('rituals');
+  const hasAutoTransitioned = useRef(false);
   
   // Build lookup for my picks
   const myPicksByRitual = useMemo(() => {

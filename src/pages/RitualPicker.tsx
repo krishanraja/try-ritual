@@ -11,7 +11,7 @@
  * @updated 2025-12-15 - Fixed reliability issues
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCouple } from '@/contexts/CoupleContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,6 +56,7 @@ export default function RitualPicker() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { isPremium, ritualsToShow } = usePremium();
+  const synthesisCheckRef = useRef(false);
 
   // SEO for ritual picker page
   useSEO({
@@ -205,11 +206,13 @@ export default function RitualPicker() {
   }, [user, couple, currentCycle, navigate, refreshCycle]);
 
   // CONSOLIDATED: Realtime subscription moved to CoupleContext
-  // Check for synthesis completion from context changes
+  // Check for synthesis completion from context changes (runs once per generating state)
   useEffect(() => {
     if (step !== 'generating' || !currentCycle?.id) return;
+    if (synthesisCheckRef.current) return; // Already triggered
 
     console.log('[RitualPicker] Checking for synthesis completion from context');
+    synthesisCheckRef.current = true;
 
     // If currentCycle already has rituals, update local state
     const synthesized = currentCycle.synthesized_output as any;
@@ -242,7 +245,8 @@ export default function RitualPicker() {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [step, currentCycle?.id, currentCycle?.synthesized_output]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCycle?.id, currentCycle?.synthesized_output]);
 
   const handleSelectRitual = (ritual: Ritual, rank: number) => {
     // Check if already selected at this exact rank - if so, deselect
