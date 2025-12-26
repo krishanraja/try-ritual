@@ -405,6 +405,16 @@ export function useRitualFlow(): UseRitualFlowReturn {
       
       if (updateError) throw updateError;
       
+      // CRITICAL: Optimistically update local state so UI transitions immediately
+      const now = new Date().toISOString();
+      setCycle(prev => prev ? {
+        ...prev,
+        [updateField]: inputData,
+        [submittedField]: now
+      } as typeof prev : prev);
+      
+      console.log('[useRitualFlow] Submit successful, local state updated');
+      
       // Trigger synthesis if both are now complete
       const updatedCycle = { ...cycle, [updateField]: inputData };
       const bothComplete = updatedCycle.partner_one_input && updatedCycle.partner_two_input;
