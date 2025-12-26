@@ -7,8 +7,8 @@
  * @updated 2025-12-26 - Enhanced with stagger animations and spring physics
  */
 
-import { motion, type Transition } from 'framer-motion';
-import { ReactNode, createContext, useContext } from 'react';
+import { motion, type Transition, type Easing } from 'framer-motion';
+import { ReactNode } from 'react';
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -54,6 +54,9 @@ const pageVariants = {
   },
 };
 
+// Easing curves (typed for Framer Motion)
+const easeOutExpo: Easing = [0.16, 1, 0.3, 1];
+
 // Loading bar animation
 const loadingBarVariants = {
   initial: { scaleX: 0, opacity: 1 },
@@ -61,7 +64,7 @@ const loadingBarVariants = {
     scaleX: 1,
     opacity: 0,
     transition: {
-      scaleX: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+      scaleX: { duration: 0.4, ease: easeOutExpo },
       opacity: { duration: 0.2, delay: 0.35 },
     },
   },
@@ -110,8 +113,12 @@ interface StaggerContainerProps {
   initialDelay?: number;
 }
 
-const staggerContext = createContext({ staggerDelay: 0.05 });
-
+/**
+ * StaggerContainer works through Framer Motion's built-in variant propagation.
+ * When a parent has staggerChildren in its transition and children have matching
+ * variant names ("hidden"/"visible"), Framer Motion automatically coordinates
+ * the staggered animations - no React context needed.
+ */
 export const StaggerContainer = ({ 
   children, 
   className,
@@ -119,24 +126,22 @@ export const StaggerContainer = ({
   initialDelay = 0,
 }: StaggerContainerProps) => {
   return (
-    <staggerContext.Provider value={{ staggerDelay }}>
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        className={className}
-        variants={{
-          hidden: {},
-          visible: {
-            transition: {
-              staggerChildren: staggerDelay,
-              delayChildren: initialDelay,
-            },
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      className={className}
+      variants={{
+        hidden: {},
+        visible: {
+          transition: {
+            staggerChildren: staggerDelay,
+            delayChildren: initialDelay,
           },
-        }}
-      >
-        {children}
-      </motion.div>
-    </staggerContext.Provider>
+        },
+      }}
+    >
+      {children}
+    </motion.div>
   );
 };
 
