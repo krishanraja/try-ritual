@@ -710,6 +710,9 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
           schema: 'public', 
           table: 'couples' 
         }, async (payload: any) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CoupleContext.tsx:realtimeCallback',message:'Realtime couples change received',data:{eventType:payload.eventType,newPartnerOne:payload.new?.partner_one,newPartnerTwo:payload.new?.partner_two,oldPartnerTwo:payload.old?.partner_two,userId:user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{});
+          // #endregion
           console.log('[REALTIME] === Couples change detected ===');
           console.log('[REALTIME] Event type:', payload.eventType);
           
@@ -720,6 +723,9 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
             payload.old?.partner_one === user.id ||
             payload.old?.partner_two === user.id;
           
+          // #region agent log
+          fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CoupleContext.tsx:isRelevantCheck',message:'isRelevant calculated',data:{isRelevant,newPartnerOne:payload.new?.partner_one,newPartnerTwo:payload.new?.partner_two,userId:user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H4'})}).catch(()=>{});
+          // #endregion
           if (!isRelevant) {
             console.log('[REALTIME] Ignoring - not relevant to this user');
             return;
@@ -732,10 +738,16 @@ export const CoupleProvider = ({ children }: { children: ReactNode }) => {
             !payload.old?.partner_two;
           
           if (partnerJoined) {
+            // #region agent log
+            fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CoupleContext.tsx:partnerJoined',message:'Partner joined branch executed',data:{newPartnerTwo:payload.new.partner_two,userId:user.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H4'})}).catch(()=>{});
+            // #endregion
             console.log('[REALTIME] 🎉 Partner joined! New partner_two:', payload.new.partner_two);
             // Single refresh is sufficient - realtime ensures consistency
             await fetchCouple(user.id);
-            navigate('/input');
+            // #region agent log
+            fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CoupleContext.tsx:afterNavigate',message:'Navigation to /flow called',data:{navigatingTo:'/flow'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H5'})}).catch(()=>{});
+            // #endregion
+            navigate('/flow');
           } else if (payload.eventType === 'UPDATE') {
             console.log('[REALTIME] Couple updated, refreshing...');
             await fetchCouple(user.id);

@@ -184,6 +184,9 @@ export function useRitualFlow(): UseRitualFlowReturn {
   }, [user?.id, partnerId]);
   
   const loadCycleData = useCallback(async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRitualFlow.ts:loadCycleData:entry',message:'loadCycleData called',data:{coupleId:couple?.id,preferredCity:couple?.preferred_city,userId:user?.id,hasCouple:!!couple,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     if (!couple?.id || !user?.id) return;
     
     try {
@@ -209,13 +212,14 @@ export function useRitualFlow(): UseRitualFlowReturn {
       
       // Create if doesn't exist
       if (!existingCycle) {
+        // Note: Don't include 'status' column - migration may not be run yet
+        // The status column has a default value in DB, so it will be set automatically
         const { data: newCycle, error: createError } = await supabase
           .from('weekly_cycles')
           .insert({
             couple_id: couple.id,
-            week_start_date: weekStart,
-            status: 'awaiting_both_input'
-          } as any)
+            week_start_date: weekStart
+          })
           .select()
           .single();
         
@@ -237,6 +241,9 @@ export function useRitualFlow(): UseRitualFlowReturn {
         }
       }
       
+      // #region agent log
+      fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRitualFlow.ts:loadCycleData:afterFetch',message:'Cycle fetch/create result',data:{cycleId:existingCycle?.id,cycleStatus:existingCycle?.status,hasCycle:!!existingCycle},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       setCycle(existingCycle);
       
       // Restore input state if user has draft
@@ -259,6 +266,9 @@ export function useRitualFlow(): UseRitualFlowReturn {
       }
       
     } catch (err) {
+      // #region agent log
+      fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRitualFlow.ts:loadCycleData:error',message:'loadCycleData failed',data:{error:err instanceof Error ? err.message : String(err),coupleId:couple?.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       console.error('[useRitualFlow] Error loading cycle:', err);
       setError(err instanceof Error ? err.message : 'Failed to load');
     } finally {
@@ -343,7 +353,20 @@ export function useRitualFlow(): UseRitualFlowReturn {
   }, []);
   
   const submitInput = useCallback(async () => {
-    if (!cycle?.id || !user?.id || selectedCards.length < 3) {
+    // #region agent log
+    fetch('http://127.0.0.1:7250/ingest/1e40f760-cc38-4a6c-aac8-84efd2c161d0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useRitualFlow.ts:submitInput:entry',message:'submitInput called',data:{cycleId:cycle?.id,userId:user?.id,selectedCardsLength:selectedCards.length,hasCycle:!!cycle,hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H2'})}).catch(()=>{});
+    // #endregion
+    
+    // Separate validation checks with specific error messages
+    if (!cycle?.id) {
+      setError('Failed to initialize. Please refresh the page.');
+      return;
+    }
+    if (!user?.id) {
+      setError('Session expired. Please sign in again.');
+      return;
+    }
+    if (selectedCards.length < 3) {
       setError('Please select at least 3 mood cards');
       return;
     }
