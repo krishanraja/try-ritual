@@ -7,7 +7,6 @@
  */
 
 import { Suspense, lazy, memo } from "react";
-import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
@@ -171,7 +170,6 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
         <BrowserRouter>
           <CoupleProvider>
             <AnalyticsProvider>

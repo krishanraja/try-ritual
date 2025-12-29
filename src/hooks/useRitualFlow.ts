@@ -7,7 +7,7 @@
  * @created 2025-12-26
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCouple } from '@/contexts/CoupleContext';
 import {
@@ -26,6 +26,7 @@ import {
   dayOffsetToDate,
   getSlotTimeRange,
 } from '@/types/database';
+import type { City } from '@/utils/timezoneUtils';
 
 interface UseRitualFlowReturn {
   // Core state
@@ -82,6 +83,12 @@ export function useRitualFlow(): UseRitualFlowReturn {
   // Input phase state
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [desire, setDesireState] = useState('');
+  
+  // FIX: Capture the city at initial load to prevent city changes mid-session
+  // from causing the hook to fetch a different week's cycle due to timezone differences.
+  // This prevents the bug where changing cities navigates user to the "confirmed" phase
+  // because a different city's timezone produces a different week start date.
+  const initialCityRef = useRef<City | null>(null);
   
   // Pick phase state
   const [myPicks, setMyPicks] = useState<RitualPreference[]>([]);
@@ -188,6 +195,7 @@ export function useRitualFlow(): UseRitualFlowReturn {
       coupleId: couple?.id,
       userId: user?.id,
       preferredCity: couple?.preferred_city,
+      initialCity: initialCityRef.current,
     });
     
     if (!couple?.id || !user?.id) {
@@ -201,7 +209,14 @@ export function useRitualFlow(): UseRitualFlowReturn {
       
       // Get or create current week's cycle
       const { getWeekStartDate } = await import('@/utils/timezoneUtils');
-      const preferredCity = (couple.preferred_city || 'New York') as 'London' | 'Sydney' | 'Melbourne' | 'New York';
+      
+      // FIX: Use captured initial city to prevent city changes from switching cycles mid-session.
+      // Only capture the city once on first load - subsequent city changes won't affect week calculation.
+      if (!initialCityRef.current) {
+        initialCityRef.current = (couple.preferred_city || 'New York') as City;
+        console.log('[useRitualFlow] Captured initial city:', initialCityRef.current);
+      }
+      const preferredCity = initialCityRef.current;
       const weekStart = getWeekStartDate(preferredCity);
       
       // Try to get existing cycle
@@ -279,7 +294,10 @@ export function useRitualFlow(): UseRitualFlowReturn {
     } finally {
       setLoading(false);
     }
-  }, [couple?.id, couple?.preferred_city, user?.id, isPartnerOne, loadPicks, loadAvailability]);
+  // NOTE: couple?.preferred_city intentionally excluded - we use initialCityRef to prevent
+  // city changes from causing a refetch with a different week start date (timezone bug fix)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couple?.id, user?.id, isPartnerOne, loadPicks, loadAvailability]);
 
   // ============================================================================
   // Realtime Subscription

@@ -1,22 +1,21 @@
 /**
  * useErrorHandler Hook
  * 
- * Provides consistent error handling with user-friendly messages and retry capabilities
+ * Provides consistent error handling with user-friendly messages and retry capabilities.
+ * Note: Toast notifications have been removed from this app. Errors are logged to console
+ * and can be handled via the onError callback for inline UI feedback.
  */
 
 import { useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError, isRetryableError, retryWithBackoff, logError } from '@/utils/errorHandling';
 
 interface UseErrorHandlerOptions {
-  showToast?: boolean;
   context?: string;
-  onError?: (error: unknown) => void;
+  onError?: (error: unknown, message: string) => void;
 }
 
 export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
-  const { showToast = true, context, onError } = options;
-  const { toast } = useToast();
+  const { context, onError } = options;
 
   const handleError = useCallback(
     (error: unknown, customMessage?: string) => {
@@ -26,19 +25,10 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
       // Get user-friendly message
       const message = customMessage || getUserFriendlyError(error);
 
-      // Show toast if enabled
-      if (showToast) {
-        toast({
-          title: 'Error',
-          description: message,
-          variant: 'destructive',
-        });
-      }
-
-      // Call custom error handler if provided
-      onError?.(error);
+      // Call custom error handler if provided (for inline UI feedback)
+      onError?.(error, message);
     },
-    [showToast, context, onError, toast]
+    [context, onError]
   );
 
   const handleAsyncError = useCallback(

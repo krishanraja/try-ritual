@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Bug, Lightbulb, Heart, Meh, Frown, Star } from 'lucide-react';
+import { MessageCircle, X, Send, Bug, Lightbulb, Heart, Meh, Frown, Star, CheckCircle, AlertCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCouple } from '@/contexts/CoupleContext';
 
@@ -28,9 +27,9 @@ export const ContextualFeedback = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasShownThisSession, setHasShownThisSession] = useState(false);
   const [showNps, setShowNps] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   
   const location = useLocation();
-  const { toast } = useToast();
   const { user, couple } = useCouple();
 
   // Check if we should show NPS prompt (once per 7 days, only for active couples after 5 min)
@@ -54,7 +53,8 @@ export const ContextualFeedback = () => {
 
   const handleSubmit = async () => {
     if (!sentiment && !message && !npsScore) {
-      toast({ title: 'Please provide feedback', variant: 'destructive' });
+      setSubmitStatus('error');
+      setTimeout(() => setSubmitStatus('idle'), 2000);
       return;
     }
 
@@ -81,15 +81,20 @@ export const ContextualFeedback = () => {
         localStorage.setItem('last_nps_prompt', Date.now().toString());
       }
 
-      toast({ title: 'Thanks for your feedback!' });
-      setIsOpen(false);
-      setShowNps(false);
-      setSentiment(null);
-      setMessage('');
-      setNpsScore(null);
+      setSubmitStatus('success');
+      // Auto-close after showing success
+      setTimeout(() => {
+        setIsOpen(false);
+        setShowNps(false);
+        setSentiment(null);
+        setMessage('');
+        setNpsScore(null);
+        setSubmitStatus('idle');
+      }, 1500);
     } catch (error) {
       console.error('Feedback error:', error);
-      toast({ title: 'Failed to submit feedback', variant: 'destructive' });
+      setSubmitStatus('error');
+      setTimeout(() => setSubmitStatus('idle'), 2000);
     } finally {
       setIsSubmitting(false);
     }
@@ -242,12 +247,29 @@ export const ContextualFeedback = () => {
               )}
 
               <Button
-                className="w-full mt-4"
+                className={`w-full mt-4 ${
+                  submitStatus === 'success' ? 'bg-emerald-500 hover:bg-emerald-600' :
+                  submitStatus === 'error' ? 'bg-destructive hover:bg-destructive/90' : ''
+                }`}
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || submitStatus === 'success'}
               >
-                <Send className="w-4 h-4 mr-2" />
-                {isSubmitting ? 'Sending...' : 'Send Feedback'}
+                {submitStatus === 'success' ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Thanks!
+                  </>
+                ) : submitStatus === 'error' ? (
+                  <>
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Please provide feedback
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    {isSubmitting ? 'Sending...' : 'Send Feedback'}
+                  </>
+                )}
               </Button>
             </motion.div>
           </motion.div>
