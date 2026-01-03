@@ -224,18 +224,31 @@
       }
     </style>
     
-    <!-- Native splash screen - shows instantly before React loads -->
-    <!-- React's SplashScreen component takes over and coordinates hide timing -->
+    <!-- 
+      Native splash screen - shows instantly before React loads
+      
+      ARCHITECTURE (2026-01-03):
+      This is a MINIMAL splash that matches the React SplashScreen visually.
+      It shows during bundle download, then React's SplashScreen takes over
+      via useLayoutEffect (synchronous removal before paint).
+      
+      Key: Tagline and background match React splash for seamless transition.
+    -->
     <div id="splash" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg, hsla(270, 40%, 92%, 0.95), hsla(220, 20%, 97%, 0.98));">
       <!-- Logo with spinning ring -->
       <div style="position:relative;display:flex;align-items:center;justify-content:center;">
         <div class="splash-spinner"></div>
         <img src="/ritual-logo-full.png" alt="Ritual" style="position:relative;max-height:80px;width:auto;" fetchpriority="high">
       </div>
-      <!-- Tagline -->
+      <!-- Tagline - MUST match React SplashScreen exactly -->
       <p style="position:relative;margin-top:40px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:0.02em;background:linear-gradient(135deg, hsl(175, 55%, 35%), hsl(270, 55%, 55%));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Weekly moments, lasting connection</p>
-      <!-- Loading indicator -->
-      <p class="splash-loading" style="margin-top:24px;">Loading your experience...</p>
+      <!-- Loading indicator - simple dots, matches React splash -->
+      <div class="splash-loading" style="margin-top:32px;display:flex;align-items:center;gap:8px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:hsl(175, 50%, 42%);opacity:0.5;animation:splash-pulse 1s ease-in-out infinite;"></span>
+        <span style="width:6px;height:6px;border-radius:50%;background:hsl(175, 50%, 42%);opacity:0.5;animation:splash-pulse 1s ease-in-out 0.15s infinite;"></span>
+        <span style="width:6px;height:6px;border-radius:50%;background:hsl(175, 50%, 42%);opacity:0.5;animation:splash-pulse 1s ease-in-out 0.3s infinite;"></span>
+        <span style="font-size:12px;font-weight:500;color:hsl(220, 15%, 50%);margin-left:4px;">Loading</span>
+      </div>
     </div>
     
     <div id="root"></div>

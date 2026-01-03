@@ -2,21 +2,28 @@
  * SplashScreen Component
  * 
  * Premium branded loading experience with refined animations.
- * Follows Google UX principles:
- * - One loading state, one transition
- * - Content pre-renders invisibly underneath
- * - Atomic reveal with smooth crossfade
  * 
- * CRITICAL FIX (2026-01-03):
- * - Added visible progress feedback at 3s, 5s, 8s
- * - Shows user-facing messages when loading takes long
- * - Guaranteed dismissal at 10s max
+ * ARCHITECTURE FIX (2026-01-03):
+ * PROBLEM: Two loading screens were shown sequentially:
+ * 1. Native splash (index.html) - "Loading your experience..."
+ * 2. React splash - "Weekly moments, lasting connection"
+ * 
+ * FIX: Use useLayoutEffect to hide native splash BEFORE browser paint.
+ * This is synchronous with React's render cycle, so there's no gap.
+ * Native splash shows during bundle download, then React splash takes over
+ * seamlessly (both have same visual appearance).
+ * 
+ * Progressive feedback:
+ * - 3s: "Taking a moment..."
+ * - 5s: "Having trouble?" with Refresh/Continue buttons
+ * - 8s: Error state styling
+ * - 10s: Force dismiss no matter what
  * 
  * @created 2025-12-13
- * @updated 2026-01-03 - Progressive loading feedback
+ * @updated 2026-01-03 - Fixed double splash screen issue
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCouple } from '@/contexts/CoupleContext';
 import ritualIcon from '@/assets/ritual-icon.png';
@@ -42,11 +49,16 @@ export function SplashScreen({ children }: SplashScreenProps) {
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
   const [isError, setIsError] = useState(false);
 
-  // Remove native HTML splash immediately
-  useEffect(() => {
+  // ============================================================================
+  // CRITICAL: Hide native splash SYNCHRONOUSLY before browser paint
+  // useLayoutEffect runs after DOM mutation but BEFORE paint
+  // This prevents any visual flash between native and React splash
+  // ============================================================================
+  useLayoutEffect(() => {
     const nativeSplash = document.getElementById('splash');
     if (nativeSplash) {
-      nativeSplash.style.display = 'none';
+      // Remove immediately - no transition, no delay
+      // React splash is already rendered at this point
       nativeSplash.remove();
     }
   }, []);
@@ -136,17 +148,20 @@ export function SplashScreen({ children }: SplashScreenProps) {
 
   return (
     <>
-      {/* Premium branded splash screen */}
+      {/* Premium branded splash screen - THE ONLY loading screen users see */}
       <AnimatePresence>
         {showSplash && (
           <motion.div
             key="splash"
+            // Start with opacity 1 - NO fade in animation
+            // This ensures seamless transition from native splash
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
             style={{
-              background: 'linear-gradient(180deg, hsl(270 40% 94%), hsl(220 20% 97%))'
+              // Match native splash background exactly
+              background: 'linear-gradient(180deg, hsla(270, 40%, 92%, 0.95), hsla(220, 20%, 97%, 0.98))'
             }}
           >
             {/* Ambient gradient orbs */}
@@ -221,39 +236,29 @@ export function SplashScreen({ children }: SplashScreenProps) {
               </motion.div>
             </div>
             
-            {/* Logo image */}
-            <motion.img 
+            {/* Logo image - NO fade animation, appears instantly */}
+            <img 
               src="/ritual-logo-full.png" 
               alt="Ritual" 
               className="relative max-h-14 w-auto"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             />
             
-            {/* Tagline */}
-            <motion.p 
+            {/* Tagline - matches native splash exactly */}
+            <p 
               className="relative mt-8 text-sm font-semibold tracking-wide"
               style={{
-                background: 'linear-gradient(135deg, hsl(174 55% 35%), hsl(270 55% 50%))',
+                fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+                background: 'linear-gradient(135deg, hsl(175, 55%, 35%), hsl(270, 55%, 55%))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
               }}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
               Weekly moments, lasting connection
-            </motion.p>
+            </p>
             
             {/* Loading indicator with dynamic message */}
-            <motion.div 
-              className="relative mt-8 flex flex-col items-center gap-3"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-            >
+            <div className="relative mt-8 flex flex-col items-center gap-3">
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
@@ -307,7 +312,7 @@ export function SplashScreen({ children }: SplashScreenProps) {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

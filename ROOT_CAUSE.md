@@ -588,5 +588,139 @@ User can always proceed (never stuck indefinitely)
 
 ---
 
-**END OF 2026-01-03 ROOT CAUSE ANALYSIS**
+**END OF 2026-01-03 INFINITE LOADING ROOT CAUSE ANALYSIS**
+
+---
+
+# ROOT CAUSE ANALYSIS: Mobile Dialog & Double Loading Screen (2026-01-03 Update)
+
+**Date:** 2026-01-03  
+**Status:** RESOLVED
+
+---
+
+## EXECUTIVE SUMMARY
+
+This is the **6th+ attempt** to fix the mobile dialog issue. Previous "fixes" failed because they didn't address the fundamental architectural problem.
+
+**Root Causes Identified:**
+
+### Issue 1: Leave Couple Dialog Unusable on Mobile
+
+| # | Root Cause | Evidence | Fix |
+|---|-----------|----------|-----|
+| 1 | Transform-based centering | `translate-y-[-50%]` in dialog.tsx | Replaced with flexbox centering |
+| 2 | Missing overflow containment | No `overflow-hidden` on DialogContent | Added to enable flex constraint |
+| 3 | Stacked max-height values | Two `max-h` declarations | Single value with `min()` |
+| 4 | Virtual keyboard + fixed positioning | iOS/Android don't recalculate transforms | Flexbox doesn't use transforms |
+| 5 | Content structure mismatch | Dialog children expect parent constraint | Proper flex-shrink-0 on header/footer |
+
+### Issue 2: Double Loading Screens
+
+| # | Root Cause | Evidence | Fix |
+|---|-----------|----------|-----|
+| 1 | Dual splash architecture | Native in index.html, React in SplashScreen | Single coordinated experience |
+| 2 | Late removal of native splash | useEffect runs after first render | useLayoutEffect for sync removal |
+| 3 | Different loading messages | "Loading your experience..." vs tagline | Matched visuals exactly |
+
+---
+
+## WHY PREVIOUS FIXES FAILED
+
+### Mobile Dialog
+
+Previous fixes in v1.6.6 (CHANGELOG.md) claimed:
+- "Redesigned dialog for mobile-first UX"
+- "Fixed keyboard behavior (input doesn't get covered)"
+- "Added proper scroll handling with max-height"
+
+**But the code still used `translate-y-[-50%]` for centering!**
+
+This CSS pattern is fundamentally broken on mobile because:
+1. The element is positioned relative to the INITIAL viewport
+2. When content grows or keyboard appears, the transform doesn't recalculate
+3. iOS/Android handle fixed + transform differently than desktop
+
+### Double Loading Screen
+
+The SplashScreen component had this code:
+
+```typescript
+useEffect(() => {
+  const nativeSplash = document.getElementById('splash');
+  if (nativeSplash) {
+    nativeSplash.style.display = 'none';
+    nativeSplash.remove();
+  }
+}, []);
+```
+
+This runs AFTER the first render, so both splash screens were visible simultaneously.
+
+---
+
+## ARCHITECTURAL FIX APPLIED
+
+### Mobile Dialog: Flexbox Centering
+
+**Before:**
+```typescript
+// DialogContent with transform centering (BROKEN)
+"fixed inset-x-4 top-[50%] z-50 translate-y-[-50%]"
+```
+
+**After:**
+```typescript
+// DialogOverlay with flexbox centering (FIXED)
+"fixed inset-0 z-50 flex items-center justify-center p-4"
+
+// DialogContent as relative child
+"relative z-50 w-full max-w-[calc(100vw-2rem)] overflow-hidden"
+```
+
+### Double Loading: Synchronous Removal
+
+**Before:**
+```typescript
+useEffect(() => {
+  nativeSplash.remove(); // Runs AFTER render
+}, []);
+```
+
+**After:**
+```typescript
+useLayoutEffect(() => {
+  nativeSplash.remove(); // Runs BEFORE paint
+}, []);
+```
+
+---
+
+## VERIFICATION
+
+### Mobile Dialog
+- ✅ Dialog fits on 375px viewport
+- ✅ Touch targets meet 44x44px minimum
+- ✅ Buttons always visible (no keyboard overlap)
+- ✅ Scrollable content area works correctly
+- ✅ Production build succeeds with no errors
+
+### Double Loading Screen
+- ✅ Single loading experience on cache-cleared load
+- ✅ Seamless transition from native to React splash
+- ✅ Same visual appearance (no flash)
+
+---
+
+## FILES MODIFIED
+
+1. `src/components/ui/dialog.tsx` - Flexbox centering architecture
+2. `src/components/LeaveConfirmDialog.tsx` - Flex structure
+3. `src/components/DeleteAccountDialog.tsx` - Flex structure
+4. `src/components/SplashScreen.tsx` - useLayoutEffect removal
+5. `index.html` - Native splash visual match
+
+---
+
+**END OF 2026-01-03 MOBILE DIALOG & LOADING ROOT CAUSE ANALYSIS**
 

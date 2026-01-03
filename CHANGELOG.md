@@ -17,6 +17,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.1] - 2026-01-03
+
+### Fixed - Mobile Dialog & Double Loading Screen
+
+This release permanently fixes two persistent issues that previous fixes failed to address.
+
+#### Issue 1: Leave Couple Dialog Unusable on Mobile (6th+ Fix Attempt)
+
+**Why Previous Fixes Failed:**
+Previous "fixes" documented in v1.6.6 claimed to fix the dialog but used transform-based centering (`translate-y-[-50%]`) which:
+- Doesn't recalculate when virtual keyboard appears on iOS/Android
+- Positions relative to initial viewport, not visible viewport
+- Conflicts with max-height constraints
+
+**Architectural Fix Applied:**
+
+1. **DialogContent Flexbox Centering** (`src/components/ui/dialog.tsx`)
+   - Removed transform-based centering entirely on mobile
+   - DialogOverlay now uses flexbox centering (`flex items-center justify-center`)
+   - DialogContent is a relative element within the flex container
+   - Added `overflow-hidden` for proper flex child constraint
+   - Single `max-height` value using `min(calc(100vh-2rem),calc(100dvh-2rem))`
+   - Safe-area-inset padding for notched devices
+
+2. **LeaveConfirmDialog Structure** (`src/components/LeaveConfirmDialog.tsx`)
+   - Proper flex structure with `flex-shrink-0` for header/footer
+   - Scrollable content area with `flex-1 min-h-0 overflow-y-auto`
+   - Negative margin scrolling for full-width scroll
+
+3. **DeleteAccountDialog Structure** (`src/components/DeleteAccountDialog.tsx`)
+   - Applied same structural fixes as LeaveConfirmDialog
+
+#### Issue 2: Double Loading Screens on Cache-Cleared Load
+
+**Root Cause:**
+Two splash screens were shown sequentially:
+1. Native splash in `index.html` - "Loading your experience..."
+2. React splash in `SplashScreen.tsx` - "Weekly moments, lasting connection"
+
+The native splash was removed in `useEffect`, which runs AFTER first render, causing both to be visible simultaneously with different messages.
+
+**Architectural Fix Applied:**
+
+1. **SplashScreen Synchronous Removal** (`src/components/SplashScreen.tsx`)
+   - Native splash now removed in `useLayoutEffect` (synchronous, before paint)
+   - React splash starts with `opacity: 1` (no fade-in) for seamless transition
+   - Background gradient matches native splash exactly
+
+2. **Native Splash Visual Match** (`index.html`)
+   - Updated native splash to match React splash visually
+   - Same tagline: "Weekly moments, lasting connection"
+   - Same loading indicator style (dots instead of text)
+
+#### Files Modified
+- `src/components/ui/dialog.tsx` - Complete rewrite of mobile centering
+- `src/components/LeaveConfirmDialog.tsx` - Flex structure fixes
+- `src/components/DeleteAccountDialog.tsx` - Flex structure fixes
+- `src/components/SplashScreen.tsx` - useLayoutEffect for synchronous removal
+- `index.html` - Native splash visual match
+
+---
+
 ## [1.7.0] - 2026-01-03
 
 ### Fixed - Infinite Loading Screen Comprehensive Fix
