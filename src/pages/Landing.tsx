@@ -489,9 +489,9 @@ export default function Landing() {
       <div className="h-full flex flex-col relative">
         <Background videoLoaded={videoLoaded} setVideoLoaded={setVideoLoaded} isMobile={isMobile} />
         
-        <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 relative z-10 overflow-y-auto min-h-0">
           <motion.div 
-            className="text-center space-y-6 max-w-sm"
+            className="text-center space-y-6 max-w-sm w-full"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -571,8 +571,8 @@ export default function Landing() {
       <div className="h-full flex flex-col relative">
         <Background videoLoaded={videoLoaded} setVideoLoaded={setVideoLoaded} isMobile={isMobile} />
         
-        <div className="flex-1 flex flex-col justify-center px-4 relative z-10">
-          <div className="space-y-4 max-w-sm mx-auto text-center">
+        <div className="flex-1 flex flex-col justify-center px-4 py-6 relative z-10 overflow-y-auto min-h-0">
+          <div className="space-y-4 max-w-sm mx-auto text-center w-full">
             <RitualLogo size="md" variant="full" className="mx-auto" />
             
             <div className="w-12 h-12 mx-auto rounded-full bg-gradient-ritual flex items-center justify-center">

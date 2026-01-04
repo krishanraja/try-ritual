@@ -596,20 +596,50 @@ export function useRitualFlow(): UseRitualFlowReturn {
         updatedData: data,
       });
       
+      // Determine the new status based on partner completion
+      const updatedCycle = { ...cycle, [updateField]: inputData };
+      const bothComplete = updatedCycle.partner_one_input && updatedCycle.partner_two_input;
+      
+      // CRITICAL FIX: Compute and update status so phase transition happens
+      let newStatus: CycleStatus;
+      if (bothComplete) {
+        newStatus = 'generating';
+      } else if (isPartnerOne) {
+        newStatus = 'awaiting_partner_two';
+      } else {
+        newStatus = 'awaiting_partner_one';
+      }
+      
+      console.log('[useRitualFlow] Updating status to:', newStatus, {
+        bothComplete,
+        isPartnerOne,
+        hadPartnerOneInput: !!cycle.partner_one_input,
+        hadPartnerTwoInput: !!cycle.partner_two_input,
+      });
+      
+      // Update status in database
+      const { error: statusError } = await supabase
+        .from('weekly_cycles')
+        .update({ status: newStatus })
+        .eq('id', cycle.id);
+      
+      if (statusError) {
+        console.warn('[useRitualFlow] ⚠️ Status update failed (non-blocking):', statusError);
+        // Continue anyway - the local state update is more important for UX
+      }
+      
       // CRITICAL: Optimistically update local state so UI transitions immediately
       const now = new Date().toISOString();
       setCycle(prev => prev ? {
         ...prev,
         [updateField]: inputData,
-        [submittedField]: now
+        [submittedField]: now,
+        status: newStatus
       } as typeof prev : prev);
       
-      console.log('[useRitualFlow] ✅ Local state updated optimistically');
+      console.log('[useRitualFlow] ✅ Local state updated with status:', newStatus);
       
       // Trigger synthesis if both are now complete
-      const updatedCycle = { ...cycle, [updateField]: inputData };
-      const bothComplete = updatedCycle.partner_one_input && updatedCycle.partner_two_input;
-      
       if (bothComplete) {
         console.log('[useRitualFlow] Both partners complete, triggering synthesis');
         // Fire and forget - trigger will handle idempotency
@@ -623,6 +653,7 @@ export function useRitualFlow(): UseRitualFlowReturn {
       const totalDuration = performance.now() - submitStartTime;
       console.log('[useRitualFlow] ===== submitInput completed successfully =====', {
         totalDuration: `${totalDuration.toFixed(2)}ms`,
+        newStatus,
       });
       
     } catch (err) {

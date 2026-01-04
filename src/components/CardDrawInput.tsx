@@ -217,7 +217,7 @@ function MoodCardButton({ card, isSelected, isDisabled, onClick, delay }: MoodCa
       onClick={onClick}
       disabled={isDisabled}
       className={`
-        relative p-4 rounded-2xl border-2 transition-all duration-200
+        relative p-4 rounded-2xl border-2 overflow-hidden transition-all duration-200
         ${isSelected
           ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
           : isDisabled
@@ -226,11 +226,11 @@ function MoodCardButton({ card, isSelected, isDisabled, onClick, delay }: MoodCa
         }
       `}
     >
-      {/* Gradient background when selected */}
+      {/* Gradient background when selected - inset accounts for border width */}
       {isSelected && (
         <motion.div
           layoutId={`card-bg-${card.id}`}
-          className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${card.gradient} opacity-10`}
+          className={`absolute inset-0 rounded-xl bg-gradient-to-br ${card.gradient} opacity-20`}
           initial={false}
         />
       )}
