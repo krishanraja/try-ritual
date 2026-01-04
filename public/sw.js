@@ -1,7 +1,8 @@
 // Service Worker for Ritual PWA - Fixed Caching Strategy
 // CRITICAL FIX: Network-first for ALL API calls to prevent stale data issues
 // Version includes timestamp to force cache bust on each deploy
-const CACHE_VERSION = 'v3-' + '20260103'; // Update on each deploy
+const CACHE_VERSION = 'v4-' + '20260104'; // Update on each deploy
+const BUILD_ID = '2026-01-04-multiplayer-fix'; // Semantic build ID for version checking
 const CRITICAL_CACHE = 'ritual-critical-' + CACHE_VERSION;
 const DYNAMIC_CACHE = 'ritual-dynamic-' + CACHE_VERSION;
 
@@ -212,7 +213,7 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-// Message handler for manual cache clearing
+// Message handler for cache operations and version checking
 self.addEventListener('message', function(event) {
   if (event.data && event.data.type === 'CLEAR_CACHE') {
     console.log('[SW] Received clear cache request');
@@ -231,5 +232,27 @@ self.addEventListener('message', function(event) {
         }
       })
     );
+  }
+  
+  // Version check - app can request current SW version
+  if (event.data && event.data.type === 'GET_VERSION') {
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage({ 
+        version: CACHE_VERSION,
+        buildId: BUILD_ID
+      });
+    }
+  }
+  
+  // Force update - skip waiting and refresh all clients
+  if (event.data && event.data.type === 'FORCE_UPDATE') {
+    console.log('[SW] Force update requested');
+    self.skipWaiting();
+    // Notify all clients to reload
+    self.clients.matchAll({ type: 'window' }).then(function(clients) {
+      clients.forEach(function(client) {
+        client.postMessage({ type: 'RELOAD_REQUIRED', buildId: BUILD_ID });
+      });
+    });
   }
 });

@@ -36,7 +36,8 @@ import type { City } from '@/utils/timezoneUtils';
 
 // Synthesis timeout configuration
 const SYNTHESIS_TIMEOUT_MS = 30000; // 30 seconds before showing error
-const SYNTHESIS_POLL_INTERVAL_MS = 5000; // Poll every 5 seconds as fallback
+const SYNTHESIS_POLL_INTERVAL_MS = 3000; // Poll every 3 seconds as fallback (was 5s)
+const UNIVERSAL_SYNC_INTERVAL_MS = 8000; // Universal sync every 8 seconds to catch any state drift
 
 interface UseRitualFlowReturn {
   // Core state
@@ -67,6 +68,12 @@ interface UseRitualFlowReturn {
   synthesisTimedOut: boolean;
   isRetrying: boolean;
   
+  // Overlapping time slots for MatchPhase
+  overlappingSlots: Array<{ dayOffset: number; timeSlot: TimeSlot }>;
+  
+  // Slot picker rotation
+  isSlotPicker: boolean;
+  
   // Actions - Input phase
   selectCard: (cardId: string) => void;
   setDesire: (desire: string) => void;
@@ -84,6 +91,7 @@ interface UseRitualFlowReturn {
   // Actions - General
   retryGeneration: () => Promise<void>;
   refresh: () => Promise<void>;
+  forceSync: () => Promise<void>;
 }
 
 export function useRitualFlow(): UseRitualFlowReturn {
@@ -120,6 +128,28 @@ export function useRitualFlow(): UseRitualFlowReturn {
   const isPartnerOne = couple?.partner_one === user?.id;
   const partnerId = isPartnerOne ? couple?.partner_two : couple?.partner_one;
   const partnerName = partnerProfile?.name || 'your partner';
+  
+  // Slot picker rotation logic:
+  // If no one picked last time, partner_one goes first
+  // Otherwise, alternate from whoever picked last
+  const lastPickerId = (couple as any)?.last_slot_picker_id;
+  const isSlotPicker = useMemo(() => {
+    if (!user?.id || !couple) return true; // Default to true if we can't determine
+    
+    // Check if this cycle already has a designated picker
+    const cyclePickerId = (cycle as any)?.slot_picker_id;
+    if (cyclePickerId) {
+      return cyclePickerId === user.id;
+    }
+    
+    // If no one picked last, partner_one gets first pick
+    if (!lastPickerId) {
+      return isPartnerOne;
+    }
+    
+    // Otherwise, the other partner picks this time
+    return lastPickerId !== user.id;
+  }, [user?.id, couple, lastPickerId, isPartnerOne, cycle]);
   
   // Get status from cycle, with fallback
   const status: CycleStatus = (cycle as any)?.status || 'awaiting_both_input';
@@ -488,6 +518,80 @@ export function useRitualFlow(): UseRitualFlowReturn {
       clearInterval(timeoutInterval);
     };
   }, [status, cycle?.partner_one_input, cycle?.partner_two_input, cycle?.synthesized_output, synthesisTimedOut]);
+
+  // ============================================================================
+  // Universal Sync - Catches any state drift between partners
+  // ============================================================================
+  
+  // This runs in ALL phases to ensure both partners stay in sync
+  // Critical for fixing the "both partners hang" issue
+  useEffect(() => {
+    if (!cycle?.id) return;
+    
+    console.log('[useRitualFlow] Starting universal sync polling');
+    
+    const syncCycleState = async () => {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('weekly_cycles')
+          .select('*')
+          .eq('id', cycle.id)
+          .single();
+        
+        if (fetchError) {
+          console.warn('[useRitualFlow] Universal sync error:', fetchError);
+          return;
+        }
+        
+        if (!data) return;
+        
+        // Check if server state differs from local state
+        const serverStatus = (data as any).status;
+        const localStatus = status;
+        const serverHasOutput = !!data.synthesized_output;
+        const localHasOutput = !!cycle.synthesized_output;
+        const serverP1Input = !!data.partner_one_input;
+        const serverP2Input = !!data.partner_two_input;
+        const localP1Input = !!cycle.partner_one_input;
+        const localP2Input = !!cycle.partner_two_input;
+        
+        // Detect state drift
+        const hasDrift = 
+          serverStatus !== localStatus ||
+          serverHasOutput !== localHasOutput ||
+          serverP1Input !== localP1Input ||
+          serverP2Input !== localP2Input;
+        
+        if (hasDrift) {
+          console.log('[useRitualFlow] 🔄 State drift detected, syncing from server', {
+            server: { status: serverStatus, hasOutput: serverHasOutput, p1: serverP1Input, p2: serverP2Input },
+            local: { status: localStatus, hasOutput: localHasOutput, p1: localP1Input, p2: localP2Input },
+          });
+          
+          // Update local state from server
+          setCycle(data);
+          
+          // Reload picks and availability if we now have output
+          if (serverHasOutput && !localHasOutput) {
+            await Promise.all([
+              loadPicks(cycle.id),
+              loadAvailability(cycle.id)
+            ]);
+          }
+        }
+      } catch (err) {
+        console.warn('[useRitualFlow] Universal sync exception:', err);
+      }
+    };
+    
+    // Sync immediately on mount and then periodically
+    syncCycleState();
+    const syncInterval = setInterval(syncCycleState, UNIVERSAL_SYNC_INTERVAL_MS);
+    
+    return () => {
+      clearInterval(syncInterval);
+    };
+  }, [cycle?.id, status, cycle?.synthesized_output, cycle?.partner_one_input, cycle?.partner_two_input, loadPicks, loadAvailability]);
 
   // ============================================================================
   // Actions - Input Phase
@@ -872,6 +976,7 @@ export function useRitualFlow(): UseRitualFlowReturn {
     const timeRange = getSlotTimeRange(matchResult.matchedSlot.timeSlot);
     
     try {
+      // Update the cycle with the confirmed ritual and time
       const { error: updateError } = await supabase
         .from('weekly_cycles')
         .update({
@@ -880,17 +985,41 @@ export function useRitualFlow(): UseRitualFlowReturn {
           agreed_date: date.toISOString().split('T')[0],
           agreed_time_start: timeRange.start,
           agreed_time_end: timeRange.end,
-          agreed_time: timeRange.start // Legacy field
+          agreed_time: timeRange.start, // Legacy field
+          slot_picker_id: user?.id, // Track who confirmed
+          slot_selected_at: new Date().toISOString(),
+          status: 'agreed' as CycleStatus
         })
         .eq('id', cycle.id);
       
       if (updateError) throw updateError;
       
+      // Update the couple to track who picked last (for rotation)
+      // Only update if this user was the designated picker
+      if (isSlotPicker && couple?.id) {
+        const { error: coupleError } = await supabase
+          .from('couples')
+          .update({ last_slot_picker_id: user?.id })
+          .eq('id', couple.id);
+        
+        if (coupleError) {
+          console.warn('[useRitualFlow] Failed to update picker rotation:', coupleError);
+          // Non-blocking - don't fail the confirmation
+        }
+      }
+      
+      console.log('[useRitualFlow] ✅ Match confirmed', {
+        ritual: matchResult.matchedRitual.title,
+        date: date.toISOString().split('T')[0],
+        time: timeRange.start,
+        picker: user?.id,
+      });
+      
     } catch (err) {
       console.error('[useRitualFlow] Confirm match error:', err);
       setError(err instanceof Error ? err.message : 'Failed to confirm');
     }
-  }, [cycle?.id, matchResult]);
+  }, [cycle?.id, couple?.id, user?.id, isSlotPicker, matchResult]);
 
   // ============================================================================
   // Actions - General
@@ -936,6 +1065,57 @@ export function useRitualFlow(): UseRitualFlowReturn {
     await loadCycleData();
   }, [loadCycleData]);
 
+  // Force sync - immediately fetches latest state from server
+  // Use this when user suspects state is out of sync
+  const forceSync = useCallback(async () => {
+    if (!cycle?.id) return;
+    
+    console.log('[useRitualFlow] 🔄 Force sync triggered by user');
+    setError(null);
+    
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('weekly_cycles')
+        .select('*')
+        .eq('id', cycle.id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      if (!data) throw new Error('Cycle not found');
+      
+      setCycle(data);
+      
+      // Reload all related data
+      await Promise.all([
+        loadPicks(cycle.id),
+        loadAvailability(cycle.id)
+      ]);
+      
+      console.log('[useRitualFlow] ✅ Force sync complete', {
+        status: (data as any).status,
+        hasOutput: !!data.synthesized_output,
+      });
+    } catch (err) {
+      console.error('[useRitualFlow] Force sync failed:', err);
+      setError('Sync failed. Please try again.');
+    }
+  }, [cycle?.id, loadPicks, loadAvailability]);
+
+  // Compute overlapping time slots for MatchPhase
+  const overlappingSlots = useMemo(() => {
+    const mySlotKeys = new Set(mySlots.map(s => `${s.day_offset}-${s.time_slot}`));
+    const overlapping = partnerSlots
+      .filter(s => mySlotKeys.has(`${s.day_offset}-${s.time_slot}`))
+      .map(s => ({ dayOffset: s.day_offset, timeSlot: s.time_slot as TimeSlot }));
+    
+    // Sort by day then time
+    const slotOrder: Record<TimeSlot, number> = { morning: 0, afternoon: 1, evening: 2 };
+    return overlapping.sort((a, b) => {
+      if (a.dayOffset !== b.dayOffset) return a.dayOffset - b.dayOffset;
+      return slotOrder[a.timeSlot] - slotOrder[b.timeSlot];
+    });
+  }, [mySlots, partnerSlots]);
+
   return {
     loading,
     error,
@@ -952,6 +1132,10 @@ export function useRitualFlow(): UseRitualFlowReturn {
     // Synthesis timeout state
     synthesisTimedOut,
     isRetrying,
+    // Overlapping slots for MatchPhase
+    overlappingSlots,
+    // Slot picker rotation
+    isSlotPicker,
     // Actions
     selectCard,
     setDesire,
@@ -963,6 +1147,7 @@ export function useRitualFlow(): UseRitualFlowReturn {
     confirmMatch,
     retryGeneration,
     refresh,
+    forceSync,
   };
 }
 

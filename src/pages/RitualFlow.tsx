@@ -163,6 +163,8 @@ export default function RitualFlow() {
                 partnerName={partnerName}
                 onConfirm={flow.confirmMatch}
                 error={flow.error}
+                allSlots={flow.overlappingSlots}
+                isSlotPicker={flow.isSlotPicker}
               />
             </PhaseWrapper>
           )}

@@ -14,6 +14,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Presence tracking (partner online status)
 - Offline support with IndexedDB
 - Performance monitoring
+- Voice-first ritual selection
+
+---
+
+## [1.8.0] - 2026-01-04
+
+### Fixed - Multiplayer Sync & Great Minds UX Overhaul
+
+This release permanently fixes the multiplayer synchronization issues and completely overhauls the "Great Minds" matching screen.
+
+#### Critical Bug Fixes
+
+1. **Stale Cache/Ghost UI** (`public/sw.js`)
+   - Updated service worker to v4 with new BUILD_ID tracking
+   - Added `GET_VERSION` and `FORCE_UPDATE` message handlers
+   - Faster polling interval (3s vs 5s) for synthesis status
+
+2. **Both Partners Hang After Submitting** (`src/hooks/useRitualFlow.ts`)
+   - Added Universal Sync mechanism that runs in ALL phases (every 8s)
+   - Detects state drift between partners and syncs from server
+   - Added `forceSync()` action for manual recovery
+   - Prevents race conditions when both submit simultaneously
+
+3. **Card Cutoff on Great Minds Screen** (`src/components/ritual-flow/MatchPhase.tsx`)
+   - Fixed flex container hierarchy for proper safe-area handling
+   - Added `pt-safe-top` and `pb-safe` for notched devices
+   - Changed to `overflow-x-hidden` to prevent animation clipping
+
+#### New Features
+
+1. **Ritual Selector Carousel** (`MatchPhase.tsx`)
+   - When multiple rituals match, users can swipe/navigate between them
+   - Shows "Match 1 of 3" badge with navigation arrows
+   - Animated transitions between ritual cards
+
+2. **Time Slot Picker** (`MatchPhase.tsx`)
+   - Navigate between overlapping time slots with arrows
+   - Expand to pick specific 1-hour slot within time band
+   - Morning: 8-11 AM, Afternoon: 12-4 PM, Evening: 5-9 PM
+
+3. **Picker Rotation** (`useRitualFlow.ts`, `MatchPhase.tsx`)
+   - One partner picks the final time slot each week
+   - Rotates automatically based on `last_slot_picker_id` on couples table
+   - Non-picker sees "Partner will pick the exact time this week"
+
+4. **Database Schema Updates** (`supabase/migrations/20260104000000_add_slot_picker_rotation.sql`)
+   - `couples.last_slot_picker_id` - Tracks who picked last
+   - `weekly_cycles.slot_picker_id` - Designated picker for this cycle
+   - `weekly_cycles.slot_selected_at` - When slot was confirmed
+
+#### Files Modified
+- `public/sw.js` - Version tracking and force update
+- `src/hooks/useRitualFlow.ts` - Universal sync, forceSync, overlappingSlots, isSlotPicker
+- `src/components/ritual-flow/MatchPhase.tsx` - Complete UX overhaul
+- `src/pages/RitualFlow.tsx` - Pass new props to MatchPhase
+- `supabase/migrations/20260104000000_add_slot_picker_rotation.sql` - New schema
 
 ---
 
