@@ -724,3 +724,124 @@ useLayoutEffect(() => {
 
 **END OF 2026-01-03 MOBILE DIALOG & LOADING ROOT CAUSE ANALYSIS**
 
+---
+
+# ROOT CAUSE ANALYSIS: Multiplayer Sync & Great Minds UX (2026-01-04)
+
+**Date:** 2026-01-04  
+**Status:** RESOLVED
+
+---
+
+## EXECUTIVE SUMMARY
+
+Three critical issues fixed:
+1. Ghost "Ready to begin" button from stale cache
+2. Both partners hang after submitting (no transition to generating phase)
+3. Cards cut off at top of Great Minds screen
+
+Plus new features:
+4. Ritual selector carousel when multiple matches
+5. Time slot picker with 1-hour granularity
+6. Picker rotation (alternates each week)
+
+---
+
+## ROOT CAUSES IDENTIFIED
+
+### Issue 1: Ghost "Ready to begin" Button
+
+| # | Root Cause | Evidence | Fix |
+|---|-----------|----------|-----|
+| 1 | Old service worker serving cached app bundle | User seeing UI text that doesn't exist in current code | Updated SW version to v4 with BUILD_ID |
+| 2 | No force update mechanism | Old clients can't detect new version | Added GET_VERSION and FORCE_UPDATE handlers |
+
+### Issue 2: Both Partners Hang After Submitting
+
+| # | Root Cause | Evidence | Fix |
+|---|-----------|----------|-----|
+| 1 | Race condition in client-side status updates | Both clients try to update status simultaneously | Server sets status via trigger-synthesis |
+| 2 | Optimistic state conflicts with realtime | Local setCycle overwritten by stale payload | Universal sync detects drift every 8s |
+| 3 | Realtime subscription drops messages | Under load, Supabase can miss rapid updates | Polling fallback now runs in ALL phases |
+| 4 | Polling only ran during 'generating' status | If status never reached 'generating' on client, no polling | Universal sync runs regardless of status |
+
+### Issue 3: Card Cutoff at Top
+
+| # | Root Cause | Evidence | Fix |
+|---|-----------|----------|-----|
+| 1 | Missing safe-area handling | Cards clipped by iOS notch | Added pt-safe-top class |
+| 2 | Animation clipping | Cards animate from x:-20 which clips | Changed to overflow-x-hidden |
+| 3 | Flex container chain | Parent containers not properly constrained | Fixed flex hierarchy |
+
+---
+
+## ARCHITECTURAL FIXES APPLIED
+
+### Universal Sync Mechanism
+
+```typescript
+// Runs every 8 seconds in ALL phases
+useEffect(() => {
+  const syncCycleState = async () => {
+    const { data } = await supabase
+      .from('weekly_cycles')
+      .select('*')
+      .eq('id', cycle.id)
+      .single();
+    
+    // Detect state drift
+    const hasDrift = 
+      serverStatus !== localStatus ||
+      serverHasOutput !== localHasOutput;
+    
+    if (hasDrift) {
+      setCycle(data); // Sync from server
+    }
+  };
+  
+  syncCycleState();
+  const interval = setInterval(syncCycleState, 8000);
+  return () => clearInterval(interval);
+}, [cycle?.id, status, ...]);
+```
+
+### Picker Rotation Logic
+
+```typescript
+// Determines who picks the slot this week
+const isSlotPicker = useMemo(() => {
+  const lastPickerId = couple?.last_slot_picker_id;
+  
+  // If no one picked last, partner_one goes first
+  if (!lastPickerId) return isPartnerOne;
+  
+  // Otherwise, the other partner picks
+  return lastPickerId !== user.id;
+}, [couple, user?.id, isPartnerOne]);
+```
+
+---
+
+## VERIFICATION
+
+- ✅ Build succeeds with no TypeScript errors
+- ✅ No linter errors
+- ✅ Service worker updated to v4
+- ✅ Universal sync prevents state drift
+- ✅ Ritual carousel allows alternative selection
+- ✅ Time slot picker shows 1-hour options
+- ✅ Picker rotation alternates each week
+
+---
+
+## FILES MODIFIED
+
+1. `public/sw.js` - Version tracking, force update
+2. `src/hooks/useRitualFlow.ts` - Universal sync, forceSync, overlappingSlots, isSlotPicker
+3. `src/components/ritual-flow/MatchPhase.tsx` - Complete UX overhaul
+4. `src/pages/RitualFlow.tsx` - Pass new props to MatchPhase
+5. `supabase/migrations/20260104000000_add_slot_picker_rotation.sql` - Schema
+
+---
+
+**END OF 2026-01-04 ROOT CAUSE ANALYSIS**

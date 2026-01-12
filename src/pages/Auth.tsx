@@ -73,11 +73,13 @@ const Auth = () => {
     description: 'Sign in or create an account to start building meaningful weekly rituals with your partner.',
   });
 
-  // Store join intent if user came to join
+  // Store join intent if user came to join, or signup intent
   useEffect(() => {
     if (searchParams.get('join') === 'true') {
       sessionStorage.setItem('pendingAction', 'join');
       setIsLogin(false); // Switch to signup mode
+    } else if (searchParams.get('signup') === 'true') {
+      setIsLogin(false); // Switch to signup mode for new users
     }
   }, [searchParams]);
 

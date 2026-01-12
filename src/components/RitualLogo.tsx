@@ -27,7 +27,7 @@ export function RitualLogo({ size = 'md', variant = 'full', className }: RitualL
       alt="Ritual"
       width={config.width}
       height={config.height}
-      fetchPriority="high"
+      fetchpriority="high"
       className={cn('w-auto h-auto object-contain', config.class, className)}
     />
   );

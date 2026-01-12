@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCouple } from '@/contexts/CoupleContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { MapPin, Heart, Sparkles, TrendingUp, Share2, X, Calendar, Clock, MessageSquare, Copy, RefreshCw, AlertCircle } from 'lucide-react';
+import { MapPin, Heart, Sparkles, TrendingUp, Share2, X, Calendar, Clock, MessageSquare, Copy, Check, RefreshCw, AlertCircle } from 'lucide-react';
 import { RitualLogo } from '@/components/RitualLogo';
 import { RitualSpinner } from '@/components/RitualSpinner';
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -348,10 +348,13 @@ export default function Landing() {
     }
   }, [couple?.id]);
 
+  const [codeCopied, setCodeCopied] = useState(false);
   const handleCopyCode = useCallback(async () => {
     if (!couple?.couple_code) return;
     try {
       await navigator.clipboard.writeText(couple.couple_code);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
     } catch (error) {
       console.error('Copy failed:', error);
     }
@@ -434,7 +437,7 @@ export default function Landing() {
             transition={{ duration: 0.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
             <Button 
-              onClick={() => navigate('/auth')} 
+              onClick={() => navigate('/auth?signup=true')} 
               variant="gradient"
               size="xl" 
               className="w-full"
@@ -620,9 +623,13 @@ export default function Landing() {
                   onClick={handleCopyCode}
                   variant="outline"
                   className="w-12 h-12 rounded-full border-2 border-primary/30 p-0"
-                  title="Copy Code"
+                  title={codeCopied ? "Copied!" : "Copy Code"}
                 >
-                  <Copy className="w-5 h-5" />
+                  {codeCopied ? (
+                    <Check className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <Copy className="w-5 h-5" />
+                  )}
                 </Button>
               </div>
             </Card>

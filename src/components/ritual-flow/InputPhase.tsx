@@ -94,7 +94,7 @@ export function InputPhase({
         <div className="text-center mb-3">
           <h2 className="text-xl font-bold mb-1">How are you feeling?</h2>
           <p className="text-sm text-muted-foreground">
-            Tap {MAX_CARD_SELECTIONS} cards that resonate with you
+            Select at least 3 cards (up to {MAX_CARD_SELECTIONS}) that resonate with you
           </p>
         </div>
 

@@ -97,7 +97,7 @@ export function GeneratingPhase({ status, onRetry, error }: GeneratingPhaseProps
             <div>
               <h2 className="text-2xl font-bold mb-2">Taking Longer Than Expected</h2>
               <p className="text-muted-foreground text-sm">
-                {error || "Your rituals are still being generated. Please try refreshing."}
+                {error || "Ritual generation is taking longer than usual. Click 'Try Again' to check, or contact support if this persists."}
               </p>
             </div>
           </>

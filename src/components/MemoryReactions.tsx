@@ -34,6 +34,7 @@ export function MemoryReactions({ memoryId, className }: MemoryReactionsProps) {
   const [reactions, setReactions] = useState<MemoryReaction[]>([]);
   const [showPicker, setShowPicker] = useState(false);
   const [userReaction, setUserReaction] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const isMountedRef = useRef(true);
   
   // Track mounted state for async callbacks
@@ -90,8 +91,9 @@ export function MemoryReactions({ memoryId, className }: MemoryReactionsProps) {
   }, [memoryId, fetchReactions]);
 
   const handleReaction = async (reaction: Reaction) => {
-    if (!user) return;
+    if (!user || isSaving) return;
 
+    setIsSaving(true);
     try {
       if (userReaction === reaction) {
         // Remove reaction
@@ -122,9 +124,10 @@ export function MemoryReactions({ memoryId, className }: MemoryReactionsProps) {
       }
     } catch (error) {
       console.error('[MemoryReactions] Error updating reaction:', error);
+    } finally {
+      setIsSaving(false);
+      setShowPicker(false);
     }
-
-    setShowPicker(false);
   };
 
   // Get partner's reaction (not current user's)
@@ -149,13 +152,15 @@ export function MemoryReactions({ memoryId, className }: MemoryReactionsProps) {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setShowPicker(!showPicker)}
+          disabled={isSaving}
+          aria-label={userReaction ? `Your reaction: ${userReaction}` : 'Add reaction'}
           className={`w-7 h-7 rounded-full flex items-center justify-center text-sm transition-colors ${
             userReaction
               ? 'bg-primary/20 border border-primary/30'
               : 'bg-secondary/50 hover:bg-secondary'
-          }`}
+          } ${isSaving ? 'opacity-50 cursor-wait' : ''}`}
         >
-          {userReaction || '+'}
+          {isSaving ? '...' : (userReaction || '+')}
         </motion.button>
       </div>
 

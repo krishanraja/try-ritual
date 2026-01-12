@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Sparkles, Calendar, ChevronRight } from 'lucide-react';
@@ -52,6 +52,7 @@ export const OnboardingModal = ({ open, onComplete }: OnboardingModalProps) => {
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-white rounded-3xl [&>button]:hidden max-h-[calc(100dvh-2rem)] m-4">
+        <DialogTitle className="sr-only">Welcome to Ritual</DialogTitle>
         <div className="p-5 sm:p-6 md:p-8 flex flex-col max-h-full">
           <AnimatePresence mode="wait">
             <motion.div
