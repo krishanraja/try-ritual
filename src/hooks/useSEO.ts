@@ -16,7 +16,7 @@ const DEFAULT_SEO = {
   title: 'Ritual – Re-love Your Partner',
   description: 'Build meaningful weekly rituals with your partner. Both contribute ideas, AI synthesizes your perfect week. Track completions, build streaks, and strengthen your relationship.',
   keywords: 'relationship rituals, couple activities, weekly rituals, relationship building, shared moments, couple goals, date ideas, relationship app',
-  image: 'https://ritual.lovable.app/ritual-icon.png',
+  image: 'https://tryritual.co/ritual-icon.png',
   url: typeof window !== 'undefined' ? window.location.href : '',
   type: 'website' as const,
 };
@@ -77,7 +77,6 @@ export const useSEO = ({
     updateMetaTag('twitter:title', fullTitle);
     updateMetaTag('twitter:description', description || DEFAULT_SEO.description);
     updateMetaTag('twitter:image', image || DEFAULT_SEO.image);
-    updateMetaTag('twitter:site', '@Lovable');
 
     // Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;

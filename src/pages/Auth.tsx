@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { useSEO } from '@/hooks/useSEO';
 import { NotificationContainer } from '@/components/InlineNotification';
 import { Check, X, Heart, Sparkles, Users } from 'lucide-react';
+import { Chrome } from 'lucide-react';
 import { AnimatedGradientBackground } from '@/components/AnimatedGradientBackground';
 import { RitualLogo } from '@/components/RitualLogo';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -144,6 +145,42 @@ const Auth = () => {
 
   const handleBlur = (field: 'name' | 'email' | 'password' | 'confirmPassword') => {
     setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const handleGoogleAuth = async () => {
+    setLoading(true);
+    setNotification(null);
+    trackSignInAttempt(isLogin);
+
+    try {
+      logger.log("[AUTH] Attempting Google OAuth");
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        logger.error("[AUTH] Google OAuth error:", error.message);
+        trackSignInError(isLogin, error.code || 'unknown', 'oauth');
+        showNotification('error', 'Unable to sign in with Google. Please try again.');
+        setLoading(false);
+      } else {
+        logger.log("[AUTH] Google OAuth initiated, redirecting...");
+        // User will be redirected, so we don't set loading to false
+        // Navigation will happen via redirect
+      }
+    } catch (error: any) {
+      logger.error("[AUTH] Google OAuth error caught:", error);
+      const friendlyMessage = getErrorMessage(error);
+      showNotification('error', friendlyMessage || 'Unable to sign in with Google. Please try again.');
+      setLoading(false);
+    }
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -484,6 +521,28 @@ const Auth = () => {
                 {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
               </Button>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-4 sm:my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Google OAuth Button */}
+            <Button
+              type="button"
+              onClick={handleGoogleAuth}
+              disabled={loading}
+              variant="outline"
+              className="w-full h-11 sm:h-12 rounded-xl border-2 hover:bg-muted/50 transition-colors"
+            >
+              <Chrome className="w-5 h-5 mr-2" />
+              {isLogin ? "Sign in with Google" : "Sign up with Google"}
+            </Button>
 
             <button
               onClick={() => {

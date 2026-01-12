@@ -14,19 +14,19 @@
 
 ### Backend (Supabase)
 - **Database:** PostgreSQL with Row Level Security
-- **Authentication:** Supabase Auth (email/password)
+- **Authentication:** Supabase Auth (email/password, Google OAuth)
 - **Realtime:** Supabase Realtime (database changes + presence)
 - **Storage:** Supabase Storage (`ritual-photos` bucket)
 - **Edge Functions:** Deno runtime (14 functions)
 
 ### AI Integration
-- **Provider:** Lovable AI Gateway
+- **Provider:** Google Gemini API
 - **Models:**
   - `google/gemini-2.5-pro` - Main synthesis (4-5 rituals)
   - `google/gemini-2.5-flash` - Swap ritual generation
 
 ### Deployment
-- **Platform:** Vercel / Lovable Cloud
+- **Platform:** Vercel
 - **Domain:** Custom domain support
 - **CI/CD:** Automatic deployment on push
 - **CDN:** Global edge distribution
@@ -190,7 +190,7 @@ UI updates immediately, with rollback on error.
 ### Core Functions
 
 #### synthesize-rituals
-**Purpose:** Generate personalized rituals using Lovable AI
+**Purpose:** Generate personalized rituals using Google Gemini AI
 
 **Input (Card-based v1.6+):**
 ```typescript

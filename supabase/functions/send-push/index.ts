@@ -53,7 +53,7 @@ async function generateVapidAuth(
   const payload = {
     aud: audience,
     exp: expiration,
-    sub: 'mailto:hello@ritual.app'
+    sub: 'mailto:hello@tryritual.co'
   };
 
   // Encode header and payload

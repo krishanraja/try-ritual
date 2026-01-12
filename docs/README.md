@@ -37,7 +37,7 @@ Become the #1 app for couples to stay connected through shared experiences, help
 Each partner independently answers 4-5 quick questions about their week ahead. The app synthesizes both inputs to create personalized rituals.
 
 ### 2. **AI-Powered Ritual Generation**
-Uses Lovable AI to create 4-5 unique ritual options that:
+Uses Google Gemini AI to create 4-5 unique ritual options that:
 - Match both partners' constraints
 - Consider location and season
 - Learn from past experiences
@@ -63,10 +63,10 @@ The app learns from:
 
 - **Frontend:** React 18 + Vite 5 + TypeScript + Tailwind CSS
 - **Backend:** Supabase (PostgreSQL, Auth, Realtime, Storage)
-- **AI:** Google Gemini 2.5 Pro/Flash via Lovable AI Gateway
+- **AI:** Google Gemini API (Gemini 2.0 Flash)
 - **Realtime:** Supabase Realtime subscriptions
 - **Animations:** Framer Motion 12
-- **Deployment:** Vercel / Lovable Cloud
+- **Deployment:** Vercel
 
 **Current Version:** v1.7.0 (January 2026)
 

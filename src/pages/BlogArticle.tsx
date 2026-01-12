@@ -125,7 +125,7 @@ export default function BlogArticlePage() {
     author: article?.author,
     publishedTime: article?.publishedAt,
     modifiedTime: article?.updatedAt,
-    url: article ? `https://ritual.lovable.app/blog/${article.slug}` : undefined,
+    url: article ? `https://tryritual.co/blog/${article.slug}` : undefined,
   });
 
   // Add Article structured data
@@ -136,7 +136,7 @@ export default function BlogArticlePage() {
   }, [article]);
 
   // Share handlers
-  const shareUrl = article ? `https://ritual.lovable.app/blog/${article.slug}` : '';
+  const shareUrl = article ? `https://tryritual.co/blog/${article.slug}` : '';
   const shareText = article ? `${article.title} - Ritual Blog` : '';
 
   const handleShare = async () => {

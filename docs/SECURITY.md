@@ -14,7 +14,7 @@ We use Supabase Auth for user authentication:
 
 **Supported Methods:**
 - Email + Password (primary)
-- Google OAuth (future)
+- Google OAuth (enabled)
 - Apple Sign-In (future)
 
 **Session Management:**
@@ -255,7 +255,7 @@ if (!couple || (couple.partner_one !== user.id && couple.partner_two !== user.id
 - Enforced at application level (check `nudged_at` timestamp)
 
 **synthesize-rituals:**
-- 50 requests per minute per project (Lovable AI Gateway)
+- Rate limits as per Google Gemini API limits
 - 402 response when credits depleted
 
 ### CORS
@@ -293,7 +293,7 @@ const corsHeaders = {
 
 - **Within Couple:** Partners see each other's profiles, inputs, and shared rituals
 - **External:** No data shared with third parties
-- **AI Processing:** Inputs sent to Lovable AI for synthesis, not stored by AI provider
+- **AI Processing:** Inputs sent to Google Gemini API for synthesis, not stored by AI provider
 
 ### User Rights
 
@@ -328,7 +328,7 @@ const corsHeaders = {
 
 ### Edge Function Secrets
 
-- **LOVABLE_API_KEY:** Stored in Supabase Secrets
+- **GOOGLE_AI_API_KEY:** Stored in Supabase Secrets
 - **SUPABASE_URL:** Environment variable
 - **SUPABASE_ANON_KEY:** Environment variable
 - **SUPABASE_SERVICE_ROLE_KEY:** Not used in edge functions (security best practice)
@@ -389,7 +389,7 @@ if (!coupleId || !partnerOneInput || !partnerTwoInput) {
 
 - All traffic over HTTPS
 - HTTP redirects to HTTPS
-- Enforced by Lovable Cloud
+- Enforced by Vercel deployment platform
 
 ### CORS Policy
 
@@ -399,7 +399,7 @@ if (!coupleId || !partnerOneInput || !partnerTwoInput) {
 ### API Keys
 
 - **Supabase Anon Key:** Public key, safe to expose (RLS enforced)
-- **Lovable API Key:** Server-side only, never exposed to client
+- **Google AI API Key:** Server-side only, never exposed to client
 
 ### Authentication
 

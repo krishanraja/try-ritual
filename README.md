@@ -6,7 +6,7 @@ A beautifully designed couple's ritual planning app that helps partners stay con
 
 Ritual helps couples maintain strong relationships through consistent, personalized rituals. Each week, both partners submit their preferences, and AI synthesizes them into thoughtful ritual suggestions that work for both.
 
-**Live App:** [ritual.lovable.app](https://ritual.lovable.app)
+**Live App:** [tryritual.co](https://tryritual.co)
 
 ## Features
 
@@ -31,17 +31,17 @@ Ritual helps couples maintain strong relationships through consistent, personali
 
 ### Backend (Supabase)
 - **Database:** PostgreSQL with Row Level Security
-- **Auth:** Supabase Auth (email/password)
+- **Auth:** Supabase Auth (email/password, Google OAuth)
 - **Realtime:** Supabase Realtime subscriptions
 - **Storage:** Supabase Storage for photos
 - **Edge Functions:** 14 Deno functions for backend logic
 
 ### AI
-- **Provider:** Google Gemini via Lovable AI Gateway
+- **Provider:** Google Gemini API
 - **Models:** Gemini 2.5 Pro (synthesis), Gemini 2.5 Flash (swap)
 
 ### Deployment
-- **Platform:** Vercel / Lovable Cloud
+- **Platform:** Vercel
 - **CI/CD:** Automatic on push
 - **CDN:** Global edge distribution
 

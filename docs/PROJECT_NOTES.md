@@ -26,7 +26,7 @@
 ### AD-002: Authentication
 - **Decision**: Supabase Auth with email/password
 - **Date**: Initial setup
-- **Rationale**: Integrated with Lovable Cloud, handles auth flows out of the box
+- **Rationale**: Supabase Auth handles auth flows out of the box
 - **Status**: ✅ Implemented
 
 ### AD-003: Styling System
@@ -44,7 +44,7 @@
 ### AD-005: AI Integration
 - **Decision**: Google Gemini via edge functions for ritual synthesis
 - **Date**: Initial setup
-- **Rationale**: Good quality, integrated with Lovable AI, structured output support
+- **Rationale**: Good quality, Google Gemini API with structured output support
 - **Status**: ✅ Implemented
 
 ### AD-006: Card Draw Input (replaces MagneticCanvas)
@@ -225,13 +225,13 @@
 
 ## Environment Variables
 
-### Required (Auto-configured by Lovable Cloud)
+### Required Environment Variables
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SUPABASE_PROJECT_ID`
 
 ### Edge Function Secrets
-- `LOVABLE_API_KEY` - For Lovable AI synthesis
+- `GOOGLE_AI_API_KEY` - For Google Gemini AI synthesis
 - `STRIPE_SECRET_KEY` - For payments
 - `STRIPE_WEBHOOK_SECRET` - For Stripe webhooks
 - `RESEND_API_KEY` - For email delivery

@@ -1,5 +1,5 @@
 # Ritual - Robots.txt
-# https://ritual.lovable.app
+# https://tryritual.co
 
 # Allow all crawlers access to public pages
 User-agent: *
@@ -25,7 +25,7 @@ Disallow: /_next/
 Disallow: /supabase/
 
 # Sitemap location
-Sitemap: https://ritual.lovable.app/sitemap.xml
+Sitemap: https://tryritual.co/sitemap.xml
 
 # ==================== Search Engine Specific Rules ====================
 

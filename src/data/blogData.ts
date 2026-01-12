@@ -961,25 +961,25 @@ export const generateArticleSchema = (article: BlogArticle) => {
     '@type': 'Article',
     headline: article.title,
     description: article.description,
-    image: article.featuredImage || 'https://lovable.dev/opengraph-image-p98pqg.png',
+    image: article.featuredImage || 'https://tryritual.co/og-image.png',
     author: {
       '@type': 'Organization',
       name: article.author,
-      url: 'https://ritual.lovable.app',
+      url: 'https://tryritual.co',
     },
     publisher: {
       '@type': 'Organization',
       name: 'Ritual',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://ritual.lovable.app/ritual-logo-full.png',
+        url: 'https://tryritual.co/ritual-logo-full.png',
       },
     },
     datePublished: article.publishedAt,
     dateModified: article.updatedAt,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://ritual.lovable.app/blog/${article.slug}`,
+      '@id': `https://tryritual.co/blog/${article.slug}`,
     },
   };
 };
@@ -991,13 +991,13 @@ export const generateBlogListingSchema = () => {
     '@type': 'Blog',
     name: 'Ritual Blog',
     description: 'Expert relationship advice, date ideas, and tips for building meaningful couple rituals.',
-    url: 'https://ritual.lovable.app/blog',
+    url: 'https://tryritual.co/blog',
     publisher: {
       '@type': 'Organization',
       name: 'Ritual',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://ritual.lovable.app/ritual-logo-full.png',
+        url: 'https://tryritual.co/ritual-logo-full.png',
       },
     },
     blogPost: BLOG_ARTICLES.map(article => ({
@@ -1005,7 +1005,7 @@ export const generateBlogListingSchema = () => {
       headline: article.title,
       description: article.description,
       datePublished: article.publishedAt,
-      url: `https://ritual.lovable.app/blog/${article.slug}`,
+      url: `https://tryritual.co/blog/${article.slug}`,
     })),
   };
 };

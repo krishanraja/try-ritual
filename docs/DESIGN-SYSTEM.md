@@ -12,53 +12,76 @@
 
 ## Color System
 
-### Core Colors (HSL) - Lavender/Blush Theme
+### Core Colors (HSL) - Teal/Purple/Gold Theme
 
 ```css
-/* Primary - Soft Lavender */
---primary: 270 50% 70%;
+/* Primary - Deep Teal (sophisticated, calming, trustworthy) */
+--primary: 174 58% 39%;
+--primary-hover: 174 58% 35%;
 --primary-foreground: 0 0% 100%;
+--primary-glow: 174 65% 45%;
 
-/* Secondary - Blush Pink */
---secondary: 340 100% 92%;
---secondary-foreground: 340 50% 30%;
+/* Secondary - Warm Purple Accent */
+--secondary: 270 45% 95%;
+--secondary-foreground: 270 40% 35%;
 
-/* Accent - Light Lavender */
---accent: 270 45% 85%;
---accent-foreground: 270 30% 30%;
+/* Accent - Deep Purple for Highlights */
+--accent: 270 50% 92%;
+--accent-foreground: 270 50% 35%;
 
-/* Background - Warm Cream */
---background: 40 50% 97%;
---foreground: 270 15% 25%;
+/* Background - Soft Blue-Grey */
+--background: 220 20% 97%;
+--background-elevated: 0 0% 100%;
+--foreground: 220 30% 15%;
 
-/* Muted - Sage Green */
---muted: 120 30% 90%;
---muted-foreground: 120 15% 40%;
+/* Muted - Soft Neutrals */
+--muted: 220 15% 92%;
+--muted-foreground: 220 15% 45%;
 
 /* Card - Pure White */
 --card: 0 0% 100%;
---card-foreground: 270 15% 25%;
+--card-foreground: 220 30% 15%;
+--card-hover: 220 15% 99%;
 
 /* Destructive - Error Red */
---destructive: 0 84% 60%;
+--destructive: 0 72% 51%;
 --destructive-foreground: 0 0% 100%;
 
-/* Border - Soft Lavender */
---border: 270 20% 88%;
---input: 270 20% 88%;
---ring: 270 50% 70%;
+/* Success & Warning */
+--success: 142 72% 42%;
+--success-foreground: 0 0% 100%;
+--warning: 38 92% 50%;
+--warning-foreground: 0 0% 100%;
+
+/* Border & Input */
+--border: 220 20% 90%;
+--border-hover: 220 20% 80%;
+--input: 220 20% 90%;
+--ring: 174 58% 39%;
 ```
 
-### Custom Ritual Colors
+### Brand Colors (Direct from Logo Palette)
 
 ```css
-/* Custom palette tokens */
+/* Primary Brand Colors */
+--teal: 174 58% 39%;
+--teal-light: 174 50% 92%;
+--teal-glow: 174 65% 45%;
+
+--purple: 270 55% 55%;
+--purple-light: 270 40% 92%;
+--purple-glow: 270 60% 60%;
+
+--gold: 40 85% 55%;
+--gold-light: 40 60% 92%;
+
+/* Legacy compatibility (for backward compatibility) */
 --lavender: 270 50% 85%;
 --lavender-light: 270 50% 95%;
 --blush: 340 100% 92%;
 --blush-light: 340 100% 96%;
---sage: 120 30% 85%;
---sage-light: 120 30% 92%;
+--sage: 142 30% 85%;
+--sage-light: 142 30% 92%;
 ```
 
 ### Gradient System
@@ -66,63 +89,81 @@
 ```css
 /* Ritual gradient (primary CTAs, emphasis) */
 .bg-gradient-ritual {
-  background: linear-gradient(135deg, hsl(270 50% 85%), hsl(340 100% 92%));
+  background: linear-gradient(135deg, hsl(174 58% 39%), hsl(270 55% 55%));
 }
 
 /* Warm gradient (page backgrounds) */
 .bg-gradient-warm {
-  background: linear-gradient(135deg, hsl(340 100% 96%), hsl(40 60% 95%));
+  background: linear-gradient(135deg, hsl(270 40% 94%), hsl(40 60% 94%));
 }
 
 /* Calm gradient (secondary surfaces) */
 .bg-gradient-calm {
-  background: linear-gradient(180deg, hsl(270 50% 95%), hsl(120 30% 92%));
+  background: linear-gradient(180deg, hsl(220 20% 97%), hsl(220 15% 94%));
+}
+
+/* Glow gradient (subtle backgrounds) */
+.bg-gradient-glow {
+  background: radial-gradient(ellipse at center, hsl(174 65% 45% / 0.15), transparent 70%);
 }
 ```
 
 ### Shadow System
 
 ```css
-/* Soft shadow for cards */
---shadow-soft: 0 8px 32px -8px hsl(270 30% 70% / 0.2);
+/* Shadow scale */
+--shadow-xs: 0 1px 2px 0 hsl(220 30% 30% / 0.05);
+--shadow-sm: 0 2px 4px -1px hsl(220 30% 30% / 0.06), 0 1px 2px -1px hsl(220 30% 30% / 0.04);
+--shadow-soft: 0 4px 16px -4px hsl(220 30% 30% / 0.08);
+--shadow-card: 0 8px 24px -8px hsl(220 30% 30% / 0.1), 0 4px 8px -4px hsl(220 30% 30% / 0.04);
+--shadow-elevated: 0 16px 48px -12px hsl(220 30% 30% / 0.12), 0 8px 16px -8px hsl(220 30% 30% / 0.06);
+--shadow-glow: 0 0 24px -4px hsl(174 65% 45% / 0.25);
+--shadow-glow-purple: 0 0 24px -4px hsl(270 60% 60% / 0.25);
 
-/* Card elevation shadow */
---shadow-card: 0 4px 24px -4px hsl(270 20% 60% / 0.15);
+/* Neumorphic shadows (light mode) */
+--shadow-neumorphic: 
+  6px 6px 12px hsl(220 20% 85% / 0.5),
+  -6px -6px 12px hsl(0 0% 100% / 0.8);
+--shadow-neumorphic-inset:
+  inset 3px 3px 6px hsl(220 20% 88% / 0.5),
+  inset -3px -3px 6px hsl(0 0% 100% / 0.7);
 ```
 
 ### Color Usage Guidelines
 
-**Primary (Lavender):**
+**Primary (Teal):**
 - Call-to-action buttons
 - Active nav items
 - Key information highlights
 - Focus rings
+- Primary brand elements
 
-**Secondary (Blush):**
+**Secondary (Purple):**
 - Secondary actions
 - Backgrounds for emphasis cards
 - Hover states
+- Accent elements
 
-**Accent:**
-- Attention-grabbing elements
+**Gold:**
 - Celebration moments
-- Important badges
+- Special highlights
+- Premium features
 
-**Muted (Sage):**
+**Muted:**
 - Descriptive text
 - Placeholders
 - Disabled states
+- Subtle UI elements
 
 ## Typography
 
 ### Font Family
 
 ```css
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 
-             Roboto, 'Helvetica Neue', Arial, sans-serif;
+font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
 ```
 
-**Rationale:** System fonts for performance and native feel.
+**Rationale:** Plus Jakarta Sans provides a modern, friendly feel while maintaining excellent readability. Falls back to system fonts for performance.
 
 ### Type Scale
 
@@ -413,14 +454,37 @@ Dark mode is implemented with the following adjustments:
 
 ```css
 .dark {
-  --background: 270 20% 12%;
-  --foreground: 270 10% 95%;
-  --card: 270 20% 15%;
-  --primary: 270 50% 65%;
-  --secondary: 340 50% 30%;
-  --muted: 120 15% 25%;
+  --background: 220 25% 10%;
+  --background-elevated: 220 25% 14%;
+  --foreground: 220 10% 95%;
+  
+  --card: 220 25% 13%;
+  --card-foreground: 220 10% 95%;
+  --card-hover: 220 25% 16%;
+  
+  --primary: 174 55% 50%;
+  --primary-hover: 174 55% 55%;
+  --primary-glow: 174 60% 55%;
+  
+  --secondary: 270 40% 20%;
+  --secondary-foreground: 270 50% 90%;
+  
+  --muted: 220 20% 18%;
+  --muted-foreground: 220 15% 65%;
+  
   --accent: 270 40% 25%;
-  --border: 270 20% 22%;
+  --accent-foreground: 270 50% 90%;
+  
+  --border: 220 20% 22%;
+  --border-hover: 220 20% 28%;
+  
+  /* Dark mode brand colors */
+  --teal: 174 55% 50%;
+  --teal-light: 174 40% 25%;
+  --purple: 270 50% 60%;
+  --purple-light: 270 35% 25%;
+  --gold: 40 75% 50%;
+  --gold-light: 40 50% 25%;
 }
 ```
 
@@ -441,12 +505,13 @@ Respect `prefers-reduced-motion` media query (TODO: implement).
 ## Brand Assets
 
 ### Logo
-- File: `/public/ritual-logo-full.png`
-- Usage: Header, Splash screen, Landing page
-- Component: `<RitualLogo />`
+- File: `/src/assets/lockstep-logo-light.png` (primary logo)
+- File: `/src/assets/ritual-logo-full.png` (alternative full logo)
+- Usage: Header, Splash screen, Landing page, Email templates
+- Component: `<RitualLogo />` with `variant="full"` or `variant="icon"`
 
 ### Icon
-- File: `/public/ritual-icon.png` (pink hexagon with blue arrows)
+- File: `/src/assets/ritual-icon.png`
 - Usage: Favicon, Loading states, Empty states
 - Component: `<RitualSpinner />` for animated loading
 

@@ -48,7 +48,7 @@ export const generateICSFile = (ritual: Ritual, startDate?: Date, startTime?: st
     'VERSION:2.0',
     'PRODID:-//Ritual//Ritual App//EN',
     'BEGIN:VEVENT',
-    `UID:${Date.now()}@ritual.app`,
+    `UID:${Date.now()}@tryritual.co`,
     `DTSTAMP:${formatDate(now)}`,
     `DTSTART:${formatDate(start)}`,
     `DTEND:${formatDate(end)}`,

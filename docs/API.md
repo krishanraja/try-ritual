@@ -22,7 +22,7 @@ Authorization: Bearer <user-jwt-token>
 
 ## 1. synthesize-rituals
 
-**Purpose:** Generate personalized rituals using Lovable AI based on partners' inputs and historical data.
+**Purpose:** Generate personalized rituals using Google Gemini AI based on partners' inputs and historical data.
 
 ### Endpoint
 ```
@@ -450,7 +450,7 @@ try {
 ## Rate Limits
 
 ### Edge Functions
-- **Lovable AI Gateway:** 50 requests per minute per project
+- **Google Gemini API:** Rate limits as per Google's API limits
 - **Nudge Partner:** 1 request per hour per cycle
 
 ### Database Queries

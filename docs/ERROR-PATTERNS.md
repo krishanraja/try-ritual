@@ -70,9 +70,9 @@ console.log('Type:', typeof actualValue);
 
 2. **Print Config/Env Before Use:**
 ```typescript
-const apiKey = Deno.env.get('LOVABLE_API_KEY');
+const apiKey = Deno.env.get('GOOGLE_AI_API_KEY');
 console.log('API Key exists:', !!apiKey);
-if (!apiKey) throw new Error('LOVABLE_API_KEY not configured');
+if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured');
 ```
 
 3. **Reproduce with Minimal Payloads:** Strip down to simplest failing case

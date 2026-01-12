@@ -101,7 +101,7 @@ serve(async (req) => {
     }
 
     // Create checkout session
-    const origin = req.headers.get("origin") || "https://lovable.dev";
+    const origin = req.headers.get("origin") || "https://tryritual.co";
     
     const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       customer: customerId || undefined,

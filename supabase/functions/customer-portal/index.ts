@@ -66,7 +66,7 @@ serve(async (req) => {
 
     console.log("[CUSTOMER-PORTAL] Customer ID:", customerId);
 
-    const origin = req.headers.get("origin") || "https://lovable.dev";
+    const origin = req.headers.get("origin") || "https://tryritual.co";
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/profile`,

@@ -331,7 +331,7 @@ export default function Landing() {
       applicationCategory: 'LifestyleApplication',
       operatingSystem: 'Web',
       description: 'Build meaningful weekly rituals with your partner. AI-powered relationship building through shared experiences.',
-      url: 'https://ritual.lovable.app/',
+      url: 'https://tryritual.co/',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       featureList: ['AI-powered ritual suggestions', 'Location-based activities', 'Partner synchronization', 'Streak tracking', 'Calendar integration']
     });
