@@ -9,7 +9,7 @@
   <!-- Landing Page - highest priority -->
   <url>
     <loc>https://tryritual.co/</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <mobile:mobile/>
@@ -18,7 +18,7 @@
   <!-- Authentication -->
   <url>
     <loc>https://tryritual.co/auth</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile/>
@@ -29,7 +29,7 @@
   <!-- Ritual Input -->
   <url>
     <loc>https://tryritual.co/input</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <mobile:mobile/>
@@ -38,7 +38,7 @@
   <!-- Ritual Picker -->
   <url>
     <loc>https://tryritual.co/picker</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <mobile:mobile/>
@@ -47,7 +47,7 @@
   <!-- Ritual Cards -->
   <url>
     <loc>https://tryritual.co/rituals</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
     <mobile:mobile/>
@@ -56,7 +56,7 @@
   <!-- Memories Gallery -->
   <url>
     <loc>https://tryritual.co/memories</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
     <mobile:mobile/>
@@ -65,7 +65,7 @@
   <!-- Profile -->
   <url>
     <loc>https://tryritual.co/profile</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
     <mobile:mobile/>
@@ -76,7 +76,7 @@
   <!-- FAQ - High value for featured snippets -->
   <url>
     <loc>https://tryritual.co/faq</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
     <mobile:mobile/>
@@ -85,7 +85,7 @@
   <!-- Blog Listing -->
   <url>
     <loc>https://tryritual.co/blog</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <mobile:mobile/>
@@ -94,7 +94,7 @@
   <!-- Blog Articles -->
   <url>
     <loc>https://tryritual.co/blog/50-weekly-rituals-for-couples</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile/>
@@ -102,7 +102,7 @@
   
   <url>
     <loc>https://tryritual.co/blog/how-to-keep-your-relationship-exciting</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile/>
@@ -110,7 +110,7 @@
   
   <url>
     <loc>https://tryritual.co/blog/date-ideas-london-couples</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile/>
@@ -118,7 +118,7 @@
   
   <url>
     <loc>https://tryritual.co/blog/building-relationship-traditions</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile/>
@@ -126,7 +126,7 @@
   
   <url>
     <loc>https://tryritual.co/blog/date-ideas-sydney-couples</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile/>
@@ -134,7 +134,7 @@
   
   <url>
     <loc>https://tryritual.co/blog/benefits-of-couple-rituals-research</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <mobile:mobile/>
@@ -144,7 +144,7 @@
   
   <url>
     <loc>https://tryritual.co/terms</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
     <mobile:mobile/>
@@ -152,7 +152,7 @@
   
   <url>
     <loc>https://tryritual.co/privacy</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
     <mobile:mobile/>
@@ -160,7 +160,7 @@
   
   <url>
     <loc>https://tryritual.co/contact</loc>
-    <lastmod>2025-12-13</lastmod>
+    <lastmod>2026-01-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
     <mobile:mobile/>
