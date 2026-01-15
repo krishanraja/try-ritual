@@ -107,6 +107,7 @@ ritual/
 | [DATABASE.md](docs/DATABASE.md) | Database schema, RLS policies |
 | [API.md](docs/API.md) | Edge function API reference |
 | [USER-FLOWS.md](docs/USER-FLOWS.md) | User journey and state machines |
+| [OAUTH_SETUP.md](docs/OAUTH_SETUP.md) | Google OAuth configuration guide |
 | [AGENT_HISTORY.md](docs/AGENT_HISTORY.md) | AI agent session history and fixes |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and changes |
 
