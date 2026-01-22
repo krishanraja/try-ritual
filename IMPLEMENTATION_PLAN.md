@@ -1,418 +1,211 @@
-# IMPLEMENTATION PLAN: Fix /auth Route 404 Error
-
-**Date:** 2025-01-27  
-**Status:** Phase 3 - Implementation Plan With Checkpoints  
-**Root Cause:** Deployment SPA routing misconfiguration
-
----
-
-## PLAN OVERVIEW
-
-**Objective:** Fix 404 errors for `/auth` route (and all client-side routes) by ensuring proper SPA routing configuration.
-
-**Strategy:** 
-1. Verify and fix `_redirects` file format
-2. Add alternative deployment configurations for common platforms
-3. Ensure configuration files are included in build output
-4. Test and verify all routes work
+# IMPLEMENTATION PLAN: Fix Ritual Selection Glitches
+**Date**: 2026-01-22
+**Approved Scope**: Option C - Full Implementation (All 3 Phases)
+**Estimated Time**: 8-12 hours
+**Branch**: `claude/fix-ritual-selection-glitches-A4SRc`
 
 ---
 
-## FILES TO MODIFY
+## IMPLEMENTATION STRATEGY
 
-### File 1: `public/_redirects`
-**Current State:** Contains `/*    /index.html   200`  
-**Issue:** Format may be incorrect or not recognized by Lovable Cloud  
-**Action:** Verify format and ensure it's correct
+### Principles
+1. **Incremental Changes**: Each phase builds on the previous
+2. **Checkpoint Validation**: Verify functionality after each major change
+3. **Backward Compatible**: Maintain existing API surface during refactor
+4. **No Breaking Changes**: Users can continue using the app during rollout
+5. **Rollback Ready**: Each checkpoint can be independently reverted
 
-**Proposed Change:**
-- Verify current content is correct Netlify format
-- Ensure no trailing whitespace or formatting issues
-- Add comment explaining purpose
+### Phases Overview
+- **Phase 1**: Error Handling (Foundation) - 2-3 hours → 7 changes
+- **Phase 2**: State Sync Architecture (Core) - 4-6 hours → 5 changes  
+- **Phase 3**: UX Resilience (Polish) - 2-3 hours → 5 changes
 
-### File 2: `vite.config.ts` (if needed)
-**Current State:** Standard Vite config  
-**Action:** Ensure `public/_redirects` is copied to build output
-
-**Proposed Change:**
-- Verify Vite automatically copies `public/` files (it should by default)
-- No changes needed if automatic
-
-### File 3: Create `vercel.json` (backup configuration)
-**Current State:** File does not exist  
-**Action:** Create Vercel configuration as backup (if Lovable Cloud uses Vercel)
-
-**Proposed Change:**
-- Create new file with SPA routing configuration
-- Only if Lovable Cloud is based on Vercel
-
-### File 4: Update Documentation
-**Files:** `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`  
-**Action:** Document SPA routing requirements
+**Total**: 17 file changes across 3 phases
 
 ---
 
-## PROPOSED DIFFS
+## CHECKPOINT PROTOCOL
 
-### Diff 1: Fix `public/_redirects`
+Each phase follows CP0-CP5 structure:
 
-**File:** `public/_redirects`
+- **CP0**: Plan approved for this phase
+- **CP1**: Environment checks (build, no console errors)
+- **CP2**: Core feature implemented and proven
+- **CP3**: Secondary integrations validated
+- **CP4**: Regression test (full flow 3+ times)
+- **CP5**: Phase complete, ready for next phase
 
-**Current Content:**
+Expected outcome and verification method documented for each checkpoint.
+
+---
+
+## PHASE 1: ERROR HANDLING
+**Goal**: All errors visible to users within 5 seconds
+**Files**: 1 new, 3 modified
+
+### Changes
+
+**1.1** `src/utils/errorHandling.ts` (NEW)
+- Central error mapping utility
+- Functions: `mapEdgeFunctionError()`, `mapNetworkError()`, `shouldRetry()`, `getRetryDelay()`
+
+**1.2** `src/hooks/useRitualFlow.ts` 
+- L750-754: Change from `.catch()` to `await` + `try/catch`
+- L432-441: Propagate auto-retry errors to state
+- L1041-1045: Handle manual retry errors
+
+**1.3** `src/hooks/useRitualFlow.ts`
+- L105-110: Add `autoRetryInProgress` state
+- Return interface: Export `autoRetryInProgress`
+
+**1.4** `src/components/ritual-flow/GeneratingPhase.tsx`
+- L17-21: Add `autoRetryInProgress` prop
+- L26: Expand error condition logic
+- L80-103: Show auto-retry UI
+
+**1.5** `src/pages/RitualFlow.tsx`
+- L132-139: Pass `autoRetryInProgress` to GeneratingPhase
+
+### Checkpoints
+
+**CP1.0**: Review Phase 1 plan → Approved ✅  
+**CP1.1**: Build succeeds, no errors → Verified ✅  
+**CP1.2**: Edge function errors propagate → Test: mock failure, see error in UI  
+**CP1.3**: Auto-retry status visible → Test: trigger 30s timeout  
+**CP1.4**: All error types display → Test: network, server, timeout errors  
+**CP1.5**: Full flow with errors works → Test: complete flow with simulated failures  
+
+---
+
+## PHASE 2: STATE SYNC ARCHITECTURE
+**Goal**: No spontaneous screen changes
+**Files**: 1 new, 2 modified, 2 migrations
+
+### Changes
+
+**2.1** `src/hooks/useSyncEngine.ts` (NEW)
+- Realtime-first architecture
+- Polling as backup (only when realtime fails)
+- Update deduplication + debouncing (500ms)
+- Heartbeat detection for realtime health
+
+**2.2** `src/hooks/useRitualFlow.ts`
+- L356-400: Remove realtime subscription
+- L460-497: Remove synthesis polling
+- L528-594: Remove universal sync
+- L350: Add `useSyncEngine` integration
+
+**2.3** `supabase/migrations/20260122000000_auto_update_cycle_status.sql` (NEW)
+- Database trigger: auto-compute status from inputs
+- Eliminates client-side status race conditions
+
+**2.4** `src/hooks/useRitualFlow.ts`
+- L725-733: Remove manual status update in `submitInput()`
+- L946-949: Remove manual status update in `submitPicks()`
+
+**2.5** `supabase/migrations/20260122000001_auto_update_status_on_picks.sql` (NEW)
+- Trigger: recompute status when picks/slots change
+
+### Checkpoints
+
+**CP2.0**: Review Phase 2 plan → Approved ✅  
+**CP2.1**: Sync engine works → Test: realtime disconnect, polling activates  
+**CP2.2**: useRitualFlow refactored → Test: full flow identical to before  
+**CP2.3**: DB triggers deployed → Test: submit input, status auto-updates  
+**CP2.4**: Client status removed → Test: status changes correctly  
+**CP2.5**: No spontaneous glitches → Test: two-player flow, no screen changes  
+
+---
+
+## PHASE 3: UX RESILIENCE
+**Goal**: Graceful degradation, user confidence
+**Files**: 3 new, 2 modified
+
+### Changes
+
+**3.1** `src/hooks/useRitualFlow.ts`
+- Add interaction lock mechanism
+- Prevent phase changes during active user interaction
+- Debounce phase computation (500ms)
+
+**3.2** `src/components/NetworkStatus.tsx` (NEW)
+- Connection quality indicator
+- Shows: offline, degraded, reconnecting states
+
+**3.3** `src/pages/RitualFlow.tsx`
+- Add manual sync button to header
+- Show last sync time
+- Visual feedback on sync
+
+**3.4** `src/components/ErrorBoundary.tsx` (NEW)
+- Isolate phase component failures
+- Fallback UI on error
+
+**3.5** `src/components/DebugPanel.tsx` (NEW)
+- Development diagnostic overlay
+- Toggle with Ctrl+Shift+D
+
+### Checkpoints
+
+**CP3.0**: Review Phase 3 plan → Approved ✅  
+**CP3.1**: Phase guards work → Test: select ritual, sync, selection preserved  
+**CP3.2**: Network status shows → Test: disable network, see offline indicator  
+**CP3.3**: Manual sync works → Test: click sync button  
+**CP3.4**: Error boundary works → Test: throw error, see fallback  
+**CP3.5**: Debug panel functional → Test: Ctrl+Shift+D, inspect state  
+
+---
+
+## TEST SCENARIOS (Final Integration)
+
+1. **Happy Path**: Both partners complete flow without errors
+2. **Network Errors**: Offline → submit → error → online → retry → success
+3. **Synthesis Timeout**: 45s delay → auto-retry → manual retry
+4. **Simultaneous Actions**: Both submit at same time → no race conditions
+5. **Page Reload**: Reload during generating → state restored → flow continues
+6. **Realtime Failure**: Disable realtime → polling backup → reconnect
+
+**Success Criteria**: All scenarios pass without glitches or data loss
+
+---
+
+## ROLLBACK STRATEGY
+
+**Phase 1**: `git revert <hash>` (no DB changes, safe anytime)  
+**Phase 2**: Rollback migrations FIRST, then code (critical order)  
+**Phase 3**: `git revert <hash>` (no DB changes, safe anytime)
+
+**Emergency Full Rollback**:
+```bash
+supabase migration down 2  # Rollback DB first
+git revert <phase-3> <phase-2> <phase-1>
+git push
 ```
-/*    /index.html   200
-```
-
-**Proposed Content:**
-```
-# SPA Routing Configuration
-# Redirect all routes to index.html for client-side routing
-/*    /index.html   200
-```
-
-**Rationale:**
-- Add comment for clarity
-- Ensure format is correct (Netlify standard)
-- No functional change, but clearer intent
-
-**Verification:**
-- File should be exactly 2 lines (comment + rule)
-- No trailing whitespace
-- Format matches Netlify specification
 
 ---
 
-### Diff 2: Create `vercel.json` (Conditional)
+## SUCCESS METRICS
 
-**File:** `vercel.json` (NEW FILE)
+**User Experience**:
+- Zero spontaneous screen changes ✅
+- All errors visible within 5s ✅
+- Synthesis detected within 3s ✅
+- No data loss ✅
 
-**Proposed Content:**
-```json
-{
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
-}
-```
+**Technical**:
+- Max 1 state update per user action ✅
+- 100% error coverage ✅
+- Status always consistent with inputs ✅
 
-**Rationale:**
-- If Lovable Cloud uses Vercel infrastructure, this will handle SPA routing
-- Standard Vercel SPA configuration
-- Non-destructive (won't break if not used)
-
-**Verification:**
-- File created in project root
-- Valid JSON format
-- Matches Vercel SPA routing specification
-
-**Note:** This is a backup configuration. Only create if we determine Lovable Cloud might use Vercel.
+**Performance**:
+- <3 re-renders per action ✅
+- <2 DB queries per state change ✅
+- <1s partner sync latency ✅
 
 ---
 
-### Diff 3: Verify Vite Config (No Change Expected)
+## READY TO BEGIN
 
-**File:** `vite.config.ts`
+**Next Action**: Proceed with Phase 1 implementation
 
-**Current State:** Standard config, should automatically copy `public/` files
-
-**Action:** Verify no changes needed
-- Vite automatically copies all files from `public/` to `dist/` root
-- `_redirects` should be included automatically
-
-**Verification:**
-- Run build and check `dist/_redirects` exists
-- Verify file content matches source
-
----
-
-### Diff 4: Update Documentation
-
-**File:** `docs/ARCHITECTURE.md`
-
-**Location:** After line 36 (Deployment section)
-
-**Proposed Addition:**
-```markdown
-### SPA Routing Configuration
-
-The application uses client-side routing with React Router. To ensure all routes work correctly:
-
-- **Netlify:** Uses `public/_redirects` file (automatically deployed)
-- **Vercel:** Uses `vercel.json` (if applicable)
-- **Other Platforms:** May require platform-specific configuration
-
-All routes must redirect to `index.html` to allow React Router to handle routing.
-```
-
-**File:** `docs/HANDOFF.md`
-
-**Location:** Add to "Common Tasks" section
-
-**Proposed Addition:**
-```markdown
-### SPA Routing
-
-If you encounter 404 errors on client-side routes:
-
-1. Verify `public/_redirects` exists and contains: `/*    /index.html   200`
-2. Check deployment platform documentation for SPA routing requirements
-3. Ensure build output includes routing configuration file
-4. Test routes in production after deployment
-```
-
----
-
-## CHECKPOINTS
-
-### CP0: Plan Approval
-**Action:** Review implementation plan and proposed changes  
-**Expected Outcome:** Plan approved, no objections  
-**Verification Method:** 
-- Review DIAGNOSIS.md and ROOT_CAUSE.md
-- Confirm approach addresses root cause
-- Verify no breaking changes
-
-**Status:** ⏳ Pending approval
-
----
-
-### CP1: Environment + Config Checks
-**Action:** 
-1. Verify `public/_redirects` file exists and is readable
-2. Check current file content
-3. Verify Vite config doesn't exclude public files
-4. Check for any existing deployment configs
-
-**Expected Outcome:** 
-- Clean file structure
-- No conflicting configurations
-- Ready for changes
-
-**Verification Method:**
-- File system check: `ls public/_redirects`
-- Content check: `cat public/_redirects`
-- Build test: `npm run build` (if possible)
-- Check `dist/_redirects` exists after build
-
-**Evidence Required:**
-- Screenshot or log of file content
-- Build output showing `_redirects` copied to dist
-
----
-
-### CP2: Core Feature Fix Proven
-**Action:**
-1. Apply Diff 1: Fix `_redirects` file format
-2. Verify file format is correct
-3. Test build includes the file
-
-**Expected Outcome:**
-- `_redirects` file has correct format
-- File is included in build output
-- No syntax errors
-
-**Verification Method:**
-- Read file content
-- Verify format matches specification
-- Check build output includes file
-- Test in development (if possible)
-
-**Evidence Required:**
-- File content before/after
-- Build output log
-- Confirmation file exists in dist folder
-
----
-
-### CP3: Secondary Integrations Validated
-**Action:**
-1. Create `vercel.json` as backup (if applicable)
-2. Update documentation
-3. Verify no conflicts with existing configs
-
-**Expected Outcome:**
-- All configuration files present
-- Documentation updated
-- No conflicts
-
-**Verification Method:**
-- Check all config files exist
-- Review documentation updates
-- Verify no duplicate or conflicting rules
-
-**Evidence Required:**
-- List of all config files
-- Documentation diff
-
----
-
-### CP4: Regression Test
-**Action:**
-1. Deploy to production (or test environment)
-2. Test `/auth` route directly (type URL)
-3. Test all other routes: `/input`, `/picker`, `/rituals`, `/memories`, `/profile`
-4. Test browser refresh on each route
-5. Test deep linking
-6. Test authentication flow end-to-end
-
-**Expected Outcome:**
-- All routes return 200 (not 404)
-- React Router handles all routes correctly
-- Authentication flow works
-- No regressions in other features
-
-**Verification Method:**
-- Browser network tab: Check HTTP status codes
-- Console: No routing errors
-- Functional testing: All routes accessible
-- Authentication: Sign in/sign up works
-
-**Evidence Required:**
-- Screenshots of network tab showing 200 for `/auth`
-- Console logs showing no errors
-- Screenshots of working `/auth` page
-- Test results for all routes
-
----
-
-## IMPLEMENTATION STEPS
-
-### Step 1: Pre-Implementation Verification
-- [ ] Read current `public/_redirects` file
-- [ ] Verify Vite config
-- [ ] Check for existing deployment configs
-- [ ] Document current state
-
-### Step 2: Apply Primary Fix
-- [ ] Update `public/_redirects` with comment
-- [ ] Verify file format
-- [ ] Test build includes file
-
-### Step 3: Add Backup Configuration (Conditional)
-- [ ] Determine if `vercel.json` is needed
-- [ ] Create file if applicable
-- [ ] Verify JSON format
-
-### Step 4: Update Documentation
-- [ ] Update `docs/ARCHITECTURE.md`
-- [ ] Update `docs/HANDOFF.md`
-- [ ] Review for accuracy
-
-### Step 5: Testing & Verification
-- [ ] Build application
-- [ ] Verify config files in dist
-- [ ] Test in development (if possible)
-- [ ] Prepare for production testing
-
----
-
-## RISK ASSESSMENT
-
-### Low Risk Changes
-- ✅ Adding comment to `_redirects` (no functional change)
-- ✅ Creating `vercel.json` (backup, won't break if unused)
-- ✅ Documentation updates (no code changes)
-
-### Potential Risks
-- ⚠️ If `vercel.json` conflicts with existing config (unlikely)
-- ⚠️ If file format change breaks existing setup (very unlikely)
-- ⚠️ If deployment platform doesn't recognize configs (will need alternative)
-
-### Mitigation
-- Keep original file format (just add comment)
-- `vercel.json` is standard format, non-destructive
-- Test in development first if possible
-- Can revert easily if issues arise
-
----
-
-## ROLLBACK PLAN
-
-If implementation causes issues:
-
-1. **Revert `_redirects` changes:**
-   - Remove comment, restore original format
-   - File: `public/_redirects`
-
-2. **Remove `vercel.json`:**
-   - Delete file if created
-   - File: `vercel.json`
-
-3. **Revert documentation:**
-   - Restore original documentation
-   - Files: `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`
-
-**Rollback Trigger:** Any 404 errors on previously working routes
-
----
-
-## SUCCESS CRITERIA
-
-### Primary Success
-- ✅ `/auth` route returns 200 (not 404)
-- ✅ Authentication page loads and renders
-- ✅ Sign in/sign up functionality works
-
-### Secondary Success
-- ✅ All other routes work correctly
-- ✅ Browser refresh works on all routes
-- ✅ Deep linking works
-- ✅ No console errors
-
-### Documentation Success
-- ✅ SPA routing documented
-- ✅ Future developers know configuration requirements
-- ✅ Troubleshooting guide available
-
----
-
-## DEPENDENCIES
-
-### Required
-- Access to codebase ✅
-- Ability to modify files ✅
-- Deployment access (for testing) ⚠️
-
-### Optional
-- Local build environment (for testing)
-- Production deployment access (for verification)
-
----
-
-## TIMELINE ESTIMATE
-
-- **CP0 (Approval):** Immediate
-- **CP1 (Config Check):** 5 minutes
-- **CP2 (Primary Fix):** 10 minutes
-- **CP3 (Documentation):** 15 minutes
-- **CP4 (Testing):** 30-60 minutes (depends on deployment)
-
-**Total:** ~1-2 hours (excluding deployment/testing time)
-
----
-
-## NOTES
-
-1. **Lovable Cloud Specific:** Since Lovable Cloud documentation is not available, we're using standard SPA routing configurations that work on most platforms.
-
-2. **Testing Limitation:** Cannot test build locally (vite not in PATH), so will rely on production testing.
-
-3. **Incremental Approach:** Starting with safest change (comment addition), then adding backup configs.
-
-4. **User Protocol:** Following strict diagnostic protocol - no unverified fixes, evidence required at each step.
-
----
-
-**END OF IMPLEMENTATION PLAN**
-
-
-
-
-
-
-
-
-
+Awaiting your confirmation to start.
